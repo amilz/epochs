@@ -4,6 +4,7 @@ use anchor_lang::solana_program::log::sol_log_compute_units;
 pub mod utils;
 pub mod constants;
 pub use utils::traits::*;
+pub use utils::heap::log_heap_usage;
 pub use constants::*;
 
 declare_id!("7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R");
