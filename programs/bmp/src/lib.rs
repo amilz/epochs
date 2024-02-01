@@ -18,29 +18,27 @@ pub mod bmp {
 
         let pda = &mut ctx.accounts.pda;
         let current_epoch = Clock::get()?.epoch;
-        let (face_index, body_index, head_index, background) = select_traits((
+        let (hat_index, clothes_index, glasses_index , body_index, background) = select_traits((
             current_epoch, 
             ctx.accounts.signer.key(),
-            FACES.len() as u32,
-            BODIES.len() as u32,
-            HEADS.len() as u32,
+            HATS.len() as u32,
+            CLOTHES.len() as u32,
+            GLASSES.len() as u32,
+            BODIES.len() as u32
         ));
-        let animal_index: usize = 0;
         let shadow = apply_shadow(background, 20);
-        let color_og = (169, 202, 232);
+        let color_og = (169, 202, 232); 
         let mut epoch = create_epoch(
-            HEADS[head_index], 
-            FACES[face_index], 
-            BODIES[body_index],
-            ANIMALS[animal_index]
+            &HATS[hat_index], 
+            &CLOTHES[clothes_index], 
+            &GLASSES[glasses_index],
+            BODIES[body_index]
         );
         replace_pixels(&mut epoch, color_og, background);
         replace_pixels(&mut epoch, (136, 150, 164), shadow);
-
-        msg!("3");
-        let bmp_buffer = create_color_bmp_buffer(epoch, background);
+        msg!("pixels swapped");
+        let bmp_buffer = create_color_bmp_buffer(epoch,background);
         pda.buffer = bmp_buffer;
-        msg!("4");
         Ok(())
     }
 }

@@ -1,7 +1,9 @@
 pub mod bodies;
-pub mod heads;
-pub mod faces;
+pub mod hats;
+pub mod clothes;
+pub mod glasses;
 
 pub use bodies::*;
-pub use heads::*;
-pub use faces::*;
+pub use hats::*;
+pub use clothes::*;
+pub use glasses::*;
