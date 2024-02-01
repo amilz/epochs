@@ -155,10 +155,6 @@ pub fn apply_shadow(pixel: Pixel, shadow_intensity: i16) -> Pixel {
 
  type Pixel = (u8, u8, u8); // Represents a color in RGB format
 
-// Define the types for parts of an Epoch with specific heights.
- type Head = [[Pixel; 19]; 8]; // 19W x 8H
- type Face = [[Pixel; 19]; 10]; // 19W x 10H
- type Body = [[Pixel; 19]; 7]; // 19W x 7H
 
 // Define the Epoch type to be composed of Head, Face, and Body.
  type Epoch = [[Pixel; 19]; 25]; // 19W x 25H
