@@ -60,34 +60,6 @@ describe("bmp", () => {
     }
   });
 
-  it("Is initialized!", async () => {
-    // Add your test here.
-    try {
-      let ix = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 });
-
-      const ix2 = await program.methods.initialize().accounts({
-        signer: signer.publicKey,
-        pda: pda.publicKey,
-      }).signers([signer, pda]).instruction();
-      const trx = new anchor.web3.Transaction().add(ix).add(ix2);
-      const tx = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, trx, [signer, pda],)
-      console.log(`https://explorer.solana.com/tx/${tx}?cluster=custom&customUrl=http%3A%2F%2Flocalhost%3A8899`)
-    } catch (error) {
-      console.error(error);
-    }
-    const data = await program.account.bmp.fetch(pda.publicKey);
-    //console.log(data.buffer);
-
-
-    const filePath = `./img-outputs/output${Math.floor(Math.random() * 1000000)}.bmp`;
-    fs.writeFileSync(filePath, data.buffer);
-    exec(`open ${filePath}`, (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error opening file: ${error}`);
-      }
-    });
-  });
-
   it("Mints an NFT", async () => {
     let ixComputeBudget = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 });
     // > Program consumed: 215943 of 299850 compute units (without inscription)
