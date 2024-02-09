@@ -6,6 +6,8 @@
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",
+        "@metaplex-foundation/mpl-inscription": "^0.8.1",
+        "@solana/spl-token": "^0.4.0",
         "@types/node": "^20.11.10",
         "pngjs": "^7.0.0"
     },
