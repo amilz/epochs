@@ -1,5 +1,11 @@
-import { Connection, PublicKey } from "@solana/web3.js";
-
+import { Connection, PublicKey, Keypair } from "@solana/web3.js";
+import { TOKEN_METADATA_PROGRAM_ID } from "./consts";
+import {
+    findInscriptionShardPda,
+    findInscriptionMetadataPda,
+    findMintInscriptionPda,
+    MPL_INSCRIPTION_PROGRAM_ID,
+  } from "@metaplex-foundation/mpl-inscription";
 
 
 /**
@@ -35,4 +41,96 @@ async function airdropToMultiple(
     }
 }
 
-export { airdropToMultiple };
+// Derive the PDA of the metadata account for the mint.
+function getMetadataAddress(mint: PublicKey): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("metadata"),
+            TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+            mint.toBuffer()
+        ],
+        TOKEN_METADATA_PROGRAM_ID)
+    return pda;
+}
+
+
+function getMasterEditionAddress(mint: PublicKey): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("metadata"),
+            TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+            mint.toBuffer(),
+            Buffer.from("edition"),
+        ],
+        TOKEN_METADATA_PROGRAM_ID
+    );
+    return pda;
+}
+
+interface NftAccounts {
+    mintKeypair: Keypair;
+    metadataPda: PublicKey;
+    masterEditionPda: PublicKey;
+}
+
+function createMintMetaAndMasterPdas():NftAccounts {
+    const mintKeypair = Keypair.generate();
+    const metadataPda = getMetadataAddress(mintKeypair.publicKey);
+    const masterEditionPda = getMasterEditionAddress(mintKeypair.publicKey);
+    return { mintKeypair, metadataPda, masterEditionPda };
+}
+
+
+function getInscriptionAccounts(mint: PublicKey) {
+    const inscriptionProgram = new PublicKey('1NSCRfGeyo7wPUazGbaPBUsTM49e1k2aXewHGARfzSo')
+    const [mintInscriptionAccount] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("Inscription"),
+            inscriptionProgram.toBuffer(),
+            mint.toBuffer(),
+        ],
+        inscriptionProgram
+    );
+    const [inscriptionMetadataAccount] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("Inscription"),
+            inscriptionProgram.toBuffer(),
+            mintInscriptionAccount.toBuffer(),
+        ],
+        inscriptionProgram
+    );
+    // rand # 0-32
+    const shard = Math.floor(Math.random() * 32);
+
+
+    // Example from Mainnet
+    // Shard = 1
+    // 76BsfqxZgmVg114yYtLFBopv6NAqvnxgcLvPKhxUMRHg
+    let [inscriptionShardAccount] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("Inscription"),
+            Buffer.from("Shard"),
+            inscriptionProgram.toBuffer(),
+            Buffer.from(shard.toString())
+        ],
+        inscriptionProgram
+    );
+    inscriptionShardAccount = new PublicKey('76BsfqxZgmVg114yYtLFBopv6NAqvnxgcLvPKhxUMRHg');
+
+    return {
+        inscriptionProgram,
+        mintInscriptionAccount,
+        inscriptionMetadataAccount,
+        inscriptionShardAccount
+    }
+}
+
+
+
+export { 
+    airdropToMultiple, 
+    getMetadataAddress, 
+    getMasterEditionAddress, 
+    createMintMetaAndMasterPdas,
+    getInscriptionAccounts
+};
