@@ -1235,9 +1235,9 @@ dependencies = [
 
 [[package]]
 name = "mpl-inscription"
-version = "0.7.0"
+version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ebed4a3593acf6bebf92d96c91b21763c19024872958a2c5ce8e93f3a57f6e1"
+checksum = "c5eb1fdcb7c368d7b4ba43ee7fa9cb6614213a508b1b20b078ac85e7ce3fcd66"
 dependencies = [
  "borsh 0.10.3",
  "kaigan",
