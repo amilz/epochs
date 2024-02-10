@@ -29,5 +29,7 @@ program = "./tests/genesis/inscription.so"
 ## This is Inscription Shard 1 Cloned from Mainnet
 [test.validator]
 url = "https://api.mainnet-beta.solana.com"
+slots_per_epoch = "32"
+
 [[test.validator.clone]]
 address = "76BsfqxZgmVg114yYtLFBopv6NAqvnxgcLvPKhxUMRHg"

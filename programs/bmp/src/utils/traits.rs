@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, solana_program::keccak};
 
-const MERGE_COLOR: Pixel = (255, 255, 255);
+const MERGE_COLOR: Pixel = (255, 000, 246);
 
 type SelectTraitsArgs = (u64, Pubkey, u32, u32, u32, u32);
 type SelectTraitsResults = (usize, usize, usize, usize, Pixel);

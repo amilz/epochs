@@ -117,22 +117,22 @@ pub fn handler(ctx: Context<MintNftInCollection>) -> Result<()> {
     let (hat_index, clothes_index, glasses_index , body_index, background) = select_traits((
         current_epoch, 
         ctx.accounts.user.key(),
-        HATS.len() as u32,
-        CLOTHES.len() as u32,
-        GLASSES.len() as u32,
-        BODIES.len() as u32
+        HEAD_GROUP.len() as u32,
+        SHIRT_GROUP.len() as u32,
+        LENS_GROUP.len() as u32,
+        BODY_GROUP.len() as u32
     ));
 
     let shadow = apply_shadow(background, 20);
-    let color_og = (169, 202, 232); 
+    let color_og = (255, 000, 246); 
     let mut epoch = create_epoch(
-        &HATS[hat_index], 
-        &CLOTHES[clothes_index], 
-        &GLASSES[glasses_index],
-        BODIES[body_index]
+        &HEAD_GROUP[hat_index], 
+        &SHIRT_GROUP[clothes_index], 
+        &LENS_GROUP[glasses_index],
+        BODY_GROUP[body_index]
     );
     replace_pixels(&mut epoch, color_og, background);
-    replace_pixels(&mut epoch, (136, 150, 164), shadow);
+    replace_pixels(&mut epoch, (115, 115, 115), shadow);
     msg!("pixels swapped");
     let bmp_buffer = create_color_bmp_buffer(epoch,background);
 
