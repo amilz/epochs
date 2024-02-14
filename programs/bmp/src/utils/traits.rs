@@ -4,6 +4,8 @@ const MERGE_COLOR: Pixel = (255, 000, 246);
 
 type SelectTraitsArgs = (u64, Pubkey, u32, u32, u32, u32);
 type SelectTraitsResults = (usize, usize, usize, usize, Pixel);
+
+#[inline(never)]
 pub fn select_traits(args: SelectTraitsArgs) -> SelectTraitsResults {
     let (epoch, signer, num_items_hat, num_items_clothes, num_items_glasses, num_items_body) = args;
     let mut hasher = keccak::Hasher::default();
@@ -23,6 +25,7 @@ pub fn select_traits(args: SelectTraitsArgs) -> SelectTraitsResults {
     (hat_index as usize, clothes_index as usize, glasses_index as usize, body_index as usize, background)
 }
 
+#[inline(never)]
 fn merge_layers(top_layer: &Epoch, bottom_layer: &mut Epoch) {
     for (y, row) in top_layer.iter().enumerate() {
         for (x, &pixel) in row.iter().enumerate() {
@@ -34,7 +37,7 @@ fn merge_layers(top_layer: &Epoch, bottom_layer: &mut Epoch) {
     }
 }
 
-
+#[inline(never)]
 pub fn create_epoch(hat: &Epoch, clothes: &Epoch, glasses: &Epoch, body: Epoch) -> Epoch {
     let mut epoch = body; 
     merge_layers(hat, &mut epoch);
@@ -44,7 +47,7 @@ pub fn create_epoch(hat: &Epoch, clothes: &Epoch, glasses: &Epoch, body: Epoch) 
     epoch
 }
 
-
+#[inline(never)]
 pub fn create_color_bmp_buffer(pattern: Epoch, background_color: Pixel) -> Vec<u8> {
     let new_width = 32; // New width with added background columns
     let new_height = 32; // New height with added background rows
@@ -84,38 +87,24 @@ pub fn create_color_bmp_buffer(pattern: Epoch, background_color: Pixel) -> Vec<u
 
     // Add the original pattern with 5 columns of background_color to the left and right
     for row in pattern.iter().rev() {
-        // Add 5 pixels of background_color to the left side
-        for _ in 0..6 {
-            let bgr_pixel = [background_color.2, background_color.1, background_color.0];
-            buffer.extend_from_slice(&bgr_pixel);
-        }
+
         // Add the original pattern's pixels
         for &pixel in row.iter() {
             let bgr_pixel = [pixel.2, pixel.1, pixel.0];
             buffer.extend_from_slice(&bgr_pixel);
         }
-        // Add 5 pixels of background_color to the right side
-        for _ in 0..7 {
-            let bgr_pixel = [background_color.2, background_color.1, background_color.0];
-            buffer.extend_from_slice(&bgr_pixel);
-        }
+
         buffer.extend(vec![0; row_padding]);
     }
 
-    // Add 7 rows of background_color to the top
-    for _ in 0..7 {
-        for _ in 0..new_width {
-            let bgr_pixel = [background_color.2, background_color.1, background_color.0];
-            buffer.extend_from_slice(&bgr_pixel);
-        }
-        buffer.extend(vec![0; row_padding]);
-    }
+
 
 
 
     buffer
 }
 
+#[inline(never)]
 pub fn replace_pixels(pattern: &mut Epoch, pixel_to_replace: Pixel, replacement_pixel: Pixel) {
     for row in pattern.iter_mut() {
         for pixel in row.iter_mut() {
@@ -126,6 +115,7 @@ pub fn replace_pixels(pattern: &mut Epoch, pixel_to_replace: Pixel, replacement_
     }
 }
 
+#[inline(never)]
 pub fn apply_shadow(pixel: Pixel, shadow_intensity: i16) -> Pixel {
     let apply_light_change = |color_value: u8, change: i16| -> u8 {
         // Ensure that we don't underflow or overflow the color values
@@ -157,7 +147,7 @@ pub fn apply_shadow(pixel: Pixel, shadow_intensity: i16) -> Pixel {
 
 
 // Define the Epoch type to be composed of Head, Face, and Body.
- type Epoch = [[Pixel; 19]; 25]; // 19W x 25H
+ type Epoch = [[Pixel; 32]; 32]; // 19W x 25H
 
 
 
