@@ -38,39 +38,39 @@ fn merge_layers(top_layer: &Epoch, bottom_layer: &mut Epoch) {
 }
 
 #[inline(never)]
-pub fn create_epoch(hat: &Epoch, clothes: &Epoch, glasses: &Epoch, body: Epoch) -> Epoch {
-    let mut epoch = body; 
+pub fn create_epoch(hat: &Epoch, clothes: &Epoch, glasses: &Epoch, body: Box<Epoch>) -> Box<Epoch> {
+    let mut epoch = *body; // Dereference the box to access the Epoch instance. 
     merge_layers(hat, &mut epoch);
     merge_layers(clothes, &mut epoch);
     merge_layers(glasses, &mut epoch);
     msg!("Epoch created");
-    epoch
+    Box::new(epoch) // Return a new Box containing the modified Epoch.
 }
 
+
 #[inline(never)]
-pub fn create_color_bmp_buffer(pattern: Epoch, background_color: Pixel) -> Vec<u8> {
-    let new_width = 32; // New width with added background columns
-    let new_height = 32; // New height with added background rows
-    let row_padding = (4 - (new_width * 3 % 4)) % 4; // Adjusted for new width
-    let file_size = 54 + ((3 * new_width + row_padding) * new_height); // Adjusted for new dimensions
+pub fn create_color_bmp_buffer(pattern: &Epoch) -> Vec<u8> {
+    let new_width = 32; // Width is defined by the Epoch size
+    let new_height = 32; // Height is also defined by the Epoch size
+    let row_padding = (4 - (new_width * 3 % 4)) % 4; // Padding for alignment
+    let file_size = 54 + ((3 * new_width + row_padding) * new_height); // Total file size
 
     let mut buffer = Vec::with_capacity(file_size as usize);
 
     // BMP Header
     let header = [
         b'B', b'M', // Signature
-        file_size as u8, (file_size >> 8) as u8, 
-        (file_size >> 16) as u8, (file_size >> 24) as u8, // File size
+        0, 0, 0, 0, // Placeholder for file size, to be updated
         0, 0, 0, 0, // Reserved
         54, 0, 0, 0, // Data offset
     ];
     buffer.extend_from_slice(&header);
 
-    // DIB Header - adjust width and height values
+    // DIB Header
     let dib_header = [
-        40, 0, 0, 0, // DIB Header size
-        new_width as u8, 0, 0, 0, // Adjusted width
-        new_height as u8, 0, 0, 0, // Adjusted height
+        40, 0, 0, 0, // Header size
+        new_width as u8, 0, 0, 0, // Width
+        new_height as u8, 0, 0, 0, // Height
         1, 0, // Color planes
         24, 0, // Bits per pixel
         0, 0, 0, 0, // Compression
@@ -83,26 +83,27 @@ pub fn create_color_bmp_buffer(pattern: Epoch, background_color: Pixel) -> Vec<u
     buffer.extend_from_slice(&dib_header);
 
     // Pixel Data
-
-
-    // Add the original pattern with 5 columns of background_color to the left and right
     for row in pattern.iter().rev() {
-
         // Add the original pattern's pixels
         for &pixel in row.iter() {
-            let bgr_pixel = [pixel.2, pixel.1, pixel.0];
+            let bgr_pixel = [pixel.2, pixel.1, pixel.0]; // Assuming Pixel is a tuple struct (R, G, B)
             buffer.extend_from_slice(&bgr_pixel);
         }
 
+        // Add padding for each row to align to a 4-byte boundary
         buffer.extend(vec![0; row_padding]);
     }
 
-
-
-
+    // Update the file size in the BMP header after buffer construction
+    let file_size = buffer.len() as u32;
+    buffer[2] = file_size as u8;
+    buffer[3] = (file_size >> 8) as u8;
+    buffer[4] = (file_size >> 16) as u8;
+    buffer[5] = (file_size >> 24) as u8;
 
     buffer
 }
+
 
 #[inline(never)]
 pub fn replace_pixels(pattern: &mut Epoch, pixel_to_replace: Pixel, replacement_pixel: Pixel) {
@@ -147,7 +148,7 @@ pub fn apply_shadow(pixel: Pixel, shadow_intensity: i16) -> Pixel {
 
 
 // Define the Epoch type to be composed of Head, Face, and Body.
- type Epoch = [[Pixel; 32]; 32]; // 19W x 25H
+ type Epoch = [[Pixel; 32]; 32];
 
 
 

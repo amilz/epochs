@@ -19,9 +19,27 @@ function convertImageToRustTypes(filePath: string, name: string): string {
         output += '    [';
         for (let x = 0; x < width; x++) {
             const idx = (width * y + x) << 2; // Multiply by 4 for each RGBA value
-            const r = png.data[idx].toString().padStart(3, '0');
+
+            // OG
+/*             const r = png.data[idx].toString().padStart(3, '0');
             const g = png.data[idx + 1].toString().padStart(3, '0');
-            const b = png.data[idx + 2].toString().padStart(3, '0');
+            const b = png.data[idx + 2].toString().padStart(3, '0'); */
+
+            // PINK TRANSPARENT
+            const alpha = png.data[idx + 3]; // Get the alpha value
+
+            let r, g, b;
+            if (alpha === 0) { // If pixel is transparent
+                r = '255'.padStart(3, '0');
+                g = '000'.padStart(3, '0');
+                b = '246'.padStart(3, '0');
+            } else {
+                r = png.data[idx].toString().padStart(3, '0');
+                g = png.data[idx + 1].toString().padStart(3, '0');
+                b = png.data[idx + 2].toString().padStart(3, '0');
+            }
+
+
             output += `(${r}, ${g}, ${b}), `;
         }
         output = output.slice(0, -2); // Remove the last comma and space
@@ -69,7 +87,7 @@ Object.entries(categories).forEach(([category, data]: [string, CategoryData]) =>
     // Append the array definition to the outputs
     const finalOutput = outputs + arrayDefinition;
 
-    const outputPath = `./scripts/decodePng/nouns/outputs/${category}.rs`;
+    const outputPath = `./scripts/decodePng/nouns/outputs2/${category}.rs`;
     fs.writeFileSync(outputPath, finalOutput);
     console.log(`Conversion completed for ${category}. Check ${outputPath} for the result.`);
 });

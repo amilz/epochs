@@ -485,7 +485,6 @@ dependencies = [
  "ahash 0.8.6",
  "anchor-lang",
  "anchor-spl",
- "mpl-inscription",
  "mpl-token-metadata 4.1.1",
 ]
 
@@ -1104,15 +1103,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "kaigan"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e623cca1f0e2a0919032c1bdabbf81dd9aa34658d5066aca7bb90d608317ab91"
-dependencies = [
- "borsh 0.10.3",
-]
-
-[[package]]
 name = "keccak"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1231,20 +1221,6 @@ dependencies = [
  "keccak",
  "rand_core 0.6.4",
  "zeroize",
-]
-
-[[package]]
-name = "mpl-inscription"
-version = "0.8.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c5eb1fdcb7c368d7b4ba43ee7fa9cb6614213a508b1b20b078ac85e7ce3fcd66"
-dependencies = [
- "borsh 0.10.3",
- "kaigan",
- "num-derive 0.3.3",
- "num-traits",
- "solana-program",
- "thiserror",
 ]
 
 [[package]]

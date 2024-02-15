@@ -60,10 +60,12 @@ describe("bmp", () => {
         const trx = new anchor.web3.Transaction().add(ixComputeBudget).add(ixMintNft);
         const tx = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, trx, [user, pda],);
         console.log("mintNft sig", tx);
+        const txDetails = await program.provider.connection.getTransaction(tx, { maxSupportedTransactionVersion: 0, commitment: 'confirmed'});
+        console.log(txDetails.meta.logMessages);
         const data = await program.account.bmp.fetch(pda.publicKey);
 
         const filePath = `./img-outputs/zzz.bmp`;
-        fs.writeFileSync(filePath, data.buffer);
+        fs.writeFileSync(filePath, data.buffer.pixels);
         exec(`open ${filePath}`, (error, _stdout, _stderr) => {
           if (error) {
             console.error(`Error opening file: ${error}`);
