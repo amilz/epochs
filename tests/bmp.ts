@@ -41,6 +41,7 @@ describe("bmp", () => {
   it ("test", async () => {
     //await mintTest();
     let epoch = 0;
+    await mintTest(epoch);
     while (epoch < 100) {
       let {epoch: currentEpoch} = await program.provider.connection.getEpochInfo();
       if (currentEpoch > epoch) {
@@ -73,10 +74,10 @@ describe("bmp", () => {
         console.log("mintNft sig", tx);
         const txDetails = await program.provider.connection.getTransaction(tx, { maxSupportedTransactionVersion: 0, commitment: 'confirmed'});
         //console.log(txDetails.meta.logMessages);
-        const data = await program.account.bmp.fetch(newPda.publicKey);
+        const data = await program.account.epochInscription.fetch(newPda.publicKey);
 
-        const filePath = `./img-outputs/nouns/${epoch}.bmp`;
-        fs.writeFileSync(filePath, data.buffer.pixels);
+        const filePath = `./img-outputs/nouns/2-${epoch}.bmp`;
+        fs.writeFileSync(filePath, data.buffer.rawData);
 /*         exec(`open ${filePath}`, (error, _stdout, _stderr) => {
           if (error) {
             console.error(`Error opening file: ${error}`);

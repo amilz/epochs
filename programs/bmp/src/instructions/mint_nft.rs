@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use crate::bmp;
 use crate::utils::*;
 use crate::constants::*;
+use crate::state::*;
 
 #[derive(Accounts)]
 pub struct MintNftInCollection<'info> {
@@ -11,17 +12,12 @@ pub struct MintNftInCollection<'info> {
 
     #[account(
         init, 
-        space = 5000,
+        space = EpochInscription::get_size(),
         payer = user
     )]
-    pub pda: Account<'info, Bmp>,
-
-
-
-
+    pub pda: Account<'info, EpochInscription>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
-
 }
 
 pub fn handler(ctx: Context<MintNftInCollection>) -> Result<()> {
@@ -46,20 +42,9 @@ pub fn handler(ctx: Context<MintNftInCollection>) -> Result<()> {
     ); 
     replace_pixels(&mut epoch, (255, 000, 246), background);
     let bmp_buffer = create_color_bmp_buffer(&epoch);
-    bmp_account.on = true;
-    bmp_account.buffer.pixels = bmp_buffer;
+    bmp_account.buffer.raw_data = bmp_buffer;
+    bmp_account.epoch_id = current_epoch;
     Ok(())
 
 }
 
-//#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default, Eq, PartialEq, Debug)]
-#[account]
-pub struct Bmp {
-    pub on: bool,
-    pub buffer: Epoch
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default, Eq, PartialEq, Debug)]
-pub struct Epoch {
-    pub pixels: Vec<u8>
-}
