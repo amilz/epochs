@@ -1,11 +1,11 @@
 use anchor_lang::prelude::*;
 
-use crate::bmp;
 use crate::utils::*;
 use crate::constants::*;
 use crate::state::*;
 
 #[derive(Accounts)]
+#[instruction(input_epoch: u64)]
 pub struct MintNftInCollection<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
@@ -15,16 +15,29 @@ pub struct MintNftInCollection<'info> {
         space = EpochInscription::get_size(),
         payer = user
     )]
-    pub pda: Account<'info, EpochInscription>,
+    pub epoch_inscription: Account<'info, EpochInscription>,
+
+    #[account(
+        init,
+        seeds = [AUCTION_SEED.as_bytes(), &input_epoch.to_le_bytes()],
+        bump, 
+        payer = user,
+        space = Auction::get_size()
+    )]
+    pub auction: Account<'info, Auction>,
+
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
 }
 
-pub fn handler(ctx: Context<MintNftInCollection>) -> Result<()> {
+pub fn handler(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()> {
+    let epoch_inscription = &mut ctx.accounts.epoch_inscription;
+    let auction = &mut ctx.accounts.auction;
+    
     let current_epoch = Clock::get()?.epoch;
-    let bmp_account = &mut ctx.accounts.pda;
-
-
+    assert!(input_epoch == current_epoch, "Epochs do not match");
+    //TODO add error codes
+    
     let (hat_index, clothes_index, glasses_index , body_index, background) = select_traits((
         current_epoch, 
         ctx.accounts.user.key(),
@@ -42,8 +55,18 @@ pub fn handler(ctx: Context<MintNftInCollection>) -> Result<()> {
     ); 
     replace_pixels(&mut epoch, (255, 000, 246), background);
     let bmp_buffer = create_color_bmp_buffer(&epoch);
-    bmp_account.buffer.raw_data = bmp_buffer;
-    bmp_account.epoch_id = current_epoch;
+    epoch_inscription.buffer.raw_data = bmp_buffer;
+    epoch_inscription.epoch_id = current_epoch;
+
+    let auction_bump = 0; // after seed addedctx.bumps.auction;
+
+    auction.create(
+        current_epoch,
+        // TODO UPDATE WITH MINT OR RENAME
+        ctx.accounts.epoch_inscription.key(),
+        auction_bump,
+        ctx.accounts.user.key(),
+    );
     Ok(())
 
 }
