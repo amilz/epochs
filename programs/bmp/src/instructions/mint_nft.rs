@@ -38,19 +38,16 @@ pub fn handler(ctx: Context<MintNftInCollection>) -> Result<()> {
         BODY_GROUP.len() as u32
     ));
 
-    let epoch = create_epoch(
+    let mut epoch = create_epoch(
         &HEAD_GROUP[hat_index], 
         &SHIRT_GROUP[clothes_index], 
         &LENS_GROUP[glasses_index],
         Box::new(BODY_GROUP[body_index])
     ); 
-    msg!("pixels swapped");
+    replace_pixels(&mut epoch, (255, 000, 246), background);
     let bmp_buffer = create_color_bmp_buffer(&epoch);
     bmp_account.on = true;
-    msg!("bmp on");
-
     bmp_account.buffer.pixels = bmp_buffer;
-    msg!("bmp buffer assigned");
     Ok(())
 
 }
