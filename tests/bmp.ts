@@ -35,7 +35,7 @@ describe("bmp", () => {
   const collectionTokenAccount = getAssociatedTokenAddressSync(collectionMint, collectionMint, true)
 
   before(async () => {
-    await airdropToMultiple([signer.publicKey, authority.publicKey, user.publicKey], program.provider.connection, anchor.web3.LAMPORTS_PER_SOL);
+    await airdropToMultiple([signer.publicKey, authority.publicKey, user.publicKey], program.provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
 
   });
   it ("test", async () => {
