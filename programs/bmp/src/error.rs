@@ -10,5 +10,5 @@ pub enum InscriptionError {
 #[error_code]
 pub enum AuctionError {
     #[msg("zzz")]
-    zzz,
+    Zzz,
 }

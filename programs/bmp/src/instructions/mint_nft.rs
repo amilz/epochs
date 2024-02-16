@@ -34,7 +34,7 @@ pub struct MintNftInCollection<'info> {
 }
 
 pub fn handler(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()> {
-    let epoch_inscription = &mut ctx.accounts.epoch_inscription;
+    let epoch_inscription: &mut Account<'_, EpochInscription> = &mut ctx.accounts.epoch_inscription;
     let auction = &mut ctx.accounts.auction;
     
     let current_epoch = Clock::get()?.epoch;
@@ -55,7 +55,7 @@ pub fn handler(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()
         &LENS_GROUP[glasses_index],
         Box::new(BODY_GROUP[body_index])
     ); 
-    replace_pixels(&mut epoch, (255, 000, 246), background);
+    replace_pixels(&mut epoch, GREEN_SCREEN, background);
     let bmp_buffer = create_color_bmp_buffer(&epoch);
     epoch_inscription.buffer.raw_data = bmp_buffer;
     epoch_inscription.epoch_id = current_epoch;
@@ -71,4 +71,3 @@ pub fn handler(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()
     Ok(())
 
 }
-

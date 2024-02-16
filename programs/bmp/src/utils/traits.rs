@@ -1,6 +1,6 @@
 use anchor_lang::{prelude::*, solana_program::keccak};
 
-const MERGE_COLOR: Pixel = (255, 000, 246);
+use crate::GREEN_SCREEN;
 
 type SelectTraitsArgs = (u64, Pubkey, u32, u32, u32, u32);
 type SelectTraitsResults = (usize, usize, usize, usize, Pixel);
@@ -30,7 +30,7 @@ fn merge_layers(top_layer: &Epoch, bottom_layer: &mut Epoch) {
     for (y, row) in top_layer.iter().enumerate() {
         for (x, &pixel) in row.iter().enumerate() {
             // If the pixel from the top layer is not (0,0,0), overwrite the corresponding pixel in the bottom layer.
-            if pixel != MERGE_COLOR {
+            if pixel != GREEN_SCREEN {
                 bottom_layer[y][x] = pixel;
             }
         }
