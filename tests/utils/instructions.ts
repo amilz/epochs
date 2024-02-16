@@ -40,7 +40,7 @@ export async function mintAssetsForEpoch({ epoch, program, user, disableOpenFile
         const data = await program.account.epochInscription.fetch(epochInscriptionPda);
         assert.ok(data.buffer.rawData.length > 0);
 
-        const filePath = `./img-outputs/nouns/steph2-epoch-${epoch}.bmp`;
+        const filePath = `./img-outputs/nouns/z-epoch-${epoch}.bmp`;
         fs.writeFileSync(filePath, data.buffer.rawData);
 
         if (!disableOpenFile) {

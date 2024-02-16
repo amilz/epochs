@@ -1,9 +1,8 @@
 use anchor_lang::prelude::*;
 
-use crate::utils::*;
+use crate::utils::validate::get_and_validate_epoch;
 use crate::constants::*;
 use crate::state::*;
-use crate::error::*;
 
 #[derive(Accounts)]
 #[instruction(input_epoch: u64)]
@@ -35,39 +34,23 @@ pub struct MintNftInCollection<'info> {
 
 pub fn handler(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()> {
     let epoch_inscription: &mut Account<'_, EpochInscription> = &mut ctx.accounts.epoch_inscription;
-    let auction = &mut ctx.accounts.auction;
+    let user: Pubkey = ctx.accounts.user.key();
+    let auction: &mut Account<'_, Auction> = &mut ctx.accounts.auction;
     
-    let current_epoch = Clock::get()?.epoch;
-    require!(input_epoch == current_epoch, InscriptionError::InvalidEpoch);
+    let current_epoch = get_and_validate_epoch(input_epoch)?;
     
-    let (hat_index, clothes_index, glasses_index , body_index, background) = select_traits((
+    epoch_inscription.generate_and_set_asset(
         current_epoch, 
-        ctx.accounts.user.key(),
-        HEAD_GROUP.len() as u32,
-        SHIRT_GROUP.len() as u32,
-        LENS_GROUP.len() as u32,
-        BODY_GROUP.len() as u32
-    ));
-
-    let mut epoch = create_epoch(
-        &HEAD_GROUP[hat_index], 
-        &SHIRT_GROUP[clothes_index], 
-        &LENS_GROUP[glasses_index],
-        Box::new(BODY_GROUP[body_index])
-    ); 
-    replace_pixels(&mut epoch, GREEN_SCREEN, background);
-    let bmp_buffer = create_color_bmp_buffer(&epoch);
-    epoch_inscription.buffer.raw_data = bmp_buffer;
-    epoch_inscription.epoch_id = current_epoch;
-    epoch_inscription.bump = ctx.bumps.epoch_inscription;
+        user, 
+        ctx.bumps.epoch_inscription
+    );
 
     auction.create(
         current_epoch,
         // TODO UPDATE WITH MINT OR RENAME
-        ctx.accounts.epoch_inscription.key(),
+        epoch_inscription.key(),
+        user,
         ctx.bumps.auction,
-        ctx.accounts.user.key(),
     );
     Ok(())
-
 }

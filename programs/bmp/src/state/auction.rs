@@ -34,7 +34,7 @@ impl Auction {
         1       // bump
     }
 
-    pub fn create(&mut self, epoch: Epoch, mint: Pubkey, bump: u8, initiator: Pubkey) {
+    pub fn create(&mut self, epoch: Epoch, mint: Pubkey, initiator: Pubkey, bump: u8) {
         self.epoch = epoch;
         self.mint = mint;
         self.state = AuctionState::UnClaimed;
