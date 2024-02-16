@@ -1,11 +1,8 @@
 use anchor_lang::{prelude::*, solana_program::keccak};
 
 use crate::{
-    constants::{
-        bodies::BODY_GROUP, clothes::SHIRT_GROUP, colors::GREEN_SCREEN, glasses::LENS_GROUP,
-        hats::HEAD_GROUP,
-    },
-    EpochInscription,
+    clothes::SHIRT_GROUP, colors::GREEN_SCREEN, constants::bodies::BODY_GROUP, glasses::LENS_GROUP,
+    hats::HEAD_GROUP,
 };
 
 type Pixel = (u8, u8, u8);

@@ -22,11 +22,11 @@ pub mod bmp {
     use super::*;
 
     pub fn create_collection_nft(ctx: Context<CreateCollectionNft>) -> Result<()> {
-        create_collection_nft::handler(ctx)
+        create_collection_nft::handle_create_collection(ctx)
     }
 
     pub fn mint_nft(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()> {
-        mint_nft::handler(ctx, input_epoch)
+        mint_nft::handle_mint_nft(ctx, input_epoch)
     }
 
 }

@@ -31,7 +31,7 @@ pub struct MintNftInCollection<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()> {
+pub fn handle_mint_nft(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()> {
     let current_epoch = get_and_validate_epoch(input_epoch)?;
     let epoch_inscription: &mut Account<'_, EpochInscription> = &mut ctx.accounts.epoch_inscription;
     let user: Pubkey = ctx.accounts.user.key();

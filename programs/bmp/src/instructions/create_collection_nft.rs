@@ -66,7 +66,7 @@ pub struct CreateCollectionNft<'info> {
 
 
 
-pub fn handler(ctx: Context<CreateCollectionNft>) -> Result<()> {
+pub fn handle_create_collection(ctx: Context<CreateCollectionNft>) -> Result<()> {
     const NAME: &str = "The Epochs";
     const SYMBOL: &str = "EPOCH";
     const URI: &str = "https://arweave.net/PkmMMr2GNK3eraWcat-pl7BwGGUQN5QLEyzDtIjbYWI";
