@@ -1,9 +1,10 @@
 import { Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { Program, AnchorError } from "@coral-xyz/anchor";
 import { Bmp } from "../target/types/bmp";
 import { airdropToMultiple } from "./utils/utils";
 import { mintAssetsForEpoch } from "./utils/instructions";
+import { assert } from "chai";
 
 const numberEpochs = 3;
 
@@ -40,5 +41,22 @@ describe("SVM On-Chain Asset Generator", () => {
       }
       await new Promise(resolve => setTimeout(resolve, 500));
     }
+  });
+
+  it(`Fails to generate with wrong epoch`, async () => {
+    const randomHighEpoch = 100 + Math.floor(Math.random() * 100);
+    const expectedErrorCode = "InvalidEpoch";
+    await mintAssetsForEpoch({
+      epoch: randomHighEpoch,
+      program,
+      user,
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          assert.strictEqual(error.error.errorCode.code, expectedErrorCode, `Expected error code to be '${expectedErrorCode}'`);
+        }
+      }
+    })
   });
 });

@@ -29,15 +29,13 @@ pub struct MintNftInCollection<'info> {
     pub auction: Account<'info, Auction>,
 
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn handler(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()> {
+    let current_epoch = get_and_validate_epoch(input_epoch)?;
     let epoch_inscription: &mut Account<'_, EpochInscription> = &mut ctx.accounts.epoch_inscription;
     let user: Pubkey = ctx.accounts.user.key();
     let auction: &mut Account<'_, Auction> = &mut ctx.accounts.auction;
-    
-    let current_epoch = get_and_validate_epoch(input_epoch)?;
     
     epoch_inscription.generate_and_set_asset(
         current_epoch, 
@@ -52,5 +50,6 @@ pub fn handler(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()
         user,
         ctx.bumps.auction,
     );
+
     Ok(())
 }
