@@ -22,6 +22,17 @@ function getAuctionPda(epoch: number, program: Program<any>) {
     return pda;
 }
 
+function getEpochInscriptionPda(epoch: number, program: Program<any>) {
+    const [pda] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from(SEEDS.EPOCH_INSCRIPTION),
+            numberBuffer(BigInt(epoch))
+        ],
+        program.programId
+    );
+    return pda;
+}
+
 function getCollectionPda(program: Program<any>) {
     const [collectionMint] = PublicKey.findProgramAddressSync(
         [Buffer.from(SEEDS.COLLECTION)],
@@ -113,4 +124,4 @@ function getInscriptionAccounts(mint: PublicKey) {
     }
 }
 
-export { getAuctionPda, getCollectionPda };
+export { getAuctionPda, getCollectionPda, getEpochInscriptionPda };

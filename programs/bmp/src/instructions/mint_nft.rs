@@ -12,8 +12,10 @@ pub struct MintNftInCollection<'info> {
 
     #[account(
         init, 
+        seeds = [EPOCH_INSCRIPTION_SEED.as_bytes(), &input_epoch.to_le_bytes()],
+        bump, 
+        payer = user,
         space = EpochInscription::get_size(),
-        payer = user
     )]
     pub epoch_inscription: Account<'info, EpochInscription>,
 
@@ -57,14 +59,13 @@ pub fn handler(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()
     let bmp_buffer = create_color_bmp_buffer(&epoch);
     epoch_inscription.buffer.raw_data = bmp_buffer;
     epoch_inscription.epoch_id = current_epoch;
-
-    let auction_bump = 0; // after seed addedctx.bumps.auction;
+    epoch_inscription.bump = ctx.bumps.epoch_inscription;
 
     auction.create(
         current_epoch,
         // TODO UPDATE WITH MINT OR RENAME
         ctx.accounts.epoch_inscription.key(),
-        auction_bump,
+        ctx.bumps.auction,
         ctx.accounts.user.key(),
     );
     Ok(())

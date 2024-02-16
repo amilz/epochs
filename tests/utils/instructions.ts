@@ -2,7 +2,7 @@
 import { Keypair, Transaction } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { getAuctionPda } from "./pdas";
+import { getAuctionPda, getEpochInscriptionPda } from "./pdas";
 import fs from 'fs';
 import { assert } from "chai";
 import { openFile } from "./utils";
@@ -17,14 +17,14 @@ interface MintAssetsForEpochParams {
 }
 
 export async function mintAssetsForEpoch({ epoch, program, user, disableOpenFile = true, logMintInfo = false}: MintAssetsForEpochParams) {
-    const epochInscription = Keypair.generate();
     const auctionPda = getAuctionPda(epoch, program);
+    const epochInscriptionPda = getEpochInscriptionPda(epoch, program);
     const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 });
 
     const mintInstruction = await program.methods.mintNft(new anchor.BN(epoch))
         .accounts({
             user: user.publicKey,
-            epochInscription: epochInscription.publicKey,
+            epochInscription: epochInscriptionPda,
             auction: auctionPda,
         })
         .instruction();
@@ -34,13 +34,13 @@ export async function mintAssetsForEpoch({ epoch, program, user, disableOpenFile
         .add(mintInstruction);
 
     try {
-        const signature = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, transaction, [user, epochInscription]);
+        const signature = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, transaction, [user]);
         if (logMintInfo) console.log(`   Epoch ${epoch} - mintNft signature: ${signature}`);
 
-        const data = await program.account.epochInscription.fetch(epochInscription.publicKey);
+        const data = await program.account.epochInscription.fetch(epochInscriptionPda);
         assert.ok(data.buffer.rawData.length > 0);
 
-        const filePath = `./img-outputs/nouns/epoch-${epoch}.bmp`;
+        const filePath = `./img-outputs/nouns/steph2-epoch-${epoch}.bmp`;
         fs.writeFileSync(filePath, data.buffer.rawData);
 
         if (!disableOpenFile) {
