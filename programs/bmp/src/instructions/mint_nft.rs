@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use crate::utils::*;
 use crate::constants::*;
 use crate::state::*;
+use crate::error::*;
 
 #[derive(Accounts)]
 #[instruction(input_epoch: u64)]
@@ -37,8 +38,7 @@ pub fn handler(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()
     let auction = &mut ctx.accounts.auction;
     
     let current_epoch = Clock::get()?.epoch;
-    assert!(input_epoch == current_epoch, "Epochs do not match");
-    //TODO add error codes
+    require!(input_epoch == current_epoch, InscriptionError::InvalidEpoch);
     
     let (hat_index, clothes_index, glasses_index , body_index, background) = select_traits((
         current_epoch, 

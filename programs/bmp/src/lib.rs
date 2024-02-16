@@ -5,12 +5,14 @@ pub mod utils;
 pub mod constants;
 pub mod instructions;
 pub mod state;
+pub mod error;
 
 pub use utils::traits::*;
 pub use utils::heap::log_heap_usage;
 pub use constants::*;
 pub use instructions::*;
 pub use state::*;
+pub use error::*;
 
 declare_id!("7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R");
 
