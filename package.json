@@ -2,14 +2,15 @@
     "scripts": {
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-        "decodePng": "ts-node ./scripts/decodePng/app.ts"
+        "decodePng": "ts-node ./scripts/decodePng/app.ts",
+        "checkRandomness": "ts-node ./scripts/checkRandomness/app.ts"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",
         "@metaplex-foundation/mpl-inscription": "^0.8.1",
         "@solana/spl-token": "^0.4.0",
         "@types/node": "^20.11.10",
-        "pngjs": "^7.0.0"
+        "jimp": "^0.22.10"
     },
     "devDependencies": {
         "@types/bn.js": "^5.1.0",

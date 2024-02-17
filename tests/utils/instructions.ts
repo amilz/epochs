@@ -1,4 +1,3 @@
-// In a new file, e.g., `helpers/mintHelper.ts`
 import { Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
@@ -8,6 +7,7 @@ import { assert } from "chai";
 import { openFile } from "./utils";
 import { Bmp } from "../../target/types/bmp";
 import { ReputationTracker } from "./reputation";
+import { convertBmpToPng } from "./image";
 
 interface MintAssetsForEpochParams {
     epoch: number;
@@ -21,7 +21,6 @@ interface MintAssetsForEpochParams {
     };
     expectedReputation?: ReputationTracker;
 }
-
 
 export async function mintAssetsForEpoch({
     epoch,
@@ -66,15 +65,18 @@ export async function mintAssetsForEpoch({
             assert.strictEqual(reputationData.reputation.toNumber(), expectedReputation.getReputation(), "Reputation should match expected value");
         }
 
-        const filePath = `./img-outputs/nouns/z-epoch-${epoch}.bmp`;
-        fs.writeFileSync(filePath, data.buffers.imageRaw);
+        const filePaths = {
+            bmp: `./img-outputs/nouns/ej-${epoch}.bmp`,
+            json: `./img-outputs/json/${epoch}.json`,
+            png: `./img-outputs/png/ej-${epoch}.png`,
+        }
 
-        const filePath2 = `./img-outputs/nouns/z-epoch-${epoch}.json`;
-        fs.writeFileSync(filePath2, data.buffers.jsonRaw);
-
+        //fs.writeFileSync(filePaths.bmp, data.buffers.imageRaw);
+        fs.writeFileSync(filePaths.json, data.buffers.jsonRaw);
+        await convertBmpToPng(data.buffers.imageRaw, filePaths.png);
 
         if (!disableOpenFile) {
-            openFile(filePath);
+            openFile(filePaths.bmp);
         }
     } catch (error) {
         if (expectToFail) {
