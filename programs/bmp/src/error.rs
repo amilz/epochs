@@ -12,3 +12,11 @@ pub enum AuctionError {
     #[msg("zzz")]
     Zzz,
 }
+
+#[error_code]
+pub enum ReputationError {
+    #[msg("Contributor does not match signer of the transaction")]
+    InvalidContributor,
+    #[msg("Reputation overflow")]
+    Overflow,
+}

@@ -8,3 +8,6 @@ pub const AUCTION_SEED: &str = "Auction";
 
 #[constant]
 pub const EPOCH_INSCRIPTION_SEED: &str = "EpochInscription";
+
+#[constant]
+pub const REPUTATION_SEED: &str = "Reputation";

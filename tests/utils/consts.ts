@@ -5,5 +5,6 @@ export const TOKEN_METADATA_PROGRAM_ID = new PublicKey("metaqbxxUerdq28cj1RbAWkY
 export const SEEDS = {
     AUCTION: "Auction",
     EPOCH_INSCRIPTION: "EpochInscription",
-    COLLECTION: "Collection"
+    COLLECTION: "Collection",
+    REPUTATION: "Reputation"
 }

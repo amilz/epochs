@@ -2,11 +2,12 @@
 import { Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuctionPda, getEpochInscriptionPda } from "./pdas";
+import { getAuctionPda, getEpochInscriptionPda, getReputationPda } from "./pdas";
 import fs from 'fs';
 import { assert } from "chai";
 import { openFile } from "./utils";
 import { Bmp } from "../../target/types/bmp";
+import { ReputationTracker } from "./reputation";
 
 interface MintAssetsForEpochParams {
     epoch: number;
@@ -18,19 +19,29 @@ interface MintAssetsForEpochParams {
         errorCode: string;
         assertError?: (error: any) => void;
     };
+    expectedReputation?: ReputationTracker;
 }
 
 
-export async function mintAssetsForEpoch({ epoch, program, user, disableOpenFile = true, logMintInfo = false, expectToFail }: MintAssetsForEpochParams) {
+export async function mintAssetsForEpoch({
+    epoch,
+    program,
+    user,
+    disableOpenFile = true,
+    logMintInfo = false,
+    expectToFail,
+    expectedReputation
+}: MintAssetsForEpochParams) {
     const auctionPda = getAuctionPda(epoch, program);
     const epochInscriptionPda = getEpochInscriptionPda(epoch, program);
     const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 });
-
+    const reputation = getReputationPda(user.publicKey, program);
     const txRequest = program.methods.mintNft(new anchor.BN(epoch))
         .accounts({
             user: user.publicKey,
             epochInscription: epochInscriptionPda,
             auction: auctionPda,
+            reputation,
         }).signers([user])
         .preInstructions([computeInstruction])
         .rpc();
@@ -48,7 +59,13 @@ export async function mintAssetsForEpoch({ epoch, program, user, disableOpenFile
         assert.strictEqual(auctionData.highBidLamports.toNumber(), 0, "High bid should be 0");
         assert.strictEqual(auctionData.highBidder.toBase58(), user.publicKey.toBase58(), "High bidder should be the user");
         assert.deepStrictEqual(auctionData.state, { unClaimed: {} }, 'Auction should be unclaimed');
-        
+
+        if (expectedReputation !== undefined) {
+            const reputationData = await program.account.reputation.fetch(reputation);
+            assert.strictEqual(reputationData.contributor.toBase58(), expectedReputation.getUser().toBase58(), "Reputation contributor should match user");
+            assert.strictEqual(reputationData.reputation.toNumber(), expectedReputation.getReputation(), "Reputation should match expected value");
+        }
+
         const filePath = `./img-outputs/nouns/z-epoch-${epoch}.bmp`;
         fs.writeFileSync(filePath, data.buffer.rawData);
 
