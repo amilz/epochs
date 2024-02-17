@@ -52,7 +52,7 @@ export async function mintAssetsForEpoch({
         if (logMintInfo) console.log(`   Epoch ${epoch} - mintNft signature: ${signature}`);
 
         const data = await program.account.epochInscription.fetch(epochInscriptionPda);
-        assert.ok(data.buffer.rawData.length > 0);
+        assert.ok(data.buffers.imageRaw.length > 0);
 
         const auctionData = await program.account.auction.fetch(auctionPda);
         assert.strictEqual(auctionData.epoch.toNumber(), epoch, "Auction epoch should match the input epoch");
@@ -67,7 +67,11 @@ export async function mintAssetsForEpoch({
         }
 
         const filePath = `./img-outputs/nouns/z-epoch-${epoch}.bmp`;
-        fs.writeFileSync(filePath, data.buffer.rawData);
+        fs.writeFileSync(filePath, data.buffers.imageRaw);
+
+        const filePath2 = `./img-outputs/nouns/z-epoch-${epoch}.json`;
+        fs.writeFileSync(filePath2, data.buffers.jsonRaw);
+
 
         if (!disableOpenFile) {
             openFile(filePath);
