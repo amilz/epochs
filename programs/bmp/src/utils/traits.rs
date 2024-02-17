@@ -153,7 +153,7 @@ fn _apply_shadow(pixel: Pixel, shadow_intensity: i16) -> Pixel {
 }
 
 #[inline(never)]
-pub fn generate_asset(current_epoch: u64, user: Pubkey) -> Vec<u8> {
+pub fn generate_asset(current_epoch: u64, user: Pubkey) -> (Vec<u8>, SelectTraitsResults) {
     let (hat_index, clothes_index, glasses_index, body_index, background) = select_traits((
         current_epoch,
         user, // interesting Pubkey::new_unique(),
@@ -171,5 +171,5 @@ pub fn generate_asset(current_epoch: u64, user: Pubkey) -> Vec<u8> {
     );
     replace_pixels(&mut epoch, GREEN_SCREEN, background);
     let bmp_buffer = create_color_bmp_buffer(&epoch);
-    bmp_buffer
+    (bmp_buffer, (hat_index, clothes_index, glasses_index, body_index, background))
 }
