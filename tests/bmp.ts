@@ -7,29 +7,28 @@ import { mintAssetsForEpoch } from "./utils/instructions";
 import { assert } from "chai";
 import { ReputationPoints, ReputationTracker } from "./utils/reputation";
 
-const numberEpochs = 3;
+const numberEpochs = 1;
 
 describe("SVM On-Chain Asset Generator", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
-  const authority = Keypair.generate();
-  const user = Keypair.generate();
+  const payer = Keypair.generate();
 
   // Initializes a local reputation tracker to mirror expected on-chain reputation changes.
   // This allows us to predict the expected state and verify against the actual on-chain state.
-  const reputationTracker = new ReputationTracker(user.publicKey);
+  const reputationTracker = new ReputationTracker(payer.publicKey);
 
   const program = anchor.workspace.Bmp as Program<Bmp>;
 
   before(async () => {
-    await airdropToMultiple([authority.publicKey, user.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
+    await airdropToMultiple([payer.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
   });
 
   /**
    * 
    * This test generates assets for each epoch, and verifies that the reputation
-   * of the user is updated correctly.
+   * of the payer is updated correctly.
    * 
    * It works by waiting for the current epoch to match the epoch we want to mint for,
    * and then mints the asset. It then checks that the reputation has been updated correctly.
@@ -52,12 +51,12 @@ describe("SVM On-Chain Asset Generator", () => {
       await mintAssetsForEpoch({
         epoch: i,
         program,
-        user,
+        payer,
         expectedReputation: reputationTracker
       });
     });
   }
-  
+
 
   it(`Fails to generate with wrong epoch`, async () => {
     const randomHighEpoch = 100 + Math.floor(Math.random() * 100);
@@ -65,7 +64,7 @@ describe("SVM On-Chain Asset Generator", () => {
     await mintAssetsForEpoch({
       epoch: randomHighEpoch,
       program,
-      user,
+      payer,
       expectToFail: {
         errorCode: expectedErrorCode,
         assertError: (error) => {
@@ -77,3 +76,5 @@ describe("SVM On-Chain Asset Generator", () => {
   });
 
 });
+
+

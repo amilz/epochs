@@ -8,11 +8,12 @@ import { openFile } from "./utils";
 import { Bmp } from "../../target/types/bmp";
 import { ReputationTracker } from "./reputation";
 import { convertBmpToPng } from "./image";
+import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 interface MintAssetsForEpochParams {
     epoch: number;
     program: Program<Bmp>;
-    user: Keypair;
+    payer: Keypair;
     disableOpenFile?: boolean;
     logMintInfo?: boolean;
     expectToFail?: {
@@ -25,7 +26,7 @@ interface MintAssetsForEpochParams {
 export async function mintAssetsForEpoch({
     epoch,
     program,
-    user,
+    payer,
     disableOpenFile = true,
     logMintInfo = false,
     expectToFail,
@@ -34,14 +35,32 @@ export async function mintAssetsForEpoch({
     const auctionPda = getAuctionPda(epoch, program);
     const epochInscriptionPda = getEpochInscriptionPda(epoch, program);
     const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 });
-    const reputation = getReputationPda(user.publicKey, program);
+    const reputation = getReputationPda(payer.publicKey, program);
+    const mint = Keypair.generate();
+    const auctionAta = getAssociatedTokenAddressSync(mint.publicKey, auctionPda, true, TOKEN_2022_PROGRAM_ID);
+    
+/*     
+    console.table({
+        payer: payer.publicKey.toBase58(),
+        epochInscription: epochInscriptionPda.toBase58(),
+        auction: auctionPda.toBase58(),
+        reputation: reputation.toBase58(),
+        auctionAta: auctionAta.toBase58(),
+        mint: mint.publicKey.toBase58(),
+        mintAuthority: payer.publicKey.toBase58(),
+    }) 
+*/
+    
     const txRequest = program.methods.mintNft(new anchor.BN(epoch))
         .accounts({
-            user: user.publicKey,
+            payer: payer.publicKey,
             epochInscription: epochInscriptionPda,
             auction: auctionPda,
             reputation,
-        }).signers([user])
+            auctionAta,
+            mint: mint.publicKey,
+            tokenProgram: TOKEN_2022_PROGRAM_ID
+        }).signers([payer, mint])
         .preInstructions([computeInstruction])
         .rpc();
 
@@ -56,12 +75,12 @@ export async function mintAssetsForEpoch({
         const auctionData = await program.account.auction.fetch(auctionPda);
         assert.strictEqual(auctionData.epoch.toNumber(), epoch, "Auction epoch should match the input epoch");
         assert.strictEqual(auctionData.highBidLamports.toNumber(), 0, "High bid should be 0");
-        assert.strictEqual(auctionData.highBidder.toBase58(), user.publicKey.toBase58(), "High bidder should be the user");
+        assert.strictEqual(auctionData.highBidder.toBase58(), payer.publicKey.toBase58(), "High bidder should be the payer");
         assert.deepStrictEqual(auctionData.state, { unClaimed: {} }, 'Auction should be unclaimed');
 
         if (expectedReputation !== undefined) {
             const reputationData = await program.account.reputation.fetch(reputation);
-            assert.strictEqual(reputationData.contributor.toBase58(), expectedReputation.getUser().toBase58(), "Reputation contributor should match user");
+            assert.strictEqual(reputationData.contributor.toBase58(), expectedReputation.getUser().toBase58(), "Reputation contributor should match payer");
             assert.strictEqual(reputationData.reputation.toNumber(), expectedReputation.getReputation(), "Reputation should match expected value");
         }
 
@@ -79,6 +98,7 @@ export async function mintAssetsForEpoch({
             openFile(filePaths.bmp);
         }
     } catch (error) {
+        //console.error(`Error minting assets for epoch ${epoch}:`, error);
         if (expectToFail) {
             if (expectToFail.assertError) {
                 expectToFail.assertError(error);
