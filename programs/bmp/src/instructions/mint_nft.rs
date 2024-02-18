@@ -1,12 +1,5 @@
-use anchor_lang::prelude::*;
-
-use anchor_spl::{
-    associated_token::{self, AssociatedToken},
-    token_2022::{MintTo, mint_to},
-    token_interface::{spl_token_2022::extension::ExtensionType, Token2022},
-};
-use anchor_lang::solana_program::system_instruction;
-use spl_token_metadata_interface::state::TokenMetadata;
+use anchor_lang:: prelude::*;
+use anchor_spl::{associated_token::AssociatedToken, token_2022::Token2022};
 
 use crate::utils::validate::get_and_validate_epoch;
 use crate::constants::*;
@@ -14,7 +7,7 @@ use crate::state::*;
 
 #[derive(Accounts)]
 #[instruction(input_epoch: u64)]
-pub struct MintNftInCollection<'info> {
+pub struct MintNft<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -52,23 +45,14 @@ pub struct MintNftInCollection<'info> {
     //pub update_authority: Option<UncheckedAccount<'info>>,
 
     #[account(mut)]
-    mint: Signer<'info>,
+    pub mint: Signer<'info>,
 
-   /* #[account(mut
-        // rather than the anchor macro below, 
-        // we need to init in instruction
-        // b/c mint is not yet initialized 
-         init,
-        payer = payer, 
-        associated_token::mint = mint,
-        associated_token::authority = auction,
-        associated_token::token_program = token_program, 
-    )]*/
+    /// CHECK: Account is initialized by the instruction after mint is initialized
     #[account(mut)]
-    /// CHECK: dealing w/ some init issues
-    auction_ata: UncheckedAccount<'info>,
+    pub auction_ata: AccountInfo<'info>,
+
     pub associated_token_program: Program<'info, AssociatedToken>,
-    token_program: Program<'info, Token2022>,
+    pub token_program: Program<'info, Token2022>,
 
     
 
@@ -77,139 +61,10 @@ pub struct MintNftInCollection<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle_mint_nft(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()> {
-    let payer = &ctx.accounts.payer;
-    let token_program = &ctx.accounts.token_program;
-    let mint = &ctx.accounts.mint;
-
-
-
-    // ---- START OF TOKEN 2022 STUFF
-
-    let token_metadata = TokenMetadata {
-        name: String::from("EPOCH"),
-        symbol: String::from("EPOCH"),
-        uri: String::from("https://shdw-drive.genesysgo.net/GwJapVHVvfM4Mw4sWszkzywncUWuxxPd6s9VuFfXRgie/wen_meta.json"),
-        mint: ctx.accounts.mint.key(),
-        ..Default::default()
-    };
-
-
-    // Calculate data required for creating mint with
-    // metadata extension and metadata account
-    // extension_len is the length of the extension account data
-    // instance_size is the length of the metadata
-    let extension_len = ExtensionType::try_calculate_account_len::<
-        anchor_spl::token_2022::spl_token_2022::state::Mint,
-    >(&[ExtensionType::MetadataPointer])?;
-    let instance_size = token_metadata.tlv_size_of().unwrap();
-
-
-    // Initialize the Account for the mint
-    let create_account_ix = system_instruction::create_account(
-        payer.key,
-        &mint.key(),
-        Rent::get()?.minimum_balance(extension_len + instance_size ),
-        extension_len as u64,
-        token_program.key,
-    );
-
-    anchor_lang::solana_program::program::invoke(
-        &create_account_ix,
-        &[payer.to_account_info(), mint.to_account_info()],
-    )?;
-
-    //Create Metadata Pointer Extension -- point to self
-    let init_metadata_pointer_ix =
-    spl_token_2022::extension::metadata_pointer::instruction::initialize(
-        &spl_token_2022::ID,
-        &mint.key(),
-        //TODO remove authority? or change to program...just for simple test
-        Some(payer.key()),
-        // we are using the native metadata implementation,
-        // hence setting metadata address = mint address
-        Some(mint.key()),
-    )
-    .unwrap();
-
-    anchor_lang::solana_program::program::invoke(
-        &init_metadata_pointer_ix,
-        &[payer.to_account_info(), mint.to_account_info()],
-    )?;
-
-
-    // Initialize the new account as a Mint accou nt
-    let init_mint_ix = spl_token_2022::instruction::initialize_mint2(
-    &spl_token_2022::ID,
-    &mint.key(),
-    &payer.key(),
-    None,
-    0,
-    )
-    .unwrap();
-    anchor_lang::solana_program::program::invoke(
-        &init_mint_ix,
-        &[payer.to_account_info(), mint.to_account_info()],
-    )?;
-
-    // Add metadata to the mint
-    let init_metadata_ix = spl_token_metadata_interface::instruction::initialize(
-        &spl_token_2022::ID,
-        &mint.key(),
-        &payer.key(),
-        &mint.key(),
-        &payer.key(),
-        token_metadata.name,
-        token_metadata.symbol,
-        token_metadata.uri
-    );
-
-    anchor_lang::solana_program::program::invoke(
-        &init_metadata_ix,
-        &[payer.to_account_info(), mint.to_account_info()],
-    )?;
-
-
-                    
-            
-
-        // TODO apply program as authoirty
-        // TODO write tests for this
-
-     // create ATA for the user
-     msg!("Writing to ATA");
-     associated_token::create(CpiContext::new(
-         ctx.accounts.associated_token_program.to_account_info(),
-         {
-             associated_token::Create {
-                 payer: ctx.accounts.payer.to_account_info(),
-                 associated_token: ctx.accounts.auction_ata.to_account_info(),
-                 mint: ctx.accounts.mint.to_account_info(),
-                 authority: ctx.accounts.auction.to_account_info(),
-                 system_program: ctx.accounts.system_program.to_account_info(),
-                 token_program: ctx.accounts.token_program.to_account_info(),
-             }
-         },
-     ),)?;
-
- 
-      // mint to the payer's wallet
-     msg!("Minting to user's wallet");
-     mint_to(
-        CpiContext::new(
-            token_program.to_account_info(),
-            MintTo {
-                mint: mint.to_account_info(),
-                to: ctx.accounts.auction_ata.to_account_info(),
-                authority: payer.to_account_info(),
-            },
-        ),
-        1,
-    )?;
-
-    // ---- END OF TOKEN 202
-
+pub fn handle_mint_nft(ctx: Context<MintNft>, input_epoch: u64) -> Result<()> {
     let current_epoch = get_and_validate_epoch(input_epoch)?;
+    ctx.accounts.create_and_mint_nft(ctx.bumps.auction, input_epoch)?;
+
     let epoch_inscription: &mut Account<'_, EpochInscription> = &mut ctx.accounts.epoch_inscription;
     let payer: Pubkey = ctx.accounts.payer.key();
     let auction: &mut Account<'_, Auction> = &mut ctx.accounts.auction;
@@ -224,6 +79,10 @@ pub fn handle_mint_nft(ctx: Context<MintNftInCollection>, input_epoch: u64) -> R
         ctx.bumps.epoch_inscription
     );
 
+    // TODO: Get Epoch generate_asset to return traits
+    // then move create_and_mint_nft here and pass traits as an argument
+    // update the create_and_mint_nft to use the traits
+
     auction.create(
         current_epoch,
         // TODO UPDATE WITH MINT OR RENAME
@@ -231,12 +90,8 @@ pub fn handle_mint_nft(ctx: Context<MintNftInCollection>, input_epoch: u64) -> R
         payer,
         ctx.bumps.auction,
     );
-
-
-
+    
     Ok(())
-
-
 
 }
 

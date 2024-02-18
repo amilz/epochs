@@ -52,7 +52,7 @@ describe("SVM On-Chain Asset Generator", () => {
         epoch: i,
         program,
         payer,
-        expectedReputation: reputationTracker
+        expectedReputation: reputationTracker,
       });
     });
   }

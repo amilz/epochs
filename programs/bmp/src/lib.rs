@@ -25,7 +25,7 @@ pub mod bmp {
         create_collection_nft::handle_create_collection(ctx)
     }
 
-    pub fn mint_nft(ctx: Context<MintNftInCollection>, input_epoch: u64) -> Result<()> {
+    pub fn mint_nft(ctx: Context<MintNft>, input_epoch: u64) -> Result<()> {
         mint_nft::handle_mint_nft(ctx, input_epoch)
     }
 
