@@ -7,7 +7,7 @@ import { mintAssetsForEpoch } from "./utils/instructions";
 import { assert } from "chai";
 import { ReputationPoints, ReputationTracker } from "./utils/reputation";
 
-const numberEpochs = 1;
+const numberEpochs = 2;
 
 describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
   const provider = anchor.AnchorProvider.env();
