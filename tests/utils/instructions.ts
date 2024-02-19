@@ -1,7 +1,7 @@
 import { Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuctionPda, getEpochInscriptionPda, getReputationPda } from "./pdas";
+import { getAuctionPda, getAuthorityPda, getEpochInscriptionPda, getReputationPda } from "./pdas";
 import fs from 'fs';
 import { assert } from "chai";
 import { openFile } from "./utils";
@@ -36,10 +36,10 @@ export async function mintAssetsForEpoch({
 }: MintAssetsForEpochParams) {
     const auctionPda = getAuctionPda(epoch, program);
     const epochInscriptionPda = getEpochInscriptionPda(epoch, program);
-    const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 });
+    const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 });
     const reputation = getReputationPda(payer.publicKey, program);
     const auctionAta = getAssociatedTokenAddressSync(mint.publicKey, auctionPda, true, TOKEN_2022_PROGRAM_ID);
-    
+    const authority = getAuthorityPda(program);
 /*     
     console.table({
         payer: payer.publicKey.toBase58(),
@@ -48,7 +48,7 @@ export async function mintAssetsForEpoch({
         reputation: reputation.toBase58(),
         auctionAta: auctionAta.toBase58(),
         mint: mint.publicKey.toBase58(),
-        mintAuthority: payer.publicKey.toBase58(),
+        authority: authority.toBase58(),
     }) 
 */
     
@@ -60,6 +60,7 @@ export async function mintAssetsForEpoch({
             reputation,
             auctionAta,
             mint: mint.publicKey,
+            authority,
             tokenProgram: TOKEN_2022_PROGRAM_ID
         }).signers([payer, mint])
         .preInstructions([computeInstruction])

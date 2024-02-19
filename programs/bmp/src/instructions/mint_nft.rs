@@ -57,6 +57,12 @@ pub struct MintNft<'info> {
 
     // ---- End of Token 2022 Stuff
 
+    /// CHECK: Just a signer. Safe b/c of seeds/bump
+    #[account(
+        seeds = [AUTHORITY_SEED.as_bytes()],
+        bump,
+    )]
+    pub authority: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -86,7 +92,7 @@ pub fn handle_mint_nft(ctx: Context<MintNft>, input_epoch: u64) -> Result<()> {
         ctx.bumps.auction,
     );
 
-    ctx.accounts.create_and_mint_nft(ctx.bumps.auction, input_epoch, traits)?;
+    ctx.accounts.create_and_mint_nft(ctx.bumps.authority, input_epoch, traits)?;
 
     Ok(())
 

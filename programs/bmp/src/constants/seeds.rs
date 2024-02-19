@@ -11,3 +11,6 @@ pub const EPOCH_INSCRIPTION_SEED: &str = "EpochInscription";
 
 #[constant]
 pub const REPUTATION_SEED: &str = "Reputation";
+
+#[constant]
+pub const AUTHORITY_SEED: &str = "Authority";

@@ -29,19 +29,19 @@ use spl_token_metadata_interface::{
     }
 };
 
-use crate::{utils::format_pubkey, MintNft, ALL_ROYALTIES, AUCTION_SEED};
+use crate::{utils::format_pubkey, MintNft, ALL_ROYALTIES, AUTHORITY_SEED};
 
 impl<'info> MintNft<'info> {
     fn update_metadata_field_and_invoke(
         &self,
         field_key: &str,
         field_value: &str,
-        auction_signer_seeds: &[&[&[u8]]],
+        authority_signer_seeds: &[&[&[u8]]],
     ) -> Result<()> {
         let update_field_ix = update_metadata_field(
             &Token2022::id(),
             &self.mint.key(),
-            &self.auction.key(),
+            &self.authority.key(),
             Field::Key(field_key.to_string()),
             field_value.to_string(),
         );
@@ -50,16 +50,16 @@ impl<'info> MintNft<'info> {
             &update_field_ix,
             &[
                 self.mint.to_account_info(),
-                self.auction.to_account_info(),
+                self.authority.to_account_info(),
             ],
-            auction_signer_seeds,
+            authority_signer_seeds,
         )?;
 
         Ok(())
     }
     pub fn create_and_mint_nft(
         &self, 
-        auction_bump: u8, 
+        authority_bump: u8, 
         current_epoch: u64,
         traits: (usize, usize, usize, usize, (u8,u8, u8))
     ) -> Result<()> {
@@ -72,7 +72,6 @@ impl<'info> MintNft<'info> {
             mint: self.mint.key(),
             ..Default::default()
         };
-
 
         // Calculate data required for creating mint with metadata extension and metadata account extension
         let extension_len = ExtensionType::try_calculate_account_len::<Mint>(&[ExtensionType::MetadataPointer])?;
@@ -115,7 +114,7 @@ impl<'info> MintNft<'info> {
         let init_mint_ix = initialize_mint2(
             &Token2022::id(),
             &self.mint.key(),
-            &self.auction.key(),
+            &self.authority.key(),
             None,
             0,
         )?;
@@ -128,17 +127,17 @@ impl<'info> MintNft<'info> {
             ],
         )?;
 
-        // Initialize Metadata for the Mint
-        let bump = &[auction_bump];
-        let seeds = &[AUCTION_SEED.as_bytes(), &current_epoch.to_le_bytes(), bump];
-        let auction_signer_seeds =  &[&seeds[..]];
+        // get authority signer_seeds
+        let authority_bump = &[authority_bump];
+        let authority_seeds = &[AUTHORITY_SEED.as_bytes(), authority_bump];
+        let authority_signer_seeds = &[&authority_seeds[..]];
 
         let init_metadata_ix = init_metadata(
             &Token2022::id(),
             &self.mint.key(),
-            &self.auction.key(),
+            &self.authority.key(),
             &self.mint.key(),
-            &self.auction.key(),
+            &self.authority.key(),
             token_metadata.name,
             token_metadata.symbol,
             token_metadata.uri,
@@ -149,25 +148,25 @@ impl<'info> MintNft<'info> {
             &[
                 self.payer.to_account_info(),
                 self.mint.to_account_info(),
-                self.auction.to_account_info(),
+                self.authority.to_account_info(),
             ],
-            auction_signer_seeds,
+            authority_signer_seeds,
         )?;
         
         // Add traits
         let background_value = format!("R{},G{},B{}", traits.4 .0, traits.4 .1, traits.4 .2);
 
-        self.update_metadata_field_and_invoke("epoch", &current_epoch.to_string(), auction_signer_seeds)?;
-        self.update_metadata_field_and_invoke("creator", &format_pubkey(&self.payer.key()), auction_signer_seeds)?;
-        self.update_metadata_field_and_invoke("hat", &traits.0.to_string(), auction_signer_seeds)?;
-        self.update_metadata_field_and_invoke( "clothes", &traits.1.to_string(), auction_signer_seeds)?;
-        self.update_metadata_field_and_invoke("glasses", &traits.2.to_string(), auction_signer_seeds)?;
-        self.update_metadata_field_and_invoke("body", &traits.3.to_string(), auction_signer_seeds)?;
-        self.update_metadata_field_and_invoke("background", &background_value, auction_signer_seeds)?;
-        self.update_metadata_field_and_invoke("inscription", &self.epoch_inscription.key().to_string(), auction_signer_seeds)?;
-        self.update_metadata_field_and_invoke("royalties", &(500 as u16).to_string(), auction_signer_seeds)?;
+        self.update_metadata_field_and_invoke("epoch", &current_epoch.to_string(), authority_signer_seeds)?;
+        self.update_metadata_field_and_invoke("creator", &format_pubkey(&self.payer.key()), authority_signer_seeds)?;
+        self.update_metadata_field_and_invoke("hat", &traits.0.to_string(), authority_signer_seeds)?;
+        self.update_metadata_field_and_invoke( "clothes", &traits.1.to_string(), authority_signer_seeds)?;
+        self.update_metadata_field_and_invoke("glasses", &traits.2.to_string(), authority_signer_seeds)?;
+        self.update_metadata_field_and_invoke("body", &traits.3.to_string(), authority_signer_seeds)?;
+        self.update_metadata_field_and_invoke("background", &background_value, authority_signer_seeds)?;
+        self.update_metadata_field_and_invoke("inscription", &self.epoch_inscription.key().to_string(), authority_signer_seeds)?;
+        self.update_metadata_field_and_invoke("royalties", &(500 as u16).to_string(), authority_signer_seeds)?;
         ALL_ROYALTIES.iter().for_each(|royalty| {
-            self.update_metadata_field_and_invoke(&royalty.creator.key().to_string(), &royalty.amount.to_string(), auction_signer_seeds).unwrap();
+            self.update_metadata_field_and_invoke(&royalty.creator.key().to_string(), &royalty.amount.to_string(), authority_signer_seeds).unwrap();
         });
 
         // Create ATA for the user
@@ -192,22 +191,22 @@ impl<'info> MintNft<'info> {
                 MintTo {
                     mint: self.mint.to_account_info(),
                     to: self.auction_ata.to_account_info(),
-                    authority: self.auction.to_account_info(),
+                    authority: self.authority.to_account_info(),
                 },
-                auction_signer_seeds,
+                authority_signer_seeds,
             ),
             1,
         )?;
 
         // Set Mint Authority to None
         let authority_cpi_accounts = SetAuthority {
-            current_authority: self.auction.to_account_info(),
+            current_authority: self.authority.to_account_info(),
             account_or_mint: self.mint.to_account_info(),
         };
         let cpi_ctx = CpiContext::new_with_signer(
             self.token_program.to_account_info(),
             authority_cpi_accounts,
-            auction_signer_seeds,
+            authority_signer_seeds,
         );
         set_authority(cpi_ctx, AuthorityType::MintTokens, None)?;
 

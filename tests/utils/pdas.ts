@@ -44,6 +44,14 @@ function getReputationPda(user: PublicKey, program: Program<any>) {
     return reputationMint;
 }
 
+function getAuthorityPda(program: Program<any>) {
+    const [authoirtyPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.AUTHORITY)],
+        program.programId
+    );
+    return authoirtyPda;
+}
+
 function getCollectionPda(program: Program<any>) {
     const [collectionMint] = PublicKey.findProgramAddressSync(
         [Buffer.from(SEEDS.COLLECTION)],
@@ -135,4 +143,4 @@ function getInscriptionAccounts(mint: PublicKey) {
     }
 }
 
-export { getAuctionPda, getCollectionPda, getEpochInscriptionPda, getReputationPda };
+export { getAuctionPda, getEpochInscriptionPda, getReputationPda, getAuthorityPda };
