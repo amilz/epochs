@@ -78,6 +78,23 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
     })
   });
 
+  it(`Fails to regenerate existing epoch`, async () => {
+    const expectedErrorCode = "InvalidEpoch";
+    await mintAssetsForEpoch({
+      epoch: 0,
+      program,
+      payer,
+      mint: Keypair.generate(),
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          // 0x0 is attempt to reinit account
+          assert.include(error.message, '0x0', 'The error message should contain 0x0');
+        }
+      }
+    })
+  });
+
 });
 
 
