@@ -62,7 +62,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
 
   it(`Fails to generate with wrong epoch`, async () => {
     const randomHighEpoch = 100 + Math.floor(Math.random() * 100);
-    const expectedErrorCode = "InvalidEpoch";
+    const expectedErrorCode = "EpochInFuture";
     await mintAssetsForEpoch({
       epoch: randomHighEpoch,
       program,
@@ -79,7 +79,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
   });
 
   it(`Fails to regenerate existing epoch`, async () => {
-    const expectedErrorCode = "InvalidEpoch";
+    const expectedErrorCode = "0x0"; // 0x0 is attempt to reinit account
     await mintAssetsForEpoch({
       epoch: 0,
       program,
@@ -88,8 +88,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
       expectToFail: {
         errorCode: expectedErrorCode,
         assertError: (error) => {
-          // 0x0 is attempt to reinit account
-          assert.include(error.message, '0x0', 'The error message should contain 0x0');
+          assert.include(error.message, expectedErrorCode, 'The error message should contain 0x0');
         }
       }
     })

@@ -1,16 +1,21 @@
 use anchor_lang::prelude::*;
 
-
 #[error_code]
-pub enum InscriptionError {
-    #[msg("Current Epoch does not match the supplied epoch")]
+pub enum EpochError {
+    #[msg("The supplied epoch is greater than the current epoch")]
+    EpochInFuture,
+    
+    #[msg("The supplied epoch is less than the current epoch")]
+    EpochInPast,
+    
+    #[msg("The supplied epoch does not match the current epoch")]
     InvalidEpoch,
 }
 
 #[error_code]
 pub enum AuctionError {
-    #[msg("zzz")]
-    Zzz,
+    #[msg("Bid does not meet minimum bid threshold")]
+    BidTooLow,
 }
 
 #[error_code]

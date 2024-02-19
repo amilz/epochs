@@ -1,5 +1,7 @@
 use anchor_lang::{prelude::*, solana_program::stake_history::Epoch};
 
+use crate::AuctionError;
+
 #[account]
 pub struct Auction {
     pub epoch: u64,
@@ -51,13 +53,26 @@ impl Auction {
         self.state = AuctionState::Claimed;
     }
 
-    pub fn bid(&mut self, bidder: Pubkey, amount: u64) {
-        // DO IMPLEMENT BID THRESHOLDS
-        if amount <= self.high_bid_lamports {
-            //return Err(ErrorCode::BidTooLow.into());
-        }
+    fn validate_bid(&self, bid_amount_lamports: u64) -> Result<()> {
+
+        // Ensure the bid is at least 1 SOL if there are no previous bids
+        let min_bid = if self.high_bid_lamports == 0 {
+            1_000_000_000 // 1 SOL in lamports
+        } else {
+            // Calculate 5% more than the current highest bid, ensuring at least a 1 SOL increment
+            std::cmp::max(self.high_bid_lamports + (self.high_bid_lamports / 20), self.high_bid_lamports + 1_000_000_000)
+        };
+
+        require!(bid_amount_lamports >= min_bid, AuctionError::BidTooLow);
+        Ok(())
+    }
+
+
+    pub fn bid(&mut self, bidder: Pubkey, amount: u64) -> Result<()> {
+        self.validate_bid(amount)?;
         self.high_bid_lamports = amount;
         self.high_bidder = bidder;
+        Ok(())
     }
 
 

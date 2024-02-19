@@ -29,6 +29,10 @@ pub mod bmp {
         mint_nft::handle_mint_nft(ctx, input_epoch)
     }
 
+    pub fn bid(ctx: Context<AuctionBid>, input_epoch: u64, bid_amount: u64) -> Result<()> {
+        bid::handle_bid(ctx, input_epoch, bid_amount)
+    }
+
 }
 
 
