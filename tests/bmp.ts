@@ -1,135 +1,100 @@
-
-import {
-  PublicKey,
-  Keypair
-} from "@solana/web3.js";
+import { Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { Program, AnchorError } from "@coral-xyz/anchor";
 import { Bmp } from "../target/types/bmp";
-import { airdropToMultiple, createMintMetaAndMasterPdas, getInscriptionAccounts, getMasterEditionAddress, getMetadataAddress } from "./utils/utils";
-//@ts-ignore
-import fs from 'fs';
-import { exec } from 'child_process';
-import { TOKEN_METADATA_PROGRAM_ID } from "./utils/consts";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { airdropToMultiple } from "./utils/utils";
+import { mintAssetsForEpoch } from "./utils/instructions";
+import { assert } from "chai";
+import { ReputationPoints, ReputationTracker } from "./utils/reputation";
 
-describe("bmp", () => {
-  // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.AnchorProvider.env());
-  let signer = anchor.web3.Keypair.generate();
-  let pda = anchor.web3.Keypair.generate();
+const numberEpochs = 2;
+
+describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+
+  const payer = Keypair.generate();
+
+  // Initializes a local reputation tracker to mirror expected on-chain reputation changes.
+  // This allows us to predict the expected state and verify against the actual on-chain state.
+  const reputationTracker = new ReputationTracker(payer.publicKey);
+
   const program = anchor.workspace.Bmp as Program<Bmp>;
 
-
-
-  const authority = Keypair.generate();
-  const user = Keypair.generate();
-
-  const [collectionMint] = PublicKey.findProgramAddressSync(
-    [Buffer.from("Collection")],
-    program.programId
-  );
-  const collectionMasterEdition = getMasterEditionAddress(collectionMint);
-  const collectionMetadataAccount = getMetadataAddress(collectionMint);
-  const collectionTokenAccount = getAssociatedTokenAddressSync(collectionMint, collectionMint, true)
-
   before(async () => {
-    await airdropToMultiple([signer.publicKey, authority.publicKey, user.publicKey], program.provider.connection, anchor.web3.LAMPORTS_PER_SOL);
-  });
-  it("Creates a Collection", async () => {
-
-    try {
-      const ix = await program.methods
-        .createCollectionNft()
-        .accounts({
-          authority: authority.publicKey,
-          collectionMint,
-          collectionMetadataAccount,
-          collectionMasterEdition,
-          collectionTokenAccount,
-          tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        })
-        .signers([authority])
-        .instruction();
-      const trx = new anchor.web3.Transaction().add(ix);
-      const tx = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, trx, [authority],)
-
-      console.log("createCollection sig", tx);
-      await mintTest();
-    } catch (e) {
-      console.log(e);
-    }
+    await airdropToMultiple([payer.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
   });
 
-  const slotsPerEpoch = 32;
-  let numNfts = 0;
-  const ws = program.provider.connection.onSlotChange(async ({ slot }) => {
-    // if epoch changes, mint a new NFT
-    //console.log("slot", slot);
-    if (slot % slotsPerEpoch === 0) {
-      console.log("SIMULATING NEW EPOCH - MINTING NFT");
-      await mintTest();
-    
-    }
-  });
-
-  async function mintTest () {
-    //it("Mints an NFT", async () => {
-      let ixComputeBudget = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 });
-      // > Program consumed: 215943 of 299850 compute units (without inscription)
-      // > Program consumed: 268106 of 999850 compute units (with inscription)
-      const { mintKeypair, metadataPda, masterEditionPda } = createMintMetaAndMasterPdas();
-      const tokenAccount = getAssociatedTokenAddressSync(mintKeypair.publicKey, user.publicKey)
-      const {
-        inscriptionProgram,
-        mintInscriptionAccount,
-        inscriptionMetadataAccount,
-        inscriptionShardAccount
-      } = getInscriptionAccounts(mintKeypair.publicKey);
-      try {
-        const ixMintNft = await program.methods
-          .mintNft()
-          .accounts({
-            user: user.publicKey,
-            collectionMint,
-            collectionMetadataAccount,
-            collectionMasterEdition,
-            nftMint: mintKeypair.publicKey,
-            metadataAccount: metadataPda,
-            masterEdition: masterEditionPda,
-            tokenAccount,
-            tokenMetadataProgram: TOKEN_METADATA_PROGRAM_ID,
-            inscriptionProgram,
-            mintInscriptionAccount,
-            inscriptionMetadataAccount,
-            inscriptionShardAccount,
-          })
-          .instruction()
-  
-        const trx = new anchor.web3.Transaction().add(ixComputeBudget).add(ixMintNft);
-        const tx = await anchor.web3.sendAndConfirmTransaction(program.provider.connection, trx, [user, mintKeypair],);
-        console.log("mintNft sig", tx);
-        const inscription = await program.provider.connection.getAccountInfo(mintInscriptionAccount);
-        const filePath = `./img-outputs/${numNfts}.bmp`;
-        fs.writeFileSync(filePath, inscription.data);
-        exec(`open ${filePath}`, (error, _stdout, _stderr) => {
-          if (error) {
-            console.error(`Error opening file: ${error}`);
-          }
-        });
-        numNfts++;
-        if (numNfts > 100) {
-          await program.provider.connection.removeSlotChangeListener(ws);
-        }
-  
-      } catch (e) {
-        console.log(e);
+  /**
+   * 
+   * This test generates assets for each epoch, and verifies that the reputation
+   * of the payer is updated correctly.
+   * 
+   * It works by waiting for the current epoch to match the epoch we want to mint for,
+   * and then mints the asset. It then checks that the reputation has been updated correctly.
+   * 
+   * If the epoch has already passed, it will skip the epoch, so the test can catch up
+   * (though this should not happen in practice, as the test should be run in order of epochs). 
+   * 
+   */
+  for (let i = 0; i < numberEpochs; i++) {
+    let mint = Keypair.generate();
+    it(`Generates asset for epoch ${i} - ${mint.publicKey.toBase58()}`, async () => {
+      let { epoch } = await provider.connection.getEpochInfo();
+      while (i > epoch) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        ({ epoch } = await provider.connection.getEpochInfo());
       }
-  
-  
-    //})
+      if (i < epoch) {
+        return;
+      }
+      reputationTracker.addReputation(ReputationPoints.INITIATE);
+      await mintAssetsForEpoch({
+        epoch: i,
+        program,
+        payer,
+        mint,
+        expectedReputation: reputationTracker,
+      });
+    });
   }
 
 
+  it(`Fails to generate with wrong epoch`, async () => {
+    const randomHighEpoch = 100 + Math.floor(Math.random() * 100);
+    const expectedErrorCode = "InvalidEpoch";
+    await mintAssetsForEpoch({
+      epoch: randomHighEpoch,
+      program,
+      payer,
+      mint: Keypair.generate(),
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          assert.strictEqual(error.error.errorCode.code, expectedErrorCode, `Expected error code to be '${expectedErrorCode}'`);
+        }
+      }
+    })
+  });
+
+  it(`Fails to regenerate existing epoch`, async () => {
+    const expectedErrorCode = "InvalidEpoch";
+    await mintAssetsForEpoch({
+      epoch: 0,
+      program,
+      payer,
+      mint: Keypair.generate(),
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          // 0x0 is attempt to reinit account
+          assert.include(error.message, '0x0', 'The error message should contain 0x0');
+        }
+      }
+    })
+  });
 
 });
+
+
