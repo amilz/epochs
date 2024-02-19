@@ -63,26 +63,21 @@ pub struct MintNft<'info> {
 
 pub fn handle_mint_nft(ctx: Context<MintNft>, input_epoch: u64) -> Result<()> {
     let current_epoch = get_and_validate_epoch(input_epoch)?;
-    ctx.accounts.create_and_mint_nft(ctx.bumps.auction, input_epoch)?;
-
     let epoch_inscription: &mut Account<'_, EpochInscription> = &mut ctx.accounts.epoch_inscription;
     let payer: Pubkey = ctx.accounts.payer.key();
     let auction: &mut Account<'_, Auction> = &mut ctx.accounts.auction;
     let reputation: &mut Account<'_, Reputation> = &mut ctx.accounts.reputation;
-
+ 
     reputation.init_if_needed(payer, ctx.bumps.reputation);
     reputation.increment_with_validation(Points::INITIATE, payer.key())?;
     
-    epoch_inscription.generate_and_set_asset(
+    // This will create the inscriptions and return the traits generated
+    let traits = epoch_inscription.generate_and_set_asset(
         current_epoch, 
         payer, 
         ctx.bumps.epoch_inscription
     );
-
-    // TODO: Get Epoch generate_asset to return traits
-    // then move create_and_mint_nft here and pass traits as an argument
-    // update the create_and_mint_nft to use the traits
-
+    
     auction.create(
         current_epoch,
         // TODO UPDATE WITH MINT OR RENAME
@@ -90,7 +85,9 @@ pub fn handle_mint_nft(ctx: Context<MintNft>, input_epoch: u64) -> Result<()> {
         payer,
         ctx.bumps.auction,
     );
-    
+
+    ctx.accounts.create_and_mint_nft(ctx.bumps.auction, input_epoch, traits)?;
+
     Ok(())
 
 }

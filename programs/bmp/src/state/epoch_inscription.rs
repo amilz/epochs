@@ -25,12 +25,14 @@ impl EpochInscription {
         1000    // buffer of 1000 bytes (TODO: make dynamic)
     }
     #[inline(never)]
-    pub fn generate_and_set_asset(&mut self, current_epoch: u64, user: Pubkey, bump: u8) {
+    pub fn generate_and_set_asset(&mut self, current_epoch: u64, user: Pubkey, bump: u8) -> (usize, usize, usize, usize, (u8,u8, u8)) {
         let assets = generate_asset(current_epoch, user);
         self.buffers.image_raw = assets.0;
         self.buffers.json_raw = generate_json_metadata(current_epoch, user, assets.1).unwrap();
         self.epoch_id = current_epoch;
         self.bump = bump;
+
+        assets.1
     }
 
 }

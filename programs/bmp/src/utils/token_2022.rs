@@ -22,17 +22,53 @@ use anchor_spl::{
     },
 };
 
-use spl_token_metadata_interface::{state::TokenMetadata, instruction::initialize as init_metadata};
+use spl_token_metadata_interface::{
+    state::{Field, TokenMetadata}, instruction::{
+        initialize as init_metadata, 
+        update_field as update_metadata_field
+    }
+};
 
-use crate::{MintNft, AUCTION_SEED};
+use crate::{utils::format_pubkey, MintNft, AUCTION_SEED};
 
 impl<'info> MintNft<'info> {
-    pub fn create_and_mint_nft(&self, auction_bump: u8, current_epoch: u64) -> Result<()> {
+    fn update_metadata_field_and_invoke(
+        &self,
+        field_key: &str,
+        field_value: &str,
+        auction_signer_seeds: &[&[&[u8]]],
+    ) -> Result<()> {
+        let update_field_ix = update_metadata_field(
+            &Token2022::id(),
+            &self.mint.key(),
+            &self.auction.key(),
+            Field::Key(field_key.to_string()),
+            field_value.to_string(),
+        );
+
+        invoke_signed(
+            &update_field_ix,
+            &[
+                self.mint.to_account_info(),
+                self.auction.to_account_info(),
+            ],
+            auction_signer_seeds,
+        )?;
+
+        Ok(())
+    }
+    pub fn create_and_mint_nft(
+        &self, 
+        auction_bump: u8, 
+        current_epoch: u64,
+        traits: (usize, usize, usize, usize, (u8,u8, u8))
+    ) -> Result<()> {
+        msg!("New Traits: {:?}", traits);
 
         let token_metadata = TokenMetadata {
-            name: String::from("EPOCH"),
+            name: format!("Epoch #{}", current_epoch),
             symbol: String::from("EPOCH"),
-            uri: String::from("https://shdw-drive.genesysgo.net/GwJapVHVvfM4Mw4sWszkzywncUWuxxPd6s9VuFfXRgie/wen_meta.json"),
+            uri: format!("https://shdw-drive.genesysgo.net/somekey/{}.png", current_epoch).to_string(),
             mint: self.mint.key(),
             ..Default::default()
         };
@@ -46,7 +82,7 @@ impl<'info> MintNft<'info> {
         let create_account_ix = create_account(
             &self.payer.key(),
             &self.mint.key(),
-            Rent::get()?.minimum_balance(extension_len + instance_size),
+            Rent::get()?.minimum_balance(extension_len + instance_size + 1000),
             extension_len as u64,
             &Token2022::id(),
         );
@@ -117,6 +153,17 @@ impl<'info> MintNft<'info> {
             ],
             auction_signer_seeds,
         )?;
+        
+        // Add traits
+        let background_value = format!("R{},G{},B{}", traits.4 .0, traits.4 .1, traits.4 .2);
+
+        self.update_metadata_field_and_invoke("epoch", &current_epoch.to_string(), auction_signer_seeds)?;
+        self.update_metadata_field_and_invoke("creator", &format_pubkey(&self.payer.key()), auction_signer_seeds)?;
+        self.update_metadata_field_and_invoke("hat", &traits.0.to_string(), auction_signer_seeds)?;
+        self.update_metadata_field_and_invoke( "clothes", &traits.1.to_string(), auction_signer_seeds)?;
+        self.update_metadata_field_and_invoke("glasses", &traits.2.to_string(), auction_signer_seeds)?;
+        self.update_metadata_field_and_invoke("body", &traits.3.to_string(), auction_signer_seeds)?;
+        self.update_metadata_field_and_invoke("background", &background_value, auction_signer_seeds)?;
 
         // Create ATA for the user
         msg!("Creating ATA");

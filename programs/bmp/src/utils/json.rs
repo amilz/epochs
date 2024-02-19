@@ -84,3 +84,10 @@ pub fn generate_json_metadata(epoch: u64, creator: Pubkey, trait_indices: Select
     let buffer = json_str.as_bytes();
     Ok(buffer.to_vec())
 }
+
+pub fn format_pubkey(pubkey: &Pubkey) -> String {
+    let pubkey_str = pubkey.to_string();
+    let start = &pubkey_str[0..4]; // First 4 characters
+    let end = &pubkey_str[pubkey_str.len() - 4..]; // Last 4 characters
+    format!("{}...{}", start, end)
+}

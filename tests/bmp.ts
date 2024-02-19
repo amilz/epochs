@@ -7,9 +7,9 @@ import { mintAssetsForEpoch } from "./utils/instructions";
 import { assert } from "chai";
 import { ReputationPoints, ReputationTracker } from "./utils/reputation";
 
-const numberEpochs = 1;
+const numberEpochs = 3;
 
-describe("SVM On-Chain Asset Generator", () => {
+describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
@@ -38,7 +38,8 @@ describe("SVM On-Chain Asset Generator", () => {
    * 
    */
   for (let i = 0; i < numberEpochs; i++) {
-    it(`Generates asset for epoch ${i}`, async () => {
+    let mint = Keypair.generate();
+    it(`Generates asset for epoch ${i} - ${mint.publicKey.toBase58()}`, async () => {
       let { epoch } = await provider.connection.getEpochInfo();
       while (i > epoch) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -52,6 +53,7 @@ describe("SVM On-Chain Asset Generator", () => {
         epoch: i,
         program,
         payer,
+        mint,
         expectedReputation: reputationTracker,
       });
     });
@@ -65,6 +67,7 @@ describe("SVM On-Chain Asset Generator", () => {
       epoch: randomHighEpoch,
       program,
       payer,
+      mint: Keypair.generate(),
       expectToFail: {
         errorCode: expectedErrorCode,
         assertError: (error) => {

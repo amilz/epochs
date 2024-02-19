@@ -14,6 +14,7 @@ interface MintAssetsForEpochParams {
     epoch: number;
     program: Program<Bmp>;
     payer: Keypair;
+    mint: Keypair;
     disableOpenFile?: boolean;
     logMintInfo?: boolean;
     expectToFail?: {
@@ -27,6 +28,7 @@ export async function mintAssetsForEpoch({
     epoch,
     program,
     payer,
+    mint,
     disableOpenFile = true,
     logMintInfo = false,
     expectToFail,
@@ -36,7 +38,6 @@ export async function mintAssetsForEpoch({
     const epochInscriptionPda = getEpochInscriptionPda(epoch, program);
     const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_000_000 });
     const reputation = getReputationPda(payer.publicKey, program);
-    const mint = Keypair.generate();
     const auctionAta = getAssociatedTokenAddressSync(mint.publicKey, auctionPda, true, TOKEN_2022_PROGRAM_ID);
     
 /*     
