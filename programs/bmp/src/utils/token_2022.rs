@@ -29,7 +29,7 @@ use spl_token_metadata_interface::{
     }
 };
 
-use crate::{utils::format_pubkey, MintNft, AUCTION_SEED};
+use crate::{utils::format_pubkey, MintNft, ALL_ROYALTIES, AUCTION_SEED};
 
 impl<'info> MintNft<'info> {
     fn update_metadata_field_and_invoke(
@@ -82,7 +82,7 @@ impl<'info> MintNft<'info> {
         let create_account_ix = create_account(
             &self.payer.key(),
             &self.mint.key(),
-            Rent::get()?.minimum_balance(extension_len + instance_size + 1000),
+            Rent::get()?.minimum_balance(extension_len + instance_size + 300),
             extension_len as u64,
             &Token2022::id(),
         );
@@ -164,6 +164,11 @@ impl<'info> MintNft<'info> {
         self.update_metadata_field_and_invoke("glasses", &traits.2.to_string(), auction_signer_seeds)?;
         self.update_metadata_field_and_invoke("body", &traits.3.to_string(), auction_signer_seeds)?;
         self.update_metadata_field_and_invoke("background", &background_value, auction_signer_seeds)?;
+        self.update_metadata_field_and_invoke("inscription", &self.epoch_inscription.key().to_string(), auction_signer_seeds)?;
+        self.update_metadata_field_and_invoke("royalties", &(500 as u16).to_string(), auction_signer_seeds)?;
+        ALL_ROYALTIES.iter().for_each(|royalty| {
+            self.update_metadata_field_and_invoke(&royalty.creator.key().to_string(), &royalty.amount.to_string(), auction_signer_seeds).unwrap();
+        });
 
         // Create ATA for the user
         msg!("Creating ATA");
@@ -209,3 +214,8 @@ impl<'info> MintNft<'info> {
         Ok(())
     }
 }
+
+
+// TODO Add NFT to group
+// TODO Add tests
+// TODO Minimize acct size

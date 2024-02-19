@@ -41,9 +41,8 @@ pub struct MintNft<'info> {
 
     //---- Start of  Token 2022 Stuff 
 
-    /// CHECK: Optional update authority, unchecked because it can either be SystemAccount or a PDA owned by another program
-    //pub update_authority: Option<UncheckedAccount<'info>>,
-
+    // This assumes a random keypair used for minting. 
+    // Might make sense to make a PDA to use for future signing
     #[account(mut)]
     pub mint: Signer<'info>,
 
@@ -64,6 +63,7 @@ pub struct MintNft<'info> {
 pub fn handle_mint_nft(ctx: Context<MintNft>, input_epoch: u64) -> Result<()> {
     let current_epoch = get_and_validate_epoch(input_epoch)?;
     let epoch_inscription: &mut Account<'_, EpochInscription> = &mut ctx.accounts.epoch_inscription;
+    let mint: &AccountInfo<'_> = &ctx.accounts.mint;
     let payer: Pubkey = ctx.accounts.payer.key();
     let auction: &mut Account<'_, Auction> = &mut ctx.accounts.auction;
     let reputation: &mut Account<'_, Reputation> = &mut ctx.accounts.reputation;
@@ -78,10 +78,10 @@ pub fn handle_mint_nft(ctx: Context<MintNft>, input_epoch: u64) -> Result<()> {
         ctx.bumps.epoch_inscription
     );
     
+    // This will create the auction
     auction.create(
         current_epoch,
-        // TODO UPDATE WITH MINT OR RENAME
-        epoch_inscription.key(),
+        mint.key(),
         payer,
         ctx.bumps.auction,
     );
