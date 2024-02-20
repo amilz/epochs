@@ -155,7 +155,7 @@ export async function bidOnAuction({
             auction: auctionPda,
             reputation,
         }).signers([bidder])
-        .rpc({ skipPreflight: true });
+        .rpc();
 
     try {
 

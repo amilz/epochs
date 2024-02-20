@@ -80,7 +80,7 @@ describe("Epoch Auctions", () => {
     });
   });
   it(`Fails submit a low bid on Epoch # ${targetEpoch}`, async () => {
-    const expectedErrorCode = ""; // should be "BidTooLow" w/ msg of "Bid does not meet minimum bid threshold" (6003)
+    const expectedErrorCode = "BidTooLow"; // should be "BidTooLow" w/ msg of "Bid does not meet minimum bid threshold" (6003)
     bidderReputationTracker.addReputation(ReputationPoints.BID);
     await bidOnAuction({
       bidAmount: LAMPORTS_PER_SOL / 2,
@@ -91,8 +91,8 @@ describe("Epoch Auctions", () => {
       expectToFail: {
         errorCode: expectedErrorCode,
         assertError: (error) => {
-          //assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
-          assert.include(error.message, expectedErrorCode, `Expected error code to be '${expectedErrorCode}'`);
+          assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          assert.include(error.error.errorCode.code, expectedErrorCode, `Expected error code to be '${expectedErrorCode}'`);
         }
       }
     });

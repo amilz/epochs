@@ -1,4 +1,5 @@
 use anchor_lang:: prelude::*;
+use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use anchor_lang::system_program::{transfer, Transfer};
 
 use crate::utils::validate::get_and_validate_epoch;
@@ -57,6 +58,7 @@ pub struct AuctionBid<'info> {
 pub fn handle_bid(ctx: Context<AuctionBid>, input_epoch: u64, bid_amount: u64) -> Result<()> {
     get_and_validate_epoch(input_epoch)?;
     // Must do transfers before updating auction state to avoid reentrancy attacks
+    ctx.accounts.validate_bid(bid_amount)?;
     ctx.accounts.transfer_funds_to_escrow(bid_amount)?;
     ctx.accounts.transfer_funds_to_previous_high_bidder(ctx.bumps.auction_escrow)?;
     ctx.accounts.update_auction_and_reputation(bid_amount, ctx.bumps.reputation)?;
@@ -65,6 +67,24 @@ pub fn handle_bid(ctx: Context<AuctionBid>, input_epoch: u64, bid_amount: u64) -
 }
 
 impl AuctionBid<'_> {
+
+    pub fn validate_bid(&self, bid_amount_lamports: u64) -> Result<()> {
+        let auction = &self.auction;
+        let high_bid_lamports = auction.high_bid_lamports;
+        let min_bid = if high_bid_lamports == 0 {
+            LAMPORTS_PER_SOL
+        } else {
+            // Calculate 5% more than the current highest bid, ensuring at least a 1 SOL increment
+            std::cmp::max(
+                high_bid_lamports + (high_bid_lamports / 20),
+                high_bid_lamports + LAMPORTS_PER_SOL,
+            )
+        };
+
+        require!(bid_amount_lamports >= min_bid, EpochError::BidTooLow);
+
+        Ok(())
+    }
 
     pub fn transfer_funds_to_escrow(&self, bid_amount: u64) -> Result<()>   {
         transfer(
