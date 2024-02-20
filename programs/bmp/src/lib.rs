@@ -33,6 +33,10 @@ pub mod bmp {
         bid::handle_bid(ctx, input_epoch, bid_amount)
     }
 
+    pub fn claim(ctx: Context<AuctionClaim>, input_epoch: u64) -> Result<()> {
+        claim::handle_claim(ctx, input_epoch)
+    }
+
 }
 
 

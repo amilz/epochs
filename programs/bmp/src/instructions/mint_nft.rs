@@ -84,18 +84,15 @@ pub fn handle_mint_nft(ctx: Context<MintNft>, input_epoch: u64) -> Result<()> {
     let payer: Pubkey = ctx.accounts.payer.key();
     let auction: &mut Account<'_, Auction> = &mut ctx.accounts.auction;
     let reputation: &mut Account<'_, Reputation> = &mut ctx.accounts.reputation;
- 
-    reputation.init_if_needed(payer, ctx.bumps.reputation);
-    reputation.increment_with_validation(Points::INITIATE, payer.key())?;
     
-    // This will create the inscriptions and return the traits generated
+    // Create the inscriptions and return the traits generated
     let traits = epoch_inscription.generate_and_set_asset(
         current_epoch, 
         payer, 
         ctx.bumps.epoch_inscription
     );
     
-    // This will create the auction
+    // Create the auction
     auction.create(
         current_epoch,
         mint.key(),
@@ -103,6 +100,11 @@ pub fn handle_mint_nft(ctx: Context<MintNft>, input_epoch: u64) -> Result<()> {
         ctx.bumps.auction,
     );
 
+    // Add reputation to the payer
+    reputation.init_if_needed(payer, ctx.bumps.reputation);
+    reputation.increment_with_validation(Points::INITIATE, payer.key())?;
+
+    // Mint the Token2022 NFT and send it to the auction ATA
     ctx.accounts.create_and_mint_nft(ctx.bumps.authority, input_epoch, traits)?;
 
     Ok(())

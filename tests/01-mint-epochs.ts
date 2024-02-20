@@ -3,7 +3,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { Program, AnchorError } from "@coral-xyz/anchor";
 import { Bmp } from "../target/types/bmp";
 import { airdropToMultiple } from "./utils/utils";
-import { mintAssetsForEpoch } from "./utils/instructions";
+import { mintAssetsForEpoch } from "./utils/instructions/mint";
 import { assert } from "chai";
 import { ReputationPoints, ReputationTracker } from "./utils/reputation";
 

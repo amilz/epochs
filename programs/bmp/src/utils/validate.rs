@@ -17,3 +17,10 @@ pub fn get_and_validate_epoch(input_epoch: u64) -> Result<u64> {
     
     Ok(current_epoch)
 }
+
+pub fn verify_epoch_has_passed(input_epoch: u64) -> Result<()> {
+    let current_epoch = Clock::get()?.epoch;
+    require!(input_epoch <= current_epoch, EpochError::FutureEpochNotAllowed);
+
+    Ok(())
+}

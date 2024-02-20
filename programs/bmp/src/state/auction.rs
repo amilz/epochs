@@ -47,11 +47,10 @@ impl Auction {
         self.bump = bump;
     }
 
-    pub fn claim(&mut self) {
-        if self.state == AuctionState::Claimed {
-            //return Err(ErrorCode::AuctionAlreadyClaimed.into());
-        }
+    pub fn claim(&mut self) -> Result<()>{
+        require!(self.state == AuctionState::UnClaimed, EpochError::AuctionAlreadyClaimed);
         self.state = AuctionState::Claimed;
+        Ok(())
     }
 
     fn validate_bid(&self, bid_amount_lamports: u64) -> Result<()> {

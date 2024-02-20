@@ -1,7 +1,9 @@
 pub mod create_collection_nft;
 pub mod mint_nft;
 pub mod bid;
+pub mod claim;
 
 pub use create_collection_nft::*;
 pub use mint_nft::*;
 pub use bid::*;
+pub use claim::*;

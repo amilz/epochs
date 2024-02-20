@@ -23,12 +23,20 @@ pub enum EpochError {
     #[msg("Previous bidder passed does not match the current high bidder")]
     InvalidPreviousBidder,
 
+    #[msg("Signer did not win the auction")]
+    InvalidWinner,
+
+    #[msg("Auction has already been claimed")]
+    AuctionAlreadyClaimed,
 
     // Reputation Errors
 
     #[msg("Contributor does not match signer of the transaction")]
     InvalidContributor,
     
-    #[msg("Reputation overflow")]
+    #[msg("Integer overflow")]
     Overflow,
+
+    #[msg("Integer underflow")]
+    Underflow,
 }

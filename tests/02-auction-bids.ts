@@ -1,11 +1,13 @@
-import { Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Program, AnchorError } from "@coral-xyz/anchor";
 import { Bmp } from "../target/types/bmp";
 import { airdropToMultiple } from "./utils/utils";
-import { bidOnAuction, mintAssetsForEpoch } from "./utils/instructions";
+import { mintAssetsForEpoch } from "./utils/instructions/mint";
+import { bidOnAuction } from "./utils/instructions/bid";
 import { ReputationPoints, ReputationTracker } from "./utils/reputation";
 import { assert } from "chai";
+import { auctionClaim } from "./utils/instructions/claim";
 
 const targetEpoch = 1;
 
@@ -97,6 +99,25 @@ describe("Epoch Auctions", () => {
       }
     });
   });
+
+  it(`Claims the auction for Epoch # ${targetEpoch}`, async () => {
+    let { epoch } = await provider.connection.getEpochInfo();
+    while (epoch <= targetEpoch) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      ({ epoch } = await provider.connection.getEpochInfo());
+    }
+    if (targetEpoch > epoch) {
+      throw new Error(`Target epoch ${targetEpoch} not reached yet`);
+    }
+    await auctionClaim({
+      epoch: targetEpoch,
+      program,
+      winner: initiator,
+      daoTreasury: new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe"),
+      creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa")
+    })
+  })
+
 });
 
 
