@@ -22,6 +22,14 @@ function getAuctionPda(epoch: number, program: Program<any>) {
     return pda;
 }
 
+function getAuctionEscrowPda(program: Program<any>) {
+    const [pda] = PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.AUCTION_ESCROW)],
+        program.programId
+    );
+    return pda;
+}
+
 function getEpochInscriptionPda(epoch: number, program: Program<any>) {
     const [pda] = PublicKey.findProgramAddressSync(
         [
@@ -143,4 +151,4 @@ function getInscriptionAccounts(mint: PublicKey) {
     }
 }
 
-export { getAuctionPda, getEpochInscriptionPda, getReputationPda, getAuthorityPda };
+export { getAuctionPda, getEpochInscriptionPda, getReputationPda, getAuthorityPda, getAuctionEscrowPda };

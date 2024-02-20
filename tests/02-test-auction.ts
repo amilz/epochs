@@ -4,10 +4,10 @@ import { Program, AnchorError } from "@coral-xyz/anchor";
 import { Bmp } from "../target/types/bmp";
 import { airdropToMultiple } from "./utils/utils";
 import { bidOnAuction, mintAssetsForEpoch } from "./utils/instructions";
-import { assert } from "chai";
 import { ReputationPoints, ReputationTracker } from "./utils/reputation";
+import { assert } from "chai";
 
-const targetEpoch = 3;
+const targetEpoch = 1;
 
 describe("Epoch Auctions", () => {
   const provider = anchor.AnchorProvider.env();
@@ -39,7 +39,7 @@ describe("Epoch Auctions", () => {
    * (though this should not happen in practice, as the test should be run in order of epochs). 
    * 
    */
-  it(`Bids on Epoch # ${targetEpoch}`, async () => {
+  it(`Multiple Bids on Epoch # ${targetEpoch}`, async () => {
     let { epoch } = await provider.connection.getEpochInfo();
     while (epoch < targetEpoch) {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -49,7 +49,7 @@ describe("Epoch Auctions", () => {
       throw new Error(`Target epoch ${targetEpoch} has already passed`);
     }
     const bidAmount = LAMPORTS_PER_SOL;
-    bidderReputationTracker.addReputation(ReputationPoints.BID);
+    // Initiator starts the auction
     initiatorReputationTracker.addReputation(ReputationPoints.INITIATE);
     await mintAssetsForEpoch({
       epoch: targetEpoch,
@@ -58,14 +58,55 @@ describe("Epoch Auctions", () => {
       mint: Keypair.generate(),
       expectedReputation: initiatorReputationTracker,
     });
+    // Bidder bids on the auction
+    bidderReputationTracker.addReputation(ReputationPoints.BID);
     await bidOnAuction({
       bidAmount,
       epoch: targetEpoch,
       program,
       bidder,
+      highBidder: initiator.publicKey,
       expectedReputation: bidderReputationTracker,
+    });
+    // Initiator bids on the auction
+    initiatorReputationTracker.addReputation(ReputationPoints.BID);
+    await bidOnAuction({
+      bidAmount: LAMPORTS_PER_SOL * 3,
+      epoch: targetEpoch,
+      program,
+      bidder: initiator,
+      highBidder: bidder.publicKey,
+      expectedReputation: initiatorReputationTracker,
+    });
+  });
+  it(`Fails submit a low bid on Epoch # ${targetEpoch}`, async () => {
+    const expectedErrorCode = ""; // should be "BidTooLow" w/ msg of "Bid does not meet minimum bid threshold" (6003)
+    bidderReputationTracker.addReputation(ReputationPoints.BID);
+    await bidOnAuction({
+      bidAmount: LAMPORTS_PER_SOL / 2,
+      epoch: targetEpoch,
+      program,
+      bidder,
+      highBidder: initiator.publicKey,
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          //assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          assert.include(error.message, expectedErrorCode, `Expected error code to be '${expectedErrorCode}'`);
+        }
+      }
     });
   });
 });
 
 
+/*
+  TODO: 
+    X Assert balance
+    X Test bid too low
+    - Test invalid high bidder
+    - Test invalid epoch
+    - Test invalid auction
+    - Test invalid reputation
+    - Test invalid escrow
+*/

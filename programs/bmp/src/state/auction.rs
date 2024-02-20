@@ -1,6 +1,9 @@
-use anchor_lang::{prelude::*, solana_program::stake_history::Epoch};
+use anchor_lang::{
+    prelude::*,
+    solana_program::{native_token::LAMPORTS_PER_SOL, stake_history::Epoch},
+};
 
-use crate::AuctionError;
+use crate::EpochError;
 
 #[account]
 pub struct Auction {
@@ -24,7 +27,6 @@ impl Default for AuctionState {
     }
 }
 
-
 impl Auction {
     pub fn get_size() -> usize {
         8 +     // discriminator
@@ -33,7 +35,7 @@ impl Auction {
         2 +     // state
         32 +    // high_bidder
         8 +     // high_bid
-        1       // bump
+        1 // bump
     }
 
     pub fn create(&mut self, epoch: Epoch, mint: Pubkey, initiator: Pubkey, bump: u8) {
@@ -45,28 +47,28 @@ impl Auction {
         self.bump = bump;
     }
 
-    pub fn claim(&mut self, ) {
+    pub fn claim(&mut self) {
         if self.state == AuctionState::Claimed {
             //return Err(ErrorCode::AuctionAlreadyClaimed.into());
-
         }
         self.state = AuctionState::Claimed;
     }
 
     fn validate_bid(&self, bid_amount_lamports: u64) -> Result<()> {
-
         // Ensure the bid is at least 1 SOL if there are no previous bids
         let min_bid = if self.high_bid_lamports == 0 {
-            1_000_000_000 // 1 SOL in lamports
+            LAMPORTS_PER_SOL
         } else {
             // Calculate 5% more than the current highest bid, ensuring at least a 1 SOL increment
-            std::cmp::max(self.high_bid_lamports + (self.high_bid_lamports / 20), self.high_bid_lamports + 1_000_000_000)
+            std::cmp::max(
+                self.high_bid_lamports + (self.high_bid_lamports / 20),
+                self.high_bid_lamports + LAMPORTS_PER_SOL,
+            )
         };
 
-        require!(bid_amount_lamports >= min_bid, AuctionError::BidTooLow);
+        require!(bid_amount_lamports >= min_bid, EpochError::BidTooLow);
         Ok(())
     }
-
 
     pub fn bid(&mut self, bidder: Pubkey, amount: u64) -> Result<()> {
         self.validate_bid(amount)?;
@@ -74,6 +76,4 @@ impl Auction {
         self.high_bidder = bidder;
         Ok(())
     }
-
-
 }

@@ -14,3 +14,6 @@ pub const REPUTATION_SEED: &str = "Reputation";
 
 #[constant]
 pub const AUTHORITY_SEED: &str = "Authority";
+
+#[constant]
+pub const AUCTION_ESCROW_SEED: &str = "AuctionEscrow";

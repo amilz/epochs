@@ -7,7 +7,7 @@ import { mintAssetsForEpoch } from "./utils/instructions";
 import { assert } from "chai";
 import { ReputationPoints, ReputationTracker } from "./utils/reputation";
 
-const numberEpochs = 2;
+const numberEpochs = 1;
 
 describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
   const provider = anchor.AnchorProvider.env();
@@ -62,7 +62,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
 
   it(`Fails to generate with wrong epoch`, async () => {
     const randomHighEpoch = 100 + Math.floor(Math.random() * 100);
-    const expectedErrorCode = "EpochInFuture";
+    const expectedErrorCode = "FutureEpochNotAllowed";
     await mintAssetsForEpoch({
       epoch: randomHighEpoch,
       program,

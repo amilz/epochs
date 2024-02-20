@@ -7,13 +7,13 @@ pub fn get_and_validate_epoch(input_epoch: u64) -> Result<u64> {
     let current_epoch = Clock::get()?.epoch;
     
     // Check if the input epoch is in the future
-    require!(input_epoch <= current_epoch, EpochError::EpochInFuture);
+    require!(input_epoch <= current_epoch, EpochError::FutureEpochNotAllowed);
 
     // Check if the input epoch is in the past
-    require!(input_epoch >= current_epoch, EpochError::EpochInPast);
+    require!(input_epoch >= current_epoch, EpochError::PastEpochNotAllowed);
 
     // Should not ever need to fire this error (previous errors for more specificity in error msg)
-    require!(input_epoch == current_epoch, EpochError::InvalidEpoch);
+    require!(input_epoch == current_epoch, EpochError::EpochMismatch);
     
     Ok(current_epoch)
 }

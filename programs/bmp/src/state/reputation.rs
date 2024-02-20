@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-use crate::ReputationError;
+use crate::EpochError;
 
 #[account]
 pub struct Reputation {
@@ -21,11 +21,11 @@ impl Reputation {
 
     // Updated increment_with_validation method to use Result for error handling
     pub fn increment_with_validation(&mut self, amount: u64, contributor: Pubkey) -> Result<()> {
-        require!(self.validate(contributor), ReputationError::InvalidContributor);
+        require!(self.validate(contributor), EpochError::InvalidContributor);
         self.reputation = self
             .reputation
             .checked_add(amount)
-            .ok_or_else(|| ReputationError::Overflow)?;
+            .ok_or_else(|| EpochError::Overflow)?;
         Ok(())
     }
 

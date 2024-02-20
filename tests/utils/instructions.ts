@@ -1,7 +1,7 @@
-import { Keypair } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuctionPda, getAuthorityPda, getEpochInscriptionPda, getReputationPda } from "./pdas";
+import { getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getEpochInscriptionPda, getReputationPda } from "./pdas";
 import fs from 'fs';
 import { assert } from "chai";
 import { openFile } from "./utils";
@@ -119,6 +119,7 @@ interface AuctionBidParams {
     epoch: number;
     program: Program<Bmp>;
     bidder: Keypair;
+    highBidder: PublicKey;
     logMintInfo?: boolean;
     expectToFail?: {
         errorCode: string;
@@ -132,16 +133,25 @@ export async function bidOnAuction({
     bidAmount,
     program,
     bidder,
+    highBidder,
     logMintInfo = false,
     expectToFail,
     expectedReputation
 }: AuctionBidParams) {
     const auctionPda = getAuctionPda(epoch, program);
     const reputation = getReputationPda(bidder.publicKey, program);
+    const auctionEscrow = getAuctionEscrowPda(program);
+
+    const [prevBidderInitialBalance, { highBidLamports: prevBid }] = await Promise.all([
+        program.provider.connection.getBalance(highBidder),
+        program.account.auction.fetch(auctionPda)
+    ]);
 
     const txRequest = program.methods.bid(new anchor.BN(epoch), new anchor.BN(bidAmount))
         .accounts({
             bidder: bidder.publicKey,
+            highBidder,
+            auctionEscrow,
             auction: auctionPda,
             reputation,
         }).signers([bidder])
@@ -163,9 +173,17 @@ export async function bidOnAuction({
             assert.strictEqual(reputationData.contributor.toBase58(), expectedReputation.getUser().toBase58(), "Reputation contributor should match payer");
             assert.strictEqual(reputationData.reputation.toNumber(), expectedReputation.getReputation(), "Reputation should match expected value");
         }
+        const [finalEscrowBalance, prevBidderFinalBalance] = await Promise.all([
+            program.provider.connection.getBalance(auctionEscrow),
+            program.provider.connection.getBalance(highBidder)
+        ]);
+        // After returning funds, the escrow should only have the bid amount
+        assert.strictEqual(finalEscrowBalance, bidAmount, "Escrow balance should be increased by the bid amount");
+        // After returning funds, the previous bidder should have their previous bid refunded
+        assert.strictEqual(prevBidderFinalBalance, prevBidderInitialBalance + prevBid.toNumber(), "Previous bidder should have their bid refunded");
 
     } catch (error) {
-        //console.error(`Error minting assets for epoch ${epoch}:`, error);
+        //console.error(`Error bidding on epoch ${epoch}:`, error);
         if (expectToFail) {
             if (expectToFail.assertError) {
                 expectToFail.assertError(error);
