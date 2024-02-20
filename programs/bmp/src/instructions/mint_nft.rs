@@ -11,8 +11,8 @@ pub struct MintNft<'info> {
 
     /// Anybody can kick off a new epoch. 
     /// No constraits--just need to be a signer
-    #[account(mut)]
-    pub payer: Signer<'info>,
+    #[account(mut, signer)]
+    pub payer: SystemAccount<'info>,
 
 
     /// PDA that will store the instricption for the epoch

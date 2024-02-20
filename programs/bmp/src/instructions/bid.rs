@@ -12,8 +12,8 @@ pub struct AuctionBid<'info> {
 
     /// Anybody can bid on an auction.
     /// No constraits--just need to be a signer
-    #[account(mut)]
-    bidder: Signer<'info>,
+    #[account(mut, signer)]
+    bidder: SystemAccount<'info>,
 
     /// We will update the auction PDA based on the bid
     /// Seeded on user-input epoch (verified in program to be current epoch)

@@ -14,8 +14,8 @@ pub struct AuctionClaim<'info> {
 
     /// Anybody can bid on an auction.
     /// No constraits--just need to be a signer
-    #[account(mut)]
-    winner: Signer<'info>,
+    #[account(mut, signer)]
+    winner: SystemAccount<'info>,
 
     /// We will update the auction PDA based on the bid
     /// Seeded on user-input epoch (verified in program to be current epoch)
@@ -111,7 +111,7 @@ impl AuctionClaim<'_> {
         verify_epoch_has_passed(self.auction.epoch)?;
         Ok(())
     }
-    
+
     pub fn verify_winner(&self) -> Result<()> {
         require!(self.auction.high_bidder == self.winner.key(), EpochError::InvalidWinner);
         Ok(())
