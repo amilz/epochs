@@ -4,7 +4,7 @@ import { AnchorError, Program } from "@coral-xyz/anchor";
 import { getAuctionEscrowPda, getAuctionPda, getReputationPda } from "../pdas";
 import { assert } from "chai";
 import { Bmp } from "../../../target/types/bmp";
-import { ReputationTracker } from "../reputation";
+import { ReputationPoints, ReputationTracker } from "../reputation";
 import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
 
 interface AuctionClaimParams {
@@ -18,7 +18,7 @@ interface AuctionClaimParams {
         errorCode: string;
         assertError?: (error: any) => void;
     };
-    expectedReputation?: ReputationTracker;
+    expectedReputation: ReputationTracker;
 }
 
 export async function auctionClaim({
@@ -64,6 +64,7 @@ export async function auctionClaim({
 
         const signature = await txRequest;
         if (logMintInfo) console.log(`   Epoch ${epoch} - bid signature: ${signature}`);
+        expectedReputation.addReputation(ReputationPoints.WIN);
 
         const auctionData = await program.account.auction.fetch(auctionPda);
         assert.deepStrictEqual(auctionData.state, { claimed: {} }, 'Auction should be claimed');

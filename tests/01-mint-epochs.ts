@@ -48,7 +48,6 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
       if (i < epoch) {
         return;
       }
-      reputationTracker.addReputation(ReputationPoints.INITIATE);
       await mintAssetsForEpoch({
         epoch: i,
         program,
@@ -68,6 +67,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
       program,
       payer,
       mint: Keypair.generate(),
+      expectedReputation: reputationTracker,
       expectToFail: {
         errorCode: expectedErrorCode,
         assertError: (error) => {
@@ -85,6 +85,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
       program,
       payer,
       mint: Keypair.generate(),
+      expectedReputation: reputationTracker,
       expectToFail: {
         errorCode: expectedErrorCode,
         assertError: (error) => {

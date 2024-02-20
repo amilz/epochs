@@ -4,7 +4,7 @@ import { AnchorError, Program } from "@coral-xyz/anchor";
 import { getAuctionEscrowPda, getAuctionPda, getReputationPda } from "../pdas";
 import { assert } from "chai";
 import { Bmp } from "../../../target/types/bmp";
-import { ReputationTracker } from "../reputation";
+import { ReputationPoints, ReputationTracker } from "../reputation";
 
 interface AuctionBidParams {
     bidAmount: number;
@@ -17,7 +17,7 @@ interface AuctionBidParams {
         errorCode: string;
         assertError?: (error: any) => void;
     };
-    expectedReputation?: ReputationTracker;
+    expectedReputation: ReputationTracker;
 }
 
 export async function bidOnAuction({
@@ -54,6 +54,7 @@ export async function bidOnAuction({
 
         const signature = await txRequest;
         if (logMintInfo) console.log(`   Epoch ${epoch} - bid signature: ${signature}`);
+        expectedReputation.addReputation(ReputationPoints.BID);
 
         const auctionData = await program.account.auction.fetch(auctionPda);
         assert.strictEqual(auctionData.epoch.toNumber(), epoch, "Auction epoch should match the input epoch");

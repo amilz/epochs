@@ -52,7 +52,6 @@ describe("Epoch Auctions", () => {
     }
     const bidAmount = LAMPORTS_PER_SOL;
     // Initiator starts the auction
-    initiatorReputationTracker.addReputation(ReputationPoints.INITIATE);
     await mintAssetsForEpoch({
       epoch: targetEpoch,
       program,
@@ -61,7 +60,6 @@ describe("Epoch Auctions", () => {
       expectedReputation: initiatorReputationTracker,
     });
     // Bidder bids on the auction
-    bidderReputationTracker.addReputation(ReputationPoints.BID);
     await bidOnAuction({
       bidAmount,
       epoch: targetEpoch,
@@ -71,7 +69,6 @@ describe("Epoch Auctions", () => {
       expectedReputation: bidderReputationTracker,
     });
     // Initiator bids on the auction
-    initiatorReputationTracker.addReputation(ReputationPoints.BID);
     await bidOnAuction({
       bidAmount: LAMPORTS_PER_SOL * 3,
       epoch: targetEpoch,
@@ -83,12 +80,12 @@ describe("Epoch Auctions", () => {
   });
   it(`Fails submit a low bid on Epoch # ${targetEpoch}`, async () => {
     const expectedErrorCode = "BidTooLow"; // should be "BidTooLow" w/ msg of "Bid does not meet minimum bid threshold" (6003)
-    bidderReputationTracker.addReputation(ReputationPoints.BID);
     await bidOnAuction({
       bidAmount: LAMPORTS_PER_SOL / 2,
       epoch: targetEpoch,
       program,
       bidder,
+      expectedReputation: bidderReputationTracker,
       highBidder: initiator.publicKey,
       expectToFail: {
         errorCode: expectedErrorCode,
@@ -114,7 +111,8 @@ describe("Epoch Auctions", () => {
       program,
       winner: initiator,
       daoTreasury: new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe"),
-      creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa")
+      creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa"),
+      expectedReputation: initiatorReputationTracker
     })
   })
 

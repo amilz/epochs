@@ -6,7 +6,7 @@ import fs from 'fs';
 import { assert } from "chai";
 import { openFile } from "../utils";
 import { Bmp } from "../../../target/types/bmp";
-import { ReputationTracker } from "../reputation";
+import { ReputationPoints, ReputationTracker } from "../reputation";
 import { convertBmpToPng } from "../image";
 import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
 
@@ -21,7 +21,7 @@ interface MintAssetsForEpochParams {
         errorCode: string;
         assertError?: (error: any) => void;
     };
-    expectedReputation?: ReputationTracker;
+    expectedReputation: ReputationTracker;
 }
 
 export async function mintAssetsForEpoch({
@@ -70,6 +70,7 @@ export async function mintAssetsForEpoch({
 
         const signature = await txRequest;
         if (logMintInfo) console.log(`   Epoch ${epoch} - mintNft signature: ${signature}`);
+        expectedReputation.addReputation(ReputationPoints.INITIATE);
 
         const [data, auctionData, tokenBalance] = await Promise.all([
             program.account.epochInscription.fetch(epochInscriptionPda),
