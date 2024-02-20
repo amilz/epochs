@@ -38,12 +38,12 @@ export async function auctionClaim({
     const sourceAta = getAssociatedTokenAddressSync(mint, auctionPda, true, TOKEN_2022_PROGRAM_ID);
     const destinationAta = getAssociatedTokenAddressSync(mint, winner.publicKey, false, TOKEN_2022_PROGRAM_ID);
 
-    /*
-        const [prevBidderInitialBalance, { highBidLamports: prevBid }] = await Promise.all([
-            program.provider.connection.getBalance(highBidder),
-            program.account.auction.fetch(auctionPda)
-        ]); 
-    */
+    const [escrowPreBalance, daoPreBalance, creatorPreBalance, { highBidLamports: exceptedEscrowWithdraw }] = await Promise.all([
+        program.provider.connection.getBalance(auctionEscrow),
+        program.provider.connection.getBalance(daoTreasury),
+        program.provider.connection.getBalance(creatorWallet),
+        program.account.auction.fetch(auctionPda)
+    ]);
 
     const txRequest = await program.methods.claim(new anchor.BN(epoch))
         .accounts({
@@ -74,17 +74,20 @@ export async function auctionClaim({
             assert.strictEqual(reputationData.reputation.toNumber(), expectedReputation.getReputation(), "Reputation should match expected value");
         }
 
-/*
-        const [finalEscrowBalance, prevBidderFinalBalance] = await Promise.all([
+        const [escrowPostBalance, daoPostBalance, creatorPostBalance, winnerTokenBalance, escrowTokenBalance] = await Promise.all([
             program.provider.connection.getBalance(auctionEscrow),
-            program.provider.connection.getBalance(highBidder)
+            program.provider.connection.getBalance(daoTreasury),
+            program.provider.connection.getBalance(creatorWallet),
+            program.provider.connection.getTokenAccountBalance(destinationAta),
+            program.provider.connection.getTokenAccountBalance(sourceAta)
         ]);
-
-        // After returning funds, the escrow should only have the bid amount
-        assert.strictEqual(finalEscrowBalance, bidAmount, "Escrow balance should be increased by the bid amount");
-        // After returning funds, the previous bidder should have their previous bid refunded
-        assert.strictEqual(prevBidderFinalBalance, prevBidderInitialBalance + prevBid.toNumber(), "Previous bidder should have their bid refunded");
-*/
+        const expectedDaoGain = exceptedEscrowWithdraw.toNumber() * 0.8;
+        const expectedCreatorGain = exceptedEscrowWithdraw.toNumber() - expectedDaoGain;
+        assert.strictEqual(escrowPostBalance, escrowPreBalance - exceptedEscrowWithdraw.toNumber(), "Auction escrow should have the expected balance");
+        assert.strictEqual(daoPostBalance, daoPreBalance + expectedDaoGain, "Dao treasury should have the expected balance");
+        assert.strictEqual(creatorPostBalance, creatorPreBalance + expectedCreatorGain, "Creator wallet should have the expected balance");
+        assert.strictEqual(winnerTokenBalance.value.uiAmount, 1, "Winner token balance should be 1.");
+        assert.strictEqual(escrowTokenBalance.value.uiAmount, 0, "Escrow token balance should be 0.");
 
     } catch (error) {
         console.error(`Error bidding on epoch ${epoch}:`, error);

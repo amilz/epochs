@@ -71,14 +71,18 @@ export async function mintAssetsForEpoch({
         const signature = await txRequest;
         if (logMintInfo) console.log(`   Epoch ${epoch} - mintNft signature: ${signature}`);
 
-        const data = await program.account.epochInscription.fetch(epochInscriptionPda);
-        assert.ok(data.buffers.imageRaw.length > 0);
+        const [data, auctionData, tokenBalance] = await Promise.all([
+            program.account.epochInscription.fetch(epochInscriptionPda),
+            program.account.auction.fetch(auctionPda),
+            program.provider.connection.getTokenAccountBalance(auctionAta)
+        ]);
 
-        const auctionData = await program.account.auction.fetch(auctionPda);
+        assert.ok(data.buffers.imageRaw.length > 0);
         assert.strictEqual(auctionData.epoch.toNumber(), epoch, "Auction epoch should match the input epoch");
         assert.strictEqual(auctionData.highBidLamports.toNumber(), 0, "High bid should be 0");
         assert.strictEqual(auctionData.highBidder.toBase58(), payer.publicKey.toBase58(), "High bidder should be the payer");
         assert.deepStrictEqual(auctionData.state, { unClaimed: {} }, 'Auction should be unclaimed');
+        assert.strictEqual(tokenBalance.value.uiAmount, 1, "Auction ATA should have 1 token");
 
         if (expectedReputation !== undefined) {
             const reputationData = await program.account.reputation.fetch(reputation);

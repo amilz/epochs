@@ -34,9 +34,10 @@ export async function bidOnAuction({
     const reputation = getReputationPda(bidder.publicKey, program);
     const auctionEscrow = getAuctionEscrowPda(program);
 
-    const [prevBidderInitialBalance, { highBidLamports: prevBid }] = await Promise.all([
+    const [prevBidderInitialBalance, { highBidLamports: prevBid }, initialEscrowBalance] = await Promise.all([
         program.provider.connection.getBalance(highBidder),
-        program.account.auction.fetch(auctionPda)
+        program.account.auction.fetch(auctionPda),
+        program.provider.connection.getBalance(auctionEscrow)
     ]);
 
     const txRequest = program.methods.bid(new anchor.BN(epoch), new anchor.BN(bidAmount))
@@ -69,10 +70,9 @@ export async function bidOnAuction({
             program.provider.connection.getBalance(auctionEscrow),
             program.provider.connection.getBalance(highBidder)
         ]);
-        // After returning funds, the escrow should only have the bid amount
-        assert.strictEqual(finalEscrowBalance, bidAmount, "Escrow balance should be increased by the bid amount");
-        // After returning funds, the previous bidder should have their previous bid refunded
-        assert.strictEqual(prevBidderFinalBalance, prevBidderInitialBalance + prevBid.toNumber(), "Previous bidder should have their bid refunded");
+
+        assert.strictEqual(finalEscrowBalance, initialEscrowBalance + bidAmount - prevBid.toNumber(), "After tx, final escrow should have the previous balance plus the new bid amount minus the previous bid amount");
+        assert.strictEqual(prevBidderFinalBalance, prevBidderInitialBalance + prevBid.toNumber(), "Previous bidder should have had their bid refunded");
 
     } catch (error) {
         //console.error(`Error bidding on epoch ${epoch}:`, error);
