@@ -91,7 +91,7 @@ export async function auctionClaim({
         assert.strictEqual(escrowTokenBalance.value.uiAmount, 0, "Escrow token balance should be 0.");
 
     } catch (error) {
-        console.error(`Error bidding on epoch ${epoch}:`, error);
+        //console.error(`Error bidding on epoch ${epoch}:`, error);
         if (expectToFail) {
             if (expectToFail.assertError) {
                 expectToFail.assertError(error);

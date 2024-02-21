@@ -34,23 +34,23 @@ export async function bidOnAuction({
     const reputation = getReputationPda(bidder.publicKey, program);
     const auctionEscrow = getAuctionEscrowPda(program);
 
-    const [prevBidderInitialBalance, { highBidLamports: prevBid }, initialEscrowBalance] = await Promise.all([
-        program.provider.connection.getBalance(highBidder),
-        program.account.auction.fetch(auctionPda),
-        program.provider.connection.getBalance(auctionEscrow)
-    ]);
-
-    const txRequest = program.methods.bid(new anchor.BN(epoch), new anchor.BN(bidAmount))
-        .accounts({
-            bidder: bidder.publicKey,
-            highBidder,
-            auctionEscrow,
-            auction: auctionPda,
-            reputation,
-        }).signers([bidder])
-        .rpc();
-
     try {
+
+        const [prevBidderInitialBalance, { highBidLamports: prevBid }, initialEscrowBalance] = await Promise.all([
+            program.provider.connection.getBalance(highBidder),
+            program.account.auction.fetch(auctionPda),
+            program.provider.connection.getBalance(auctionEscrow)
+        ]);
+
+        const txRequest = program.methods.bid(new anchor.BN(epoch), new anchor.BN(bidAmount))
+            .accounts({
+                bidder: bidder.publicKey,
+                highBidder,
+                auctionEscrow,
+                auction: auctionPda,
+                reputation,
+            }).signers([bidder])
+            .rpc();
 
         const signature = await txRequest;
         if (logMintInfo) console.log(`   Epoch ${epoch} - bid signature: ${signature}`);

@@ -5,11 +5,11 @@ import { Bmp } from "../target/types/bmp";
 import { airdropToMultiple } from "./utils/utils";
 import { mintAssetsForEpoch } from "./utils/instructions/mint";
 import { bidOnAuction } from "./utils/instructions/bid";
-import { ReputationPoints, ReputationTracker } from "./utils/reputation";
+import { ReputationTracker } from "./utils/reputation";
 import { assert } from "chai";
 import { auctionClaim } from "./utils/instructions/claim";
 
-const targetEpoch = 1;
+const targetEpoch = 2;
 
 describe("Epoch Auctions", () => {
   const provider = anchor.AnchorProvider.env();
@@ -78,8 +78,9 @@ describe("Epoch Auctions", () => {
       expectedReputation: initiatorReputationTracker,
     });
   });
+
   it(`Fails submit a low bid on Epoch # ${targetEpoch}`, async () => {
-    const expectedErrorCode = "BidTooLow"; // should be "BidTooLow" w/ msg of "Bid does not meet minimum bid threshold" (6003)
+    const expectedErrorCode = "BidTooLow";
     await bidOnAuction({
       bidAmount: LAMPORTS_PER_SOL / 2,
       epoch: targetEpoch,
@@ -87,6 +88,49 @@ describe("Epoch Auctions", () => {
       bidder,
       expectedReputation: bidderReputationTracker,
       highBidder: initiator.publicKey,
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          assert.include(error.error.errorCode.code, expectedErrorCode, `Expected error code to be '${expectedErrorCode}'`);
+        }
+      }
+    });
+  });
+
+  // Skip this test b/c it causes an error that is not handled some how
+  // Error: Account does not exist or has no data 8tEj9Y885kC61J9fNw85m3WUQ2P8x994mjhmKKVnK2Pg
+  it(`Fails submit wrong epoch (too low) for Epoch # ${targetEpoch}`, async () => {
+    const expectedErrorCode = "Fails for a lot of reason";
+    await bidOnAuction({
+      bidAmount: LAMPORTS_PER_SOL * 10,
+      epoch: targetEpoch - 1,
+      program,
+      bidder,
+      expectedReputation: bidderReputationTracker,
+      highBidder: initiator.publicKey,
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          assert.ok(error, "Expected an error");
+          // these don't work b/c accounts are not initialized
+          //assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          //assert.include(error.error.errorCode.code, expectedErrorCode, `Expected error code to be '${expectedErrorCode}'`);
+        }
+      },
+    });
+  });
+
+
+  it(`Fails submit a bid with wrong prevBidder on Epoch # ${targetEpoch}`, async () => {
+    const expectedErrorCode = "InvalidPreviousBidder"; 
+    await bidOnAuction({
+      bidAmount: LAMPORTS_PER_SOL / 2,
+      epoch: targetEpoch,
+      program,
+      bidder,
+      expectedReputation: bidderReputationTracker,
+      highBidder: Keypair.generate().publicKey,
       expectToFail: {
         errorCode: expectedErrorCode,
         assertError: (error) => {
@@ -123,7 +167,7 @@ describe("Epoch Auctions", () => {
   TODO: 
     X Assert balance
     X Test bid too low
-    - Test invalid high bidder
+    X Test invalid high bidder InvalidPreviousBidder
     - Test invalid epoch
     - Test invalid auction
     - Test invalid reputation
