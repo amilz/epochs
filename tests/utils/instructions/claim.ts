@@ -1,7 +1,7 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuctionEscrowPda, getAuctionPda, getReputationPda } from "../pdas";
+import { getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getReputationPda } from "../pdas";
 import { assert } from "chai";
 import { Bmp } from "../../../target/types/bmp";
 import { ReputationPoints, ReputationTracker } from "../reputation";
@@ -34,8 +34,8 @@ export async function auctionClaim({
     const auctionPda = getAuctionPda(epoch, program);
     const reputation = getReputationPda(winner.publicKey, program);
     const auctionEscrow = getAuctionEscrowPda(program);
+    const authority = getAuthorityPda(program);
     const { mint } = await program.account.auction.fetch(auctionPda);
-    const sourceAta = getAssociatedTokenAddressSync(mint, auctionPda, true, TOKEN_2022_PROGRAM_ID);
     const destinationAta = getAssociatedTokenAddressSync(mint, winner.publicKey, false, TOKEN_2022_PROGRAM_ID);
 
     const [escrowPreBalance, daoPreBalance, creatorPreBalance, { highBidLamports: exceptedEscrowWithdraw }] = await Promise.all([
@@ -53,8 +53,8 @@ export async function auctionClaim({
             reputation,
             daoTreasury,
             creatorWallet,
+            authority,
             mint, // fetch from the auction account
-            sourceAta,
             destinationAta,
             tokenProgram: TOKEN_2022_PROGRAM_ID
         })
@@ -75,12 +75,11 @@ export async function auctionClaim({
             assert.strictEqual(reputationData.reputation.toNumber(), expectedReputation.getReputation(), "Reputation should match expected value");
         }
 
-        const [escrowPostBalance, daoPostBalance, creatorPostBalance, winnerTokenBalance, escrowTokenBalance] = await Promise.all([
+        const [escrowPostBalance, daoPostBalance, creatorPostBalance, winnerTokenBalance] = await Promise.all([
             program.provider.connection.getBalance(auctionEscrow),
             program.provider.connection.getBalance(daoTreasury),
             program.provider.connection.getBalance(creatorWallet),
             program.provider.connection.getTokenAccountBalance(destinationAta),
-            program.provider.connection.getTokenAccountBalance(sourceAta)
         ]);
         const expectedDaoGain = exceptedEscrowWithdraw.toNumber() * 0.8;
         const expectedCreatorGain = exceptedEscrowWithdraw.toNumber() - expectedDaoGain;
@@ -88,7 +87,6 @@ export async function auctionClaim({
         assert.strictEqual(daoPostBalance, daoPreBalance + expectedDaoGain, "Dao treasury should have the expected balance");
         assert.strictEqual(creatorPostBalance, creatorPreBalance + expectedCreatorGain, "Creator wallet should have the expected balance");
         assert.strictEqual(winnerTokenBalance.value.uiAmount, 1, "Winner token balance should be 1.");
-        assert.strictEqual(escrowTokenBalance.value.uiAmount, 0, "Escrow token balance should be 0.");
 
     } catch (error) {
         //console.error(`Error bidding on epoch ${epoch}:`, error);

@@ -7,7 +7,7 @@ use crate::state::*;
 
 #[derive(Accounts)]
 #[instruction(input_epoch: u64)]
-pub struct MintNft<'info> {
+pub struct InitEpoch<'info> {
 
     /// Anybody can kick off a new epoch. 
     /// No constraits--just need to be a signer
@@ -66,18 +66,13 @@ pub struct MintNft<'info> {
     )]
     pub authority: AccountInfo<'info>,
 
-    /// We will initialize the epoch/auction by sending the NFT
-    /// to the auction PDA.
-    /// CHECK: Account is initialized by the instruction after mint is initialized
-    #[account(mut)]
-    pub auction_ata: AccountInfo<'info>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token2022>,
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle_mint_nft(ctx: Context<MintNft>, input_epoch: u64) -> Result<()> {
+pub fn handle_init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()> {
     let current_epoch = get_and_validate_epoch(input_epoch)?;
     let epoch_inscription: &mut Account<'_, EpochInscription> = &mut ctx.accounts.epoch_inscription;
     let mint: &AccountInfo<'_> = &ctx.accounts.mint;

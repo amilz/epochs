@@ -1,7 +1,11 @@
-use anchor_lang:: prelude::*;
-use anchor_spl::token_interface::{Mint, TokenAccount, TransferChecked, transfer_checked};
-use anchor_spl::{associated_token::AssociatedToken, token_2022::Token2022};
-use anchor_lang::system_program::{transfer, Transfer};
+use anchor_lang::{prelude::*, system_program::{transfer, Transfer}};
+
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_2022::{mint_to, MintTo, Token2022},
+    token_interface::{set_authority, spl_token_2022::instruction::AuthorityType, SetAuthority, Mint, TokenAccount},
+};
+
 use std::str::FromStr;
 
 use crate::utils::verify_epoch_has_passed;
@@ -68,18 +72,16 @@ pub struct AuctionClaim<'info> {
     #[account(mut)]
     pub mint: InterfaceAccount<'info, Mint>,
 
-
+    /// CHECK: Just a signer. Safe b/c of seeds/bump
     #[account(
-        mut,
-        associated_token::mint = mint,
-        associated_token::authority = auction,
-        associated_token::token_program = token_program
+        seeds = [AUTHORITY_SEED.as_bytes()],
+        bump,
     )]
-    pub source_ata: InterfaceAccount<'info, TokenAccount>,
+    pub authority: AccountInfo<'info>,
 
-    
+
     #[account(
-        init_if_needed,
+        init,
         payer = winner,
         associated_token::mint = mint,
         associated_token::authority = winner,
@@ -99,7 +101,7 @@ pub fn handle_claim(ctx: Context<AuctionClaim>, claim_epoch: u64) -> Result<()> 
     ctx.accounts.verify_winner()?;
     ctx.accounts.verify_auction_state()?;
     ctx.accounts.distribute_funds(ctx.bumps.auction_escrow)?;
-    ctx.accounts.distribute_nft()?;
+    ctx.accounts.distribute_nft(ctx.bumps.authority)?;
     ctx.accounts.update_auction_and_reputation()?;
 
     Ok(())
@@ -155,20 +157,37 @@ impl AuctionClaim<'_> {
         Ok(())
     }
 
-    pub fn distribute_nft(&self) -> Result<()> {
-        let bump = &[self.auction.bump];
-        let seeds: &[&[u8]] = &[AUCTION_SEED.as_ref(), &self.auction.epoch.to_le_bytes(), bump];
-        let signer_seeds = &[&seeds[..]];
+    pub fn distribute_nft(&self, authority_bump: u8) -> Result<()> {
+        let authority_bump = &[authority_bump];
+        let authority_seeds = &[AUTHORITY_SEED.as_bytes(), authority_bump];
+        let authority_signer_seeds = &[&authority_seeds[..]];
 
-        let cpi_accounts = TransferChecked {
-            from: self.source_ata.to_account_info().clone(),
-            mint: self.mint.to_account_info().clone(),
-            to: self.destination_ata.to_account_info().clone(),
-            authority: self.auction.to_account_info(),
+        // Mint to the user's wallet
+        msg!("Minting to user's wallet");
+        mint_to(
+            CpiContext::new_with_signer(
+                self.token_program.to_account_info(),
+                MintTo {
+                    mint: self.mint.to_account_info(),
+                    to: self.destination_ata.to_account_info(),
+                    authority: self.authority.to_account_info(),
+                },
+                authority_signer_seeds,
+            ),
+            1,
+        )?;
+        
+        // Set Mint Authority to None
+        let authority_cpi_accounts = SetAuthority {
+            current_authority: self.authority.to_account_info(),
+            account_or_mint: self.mint.to_account_info(),
         };
-        let cpi_program = self.token_program.to_account_info();
-        let cpi_context = CpiContext::new(cpi_program, cpi_accounts).with_signer(signer_seeds);
-        transfer_checked(cpi_context, 1, 0)?;
+        let cpi_ctx = CpiContext::new_with_signer(
+            self.token_program.to_account_info(),
+            authority_cpi_accounts,
+            authority_signer_seeds,
+        );
+        set_authority(cpi_ctx, AuthorityType::MintTokens, None)?;
 
         Ok(())
     }

@@ -3,20 +3,12 @@ use anchor_lang::{
     solana_program::{
         program::{invoke, invoke_signed},
         system_instruction::create_account,
-    }
+    },
 };
 
-use anchor_spl::{
-    associated_token::{self, create as create_ata},
-    token_2022::{
-        mint_to,
-        spl_token_2022::{
-            extension::metadata_pointer::instruction::initialize as init_metadata_pointer,
-            instruction::{initialize_mint2, initialize_mint_close_authority},
-        },
-        MintTo,
-    },
-    token_interface::{set_authority, spl_token_2022::instruction::AuthorityType, SetAuthority},
+use anchor_spl::token_2022::spl_token_2022::{
+    extension::metadata_pointer::instruction::initialize as init_metadata_pointer,
+    instruction::{initialize_mint2, initialize_mint_close_authority},
 };
 
 use spl_token_2022::{
@@ -31,9 +23,9 @@ use spl_token_metadata_interface::{
     state::{Field, TokenMetadata},
 };
 
-use crate::{utils::format_pubkey, MintNft, ALL_ROYALTIES, AUTHORITY_SEED};
+use crate::{utils::format_pubkey, InitEpoch, ALL_ROYALTIES, AUTHORITY_SEED};
 
-impl<'info> MintNft<'info> {
+impl<'info> InitEpoch<'info> {
     fn update_metadata_field_and_invoke(
         &self,
         field_key: &str,
@@ -84,7 +76,7 @@ impl<'info> MintNft<'info> {
             ExtensionType::MetadataPointer,
             ExtensionType::GroupMemberPointer,
             ExtensionType::MintCloseAuthority,
-            ExtensionType::TransferHook, 
+            ExtensionType::TransferHook,
         ])?;
         let instance_size = token_metadata.tlv_size_of().unwrap();
 
@@ -252,50 +244,9 @@ impl<'info> MintNft<'info> {
             .unwrap();
         });
 
-        // Create ATA for the user
-        msg!("Creating ATA");
-        create_ata(CpiContext::new(
-            self.associated_token_program.to_account_info(),
-            associated_token::Create {
-                payer: self.payer.to_account_info(),
-                associated_token: self.auction_ata.to_account_info(),
-                mint: self.mint.to_account_info(),
-                authority: self.auction.to_account_info(),
-                system_program: self.system_program.to_account_info(),
-                token_program: self.token_program.to_account_info(),
-            },
-        ))?;
-
         // TODO:  (maybe do these on claim if compute challenges?)
         //    - Implement the transfer hook
         //    - Init group member pointer
-
-        // Mint to the user's wallet
-        msg!("Minting to user's wallet");
-        mint_to(
-            CpiContext::new_with_signer(
-                self.token_program.to_account_info(),
-                MintTo {
-                    mint: self.mint.to_account_info(),
-                    to: self.auction_ata.to_account_info(),
-                    authority: self.authority.to_account_info(),
-                },
-                authority_signer_seeds,
-            ),
-            1,
-        )?;
-
-        // Set Mint Authority to None
-        let authority_cpi_accounts = SetAuthority {
-            current_authority: self.authority.to_account_info(),
-            account_or_mint: self.mint.to_account_info(),
-        };
-        let cpi_ctx = CpiContext::new_with_signer(
-            self.token_program.to_account_info(),
-            authority_cpi_accounts,
-            authority_signer_seeds,
-        );
-        set_authority(cpi_ctx, AuthorityType::MintTokens, None)?;
 
         Ok(())
     }

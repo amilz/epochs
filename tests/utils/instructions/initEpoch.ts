@@ -8,7 +8,7 @@ import { openFile } from "../utils";
 import { Bmp } from "../../../target/types/bmp";
 import { ReputationPoints, ReputationTracker } from "../reputation";
 import { convertBmpToPng } from "../image";
-import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 
 interface MintAssetsForEpochParams {
     epoch: number;
@@ -38,27 +38,14 @@ export async function mintAssetsForEpoch({
     const epochInscriptionPda = getEpochInscriptionPda(epoch, program);
     const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 });
     const reputation = getReputationPda(payer.publicKey, program);
-    const auctionAta = getAssociatedTokenAddressSync(mint.publicKey, auctionPda, true, TOKEN_2022_PROGRAM_ID);
     const authority = getAuthorityPda(program);
-    /*     
-        console.table({
-            payer: payer.publicKey.toBase58(),
-            epochInscription: epochInscriptionPda.toBase58(),
-            auction: auctionPda.toBase58(),
-            reputation: reputation.toBase58(),
-            auctionAta: auctionAta.toBase58(),
-            mint: mint.publicKey.toBase58(),
-            authority: authority.toBase58(),
-        }) 
-    */
 
-    const txRequest = program.methods.mintNft(new anchor.BN(epoch))
+    const txRequest = program.methods.initEpoch(new anchor.BN(epoch))
         .accounts({
             payer: payer.publicKey,
             epochInscription: epochInscriptionPda,
             auction: auctionPda,
             reputation,
-            auctionAta,
             mint: mint.publicKey,
             authority,
             tokenProgram: TOKEN_2022_PROGRAM_ID
@@ -72,10 +59,9 @@ export async function mintAssetsForEpoch({
         if (logMintInfo) console.log(`   Epoch ${epoch} - mintNft signature: ${signature}`);
         expectedReputation.addReputation(ReputationPoints.INITIATE);
 
-        const [data, auctionData, tokenBalance] = await Promise.all([
+        const [data, auctionData] = await Promise.all([
             program.account.epochInscription.fetch(epochInscriptionPda),
             program.account.auction.fetch(auctionPda),
-            program.provider.connection.getTokenAccountBalance(auctionAta)
         ]);
 
         assert.ok(data.buffers.imageRaw.length > 0);
@@ -83,7 +69,6 @@ export async function mintAssetsForEpoch({
         assert.strictEqual(auctionData.highBidLamports.toNumber(), 0, "High bid should be 0");
         assert.strictEqual(auctionData.highBidder.toBase58(), payer.publicKey.toBase58(), "High bidder should be the payer");
         assert.deepStrictEqual(auctionData.state, { unClaimed: {} }, 'Auction should be unclaimed');
-        assert.strictEqual(tokenBalance.value.uiAmount, 1, "Auction ATA should have 1 token");
 
         if (expectedReputation !== undefined) {
             const reputationData = await program.account.reputation.fetch(reputation);
