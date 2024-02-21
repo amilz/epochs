@@ -17,19 +17,6 @@ wallet = "/Users/amilz/.config/solana/id.json"
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
-
-[[test.genesis]]
-address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-program = "./tests/genesis/metadata.so"
-
-[[test.genesis]]
-address = "1NSCRfGeyo7wPUazGbaPBUsTM49e1k2aXewHGARfzSo"
-program = "./tests/genesis/inscription.so"
-
-## This is Inscription Shard 1 Cloned from Mainnet
 [test.validator]
 url = "https://api.mainnet-beta.solana.com"
 slots_per_epoch = "32"
-
-[[test.validator.clone]]
-address = "76BsfqxZgmVg114yYtLFBopv6NAqvnxgcLvPKhxUMRHg"

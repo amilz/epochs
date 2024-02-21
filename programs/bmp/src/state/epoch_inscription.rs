@@ -22,7 +22,7 @@ impl EpochInscription {
         1 +     // bump
         4 +     // Vec<T> minimum length
         3126 +  // buffer of 32x32 .bmp
-        1000    // buffer of 1000 bytes (TODO: make dynamic)
+        600    // buffer of 1000 bytes (TODO: make dynamic) 500 seems to throw.  Sweet spot 500-600 but may change with mor metadata
     }
     #[inline(never)]
     pub fn generate_and_set_asset(&mut self, current_epoch: u64, user: Pubkey, bump: u8) -> (usize, usize, usize, usize, (u8,u8, u8)) {
