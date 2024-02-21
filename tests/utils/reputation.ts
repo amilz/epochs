@@ -2,11 +2,11 @@ import { PublicKey } from "@solana/web3.js";
 
 
 export enum ReputationPoints {
-    INITIATE = 5,
-    SETTLE = 3,
-    BID = 1,
-    WIN = 10
-}
+    INITIATE = 50,
+    SETTLE = 10,
+    BID = 5,
+    WIN = 25
+} 
 
 export class ReputationTracker {
     private reputation: number;
