@@ -50,7 +50,7 @@ function convertImageToRustTypes(filePath: string, name: string): string {
 }
 
 // Directory containing the PNG files
-const directoryPath = './scripts/decodePng/nouns/images/';
+const directoryPath = './scripts/decodePng/nouns-sol-test/';
 // Temporary structure to store the conversion outputs and constant names grouped by category
 const categories: Record<string, CategoryData> = {};
 
@@ -87,7 +87,7 @@ Object.entries(categories).forEach(([category, data]: [string, CategoryData]) =>
     // Append the array definition to the outputs
     const finalOutput = outputs + arrayDefinition;
 
-    const outputPath = `./scripts/decodePng/nouns/outputs2/${category}.rs`;
+    const outputPath = `./scripts/decodePng/nouns-sol-test/${category}.rs`;
     fs.writeFileSync(outputPath, finalOutput);
     console.log(`Conversion completed for ${category}. Check ${outputPath} for the result.`);
 });

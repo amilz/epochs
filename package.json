@@ -7,10 +7,10 @@
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",
-        "@metaplex-foundation/mpl-inscription": "^0.8.1",
         "@solana/spl-token": "^0.4.0",
         "@types/node": "^20.11.10",
-        "jimp": "^0.22.10"
+        "jimp": "^0.22.10",
+        "pngjs": "^7.0.0"
     },
     "devDependencies": {
         "@types/bn.js": "^5.1.0",

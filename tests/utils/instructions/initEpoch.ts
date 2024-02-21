@@ -79,7 +79,7 @@ export async function mintAssetsForEpoch({
         const filePaths = {
             bmp: `./img-outputs/nouns/ej-${epoch}.bmp`,
             json: `./img-outputs/json/${epoch}.json`,
-            png: `./img-outputs/png/ej-${epoch}.png`,
+            png: `./img-outputs/pn/sol-${epoch}.png`,
         }
 
         //fs.writeFileSync(filePaths.bmp, data.buffers.imageRaw);
