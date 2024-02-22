@@ -38,29 +38,37 @@ export async function auctionClaim({
     const { mint } = await program.account.auction.fetch(auctionPda);
     const destinationAta = getAssociatedTokenAddressSync(mint, winner.publicKey, false, TOKEN_2022_PROGRAM_ID);
 
-    const [escrowPreBalance, daoPreBalance, creatorPreBalance, { highBidLamports: exceptedEscrowWithdraw }] = await Promise.all([
-        program.provider.connection.getBalance(auctionEscrow),
-        program.provider.connection.getBalance(daoTreasury),
-        program.provider.connection.getBalance(creatorWallet),
-        program.account.auction.fetch(auctionPda)
-    ]);
-
-    const txRequest = await program.methods.claim(new anchor.BN(epoch))
-        .accounts({
-            winner: winner.publicKey,
-            auction: auctionPda,
-            auctionEscrow,
-            reputation,
-            daoTreasury,
-            creatorWallet,
-            authority,
-            mint, // fetch from the auction account
-            destinationAta,
-            tokenProgram: TOKEN_2022_PROGRAM_ID
-        })
-        .signers([winner])
-        .rpc();
     try {
+
+        const results = await Promise.allSettled([
+            program.provider.connection.getBalance(auctionEscrow),
+            program.provider.connection.getBalance(daoTreasury),
+            program.provider.connection.getBalance(creatorWallet),
+            program.account.auction.fetch(auctionPda)
+        ]);
+
+        // Extracting values with fallbacks
+        const escrowPreBalance = results[0].status === 'fulfilled' ? results[0].value : 0;
+        const daoPreBalance = results[1].status === 'fulfilled' ? results[1].value : 0;
+        const creatorPreBalance = results[2].status === 'fulfilled' ? results[2].value : 0;
+        const { highBidLamports: exceptedEscrowWithdraw } = results[3].status === 'fulfilled' ? results[3].value : { highBidLamports: new anchor.BN(0) };
+        
+
+        const txRequest = await program.methods.claim(new anchor.BN(epoch))
+            .accounts({
+                winner: winner.publicKey,
+                auction: auctionPda,
+                auctionEscrow,
+                reputation,
+                daoTreasury,
+                creatorWallet,
+                authority,
+                mint, // fetch from the auction account
+                destinationAta,
+                tokenProgram: TOKEN_2022_PROGRAM_ID
+            })
+            .signers([winner])
+            .rpc();
 
         const signature = await txRequest;
         if (logMintInfo) console.log(`   Epoch ${epoch} - bid signature: ${signature}`);

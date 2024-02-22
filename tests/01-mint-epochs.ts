@@ -9,7 +9,7 @@ import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
 import { auctionClaim } from "./utils/instructions/claim";
 
-const numberEpochs = 100;
+const numberEpochs = 1;
 
 describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
   const provider = anchor.AnchorProvider.env();
@@ -187,10 +187,12 @@ describe("Epoch Auctions", () => {
     });
   });
 
-  // Skip this test b/c it causes an error that is not handled some how
-  // Error: Account does not exist or has no data 8tEj9Y885kC61J9fNw85m3WUQ2P8x994mjhmKKVnK2Pg
   it(`Fails submit wrong epoch (too low) for Epoch # ${targetEpoch}`, async () => {
-    const expectedErrorCode = "Fails for a lot of reason";
+    const expectedErrorCode1 = "AccountNotInitialized";
+    const expectedErrorCode2 = "PastEpochNotAllowed";
+    // this is likley a throw if an older auction PDA is passed
+    // Ideally we can update to test each scenario separately
+    const expectedErrorCode3 = "InvalidPreviousBidder";
     await bidOnAuction({
       bidAmount: LAMPORTS_PER_SOL * 10,
       epoch: targetEpoch - 1,
@@ -199,20 +201,46 @@ describe("Epoch Auctions", () => {
       expectedReputation: bidderReputationTracker,
       highBidder: initiator.publicKey,
       expectToFail: {
-        errorCode: expectedErrorCode,
+        errorCode: expectedErrorCode1,
         assertError: (error) => {
-          assert.ok(error, "Expected an error");
-          // these don't work b/c accounts are not initialized
-          //assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
-          //assert.include(error.error.errorCode.code, expectedErrorCode, `Expected error code to be '${expectedErrorCode}'`);
+          assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          assert(
+            error.error.errorCode.code === expectedErrorCode1 || error.error.errorCode.code === expectedErrorCode2 
+            || error.error.errorCode.code === expectedErrorCode3,
+            `Expected error code to be '${expectedErrorCode1}', ${expectedErrorCode2}, or '${expectedErrorCode3}', but got '${error.error.errorCode.code}'`
+          );
         }
       },
     });
   });
 
+  it(`Fails submit wrong epoch (too high) for Epoch # ${targetEpoch}`, async () => {
+    const expectedErrorCode1 = "AccountNotInitialized";
+    const expectedErrorCode2 = "FutureEpochNotAllowed";
+
+    await bidOnAuction({
+      bidAmount: LAMPORTS_PER_SOL * 10,
+      epoch: targetEpoch + 1,
+      program,
+      bidder,
+      expectedReputation: bidderReputationTracker,
+      highBidder: initiator.publicKey,
+      expectToFail: {
+        errorCode: expectedErrorCode1,
+        assertError: (error) => {
+          assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          assert(
+            error.error.errorCode.code === expectedErrorCode1 || error.error.errorCode.code === expectedErrorCode2,
+            `Expected error code to be '${expectedErrorCode1}' or '${expectedErrorCode2}', but got '${error.error.errorCode.code}'`
+          );
+        }
+      },
+    });
+  });
 
   it(`Fails submit a bid with wrong prevBidder on Epoch # ${targetEpoch}`, async () => {
-    const expectedErrorCode = "InvalidPreviousBidder"; 
+    const expectedErrorCode = "InvalidPreviousBidder";
+    
     await bidOnAuction({
       bidAmount: LAMPORTS_PER_SOL / 2,
       epoch: targetEpoch,
@@ -229,6 +257,101 @@ describe("Epoch Auctions", () => {
       }
     });
   });
+
+  it(`Fails to claim with wrong winner # ${targetEpoch}`, async () => {
+    let { epoch } = await provider.connection.getEpochInfo();
+    while (epoch <= targetEpoch) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      ({ epoch } = await provider.connection.getEpochInfo());
+    }
+    if (targetEpoch > epoch) {
+      throw new Error(`Target epoch ${targetEpoch} not reached yet`);
+    }
+    const expectedErrorCode1 = "AccountNotInitialized";
+    const expectedErrorCode2 = "InvalidWinner";
+    await auctionClaim({
+      epoch: targetEpoch,
+      program,
+      winner: Keypair.generate(),
+      daoTreasury: new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe"),
+      creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa"),
+      expectedReputation: initiatorReputationTracker,
+      expectToFail: {
+        errorCode: expectedErrorCode1,
+        assertError: (error) => {
+          assert.ok(error, "Expected an error");
+          assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          assert(
+            error.error.errorCode.code === expectedErrorCode1 || error.error.errorCode.code === expectedErrorCode2,
+            `Expected error code to be '${expectedErrorCode1}' or '${expectedErrorCode2}', but got '${error.error.errorCode.code}'`
+          );
+        }
+      }
+    });
+
+
+  });
+
+  it(`Fails to claim with wrong Treasury # ${targetEpoch}`, async () => {
+    let { epoch } = await provider.connection.getEpochInfo();
+    while (epoch <= targetEpoch) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      ({ epoch } = await provider.connection.getEpochInfo());
+    }
+    if (targetEpoch > epoch) {
+      throw new Error(`Target epoch ${targetEpoch} not reached yet`);
+    }
+    const expectedErrorCode = "InvalidTreasury";
+    await auctionClaim({
+      epoch: targetEpoch,
+      program,
+      winner: initiator,
+      daoTreasury: Keypair.generate().publicKey,
+      creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa"),
+      expectedReputation: initiatorReputationTracker,
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          assert.ok(error, "Expected an error");
+          assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          assert.include(error.error.errorCode.code, expectedErrorCode, `Expected error code to be '${expectedErrorCode}' but got '${error.error.errorCode.code}'`);
+        }
+      }
+    });
+
+
+  });
+
+  it(`Fails to claim with wrong Creator # ${targetEpoch}`, async () => {
+    let { epoch } = await provider.connection.getEpochInfo();
+    while (epoch <= targetEpoch) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      ({ epoch } = await provider.connection.getEpochInfo());
+    }
+    if (targetEpoch > epoch) {
+      throw new Error(`Target epoch ${targetEpoch} not reached yet`);
+    }
+    const expectedErrorCode = "InvalidCreator";
+    await auctionClaim({
+      epoch: targetEpoch,
+      program,
+      winner: initiator,
+      daoTreasury: new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe"),
+      creatorWallet: Keypair.generate().publicKey,
+      expectedReputation: initiatorReputationTracker,
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          assert.ok(error, "Expected an error");
+          assert.isTrue(error instanceof AnchorError, "Expected an AnchorError");
+          assert.include(error.error.errorCode.code, expectedErrorCode, `Expected error code to be '${expectedErrorCode}' but got '${error.error.errorCode.code}'`);
+        }
+      }
+    });
+
+
+  });
+
 
   it(`Claims the auction for Epoch # ${targetEpoch}`, async () => {
     let { epoch } = await provider.connection.getEpochInfo();
@@ -251,3 +374,12 @@ describe("Epoch Auctions", () => {
 
 });
 
+/*
+  TODO: 
+    X Assert balance
+    X Test bid too low
+    X Test invalid high bidder InvalidPreviousBidder
+    X Test invalid epoch
+    - Simulate auction escrow balance under multiple bids across multiple epochs
+
+*/

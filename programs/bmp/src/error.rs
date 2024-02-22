@@ -29,6 +29,12 @@ pub enum EpochError {
     #[msg("Auction has already been claimed")]
     AuctionAlreadyClaimed,
 
+    #[msg("Invalid treasury account")]
+    InvalidTreasury,
+
+    #[msg("Invalid creator account")]
+    InvalidCreator,
+
     // Reputation Errors
 
     #[msg("Contributor does not match signer of the transaction")]

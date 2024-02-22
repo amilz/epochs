@@ -36,11 +36,18 @@ export async function bidOnAuction({
 
     try {
 
-        const [prevBidderInitialBalance, { highBidLamports: prevBid }, initialEscrowBalance] = await Promise.all([
+        const results = await Promise.allSettled([
             program.provider.connection.getBalance(highBidder),
             program.account.auction.fetch(auctionPda),
             program.provider.connection.getBalance(auctionEscrow)
         ]);
+
+        // Extracting and providing fallback values
+        const prevBidderInitialBalance = results[0].status === 'fulfilled' ? results[0].value : 0;
+        const { highBidLamports: prevBid } = results[1].status === 'fulfilled' ? results[1].value : { highBidLamports: new anchor.BN(0) };
+        const initialEscrowBalance = results[2].status === 'fulfilled' ? results[2].value : 0;
+
+
 
         const txRequest = program.methods.bid(new anchor.BN(epoch), new anchor.BN(bidAmount))
             .accounts({

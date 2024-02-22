@@ -59,13 +59,13 @@ pub struct AuctionClaim<'info> {
 
     #[account(
         mut,
-        address = Pubkey::from_str(DAO_TREASURY_WALLET).unwrap() 
+        address = Pubkey::from_str(DAO_TREASURY_WALLET).unwrap() @ EpochError::InvalidTreasury
     )]
     dao_treasury: SystemAccount<'info>,
 
     #[account(
         mut,
-        address = Pubkey::from_str(CREATOR_WALLET).unwrap() 
+        address = Pubkey::from_str(CREATOR_WALLET).unwrap() @EpochError::InvalidCreator
     )]
     creator_wallet: SystemAccount<'info>,
 
