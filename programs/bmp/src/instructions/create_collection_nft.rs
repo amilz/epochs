@@ -65,11 +65,11 @@ pub struct CreateCollectionNft<'info> {
 
 
 
-
+// TO DO - Migrate from Metaplex to WNS
 pub fn handle_create_collection(ctx: Context<CreateCollectionNft>) -> Result<()> {
     const NAME: &str = "The Epochs";
     const SYMBOL: &str = "EPOCH";
-    const URI: &str = "https://arweave.net/PkmMMr2GNK3eraWcat-pl7BwGGUQN5QLEyzDtIjbYWI";
+    const URI: &str = "https://something";
 
     // Collection Mint PDA for signing
     let bump: &[u8;1] = &[ctx.bumps.collection_mint];
