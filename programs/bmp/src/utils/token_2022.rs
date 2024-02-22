@@ -23,7 +23,7 @@ use spl_token_metadata_interface::{
     state::{Field, TokenMetadata},
 };
 
-use crate::{utils::format_pubkey, InitEpoch, ALL_ROYALTIES, AUTHORITY_SEED};
+use crate::{utils::format_pubkey, InitEpoch, ALL_ROYALTIES, AUTHORITY_SEED, ROYALTY_BASIS_POINTS_FIELD};
 
 impl<'info> InitEpoch<'info> {
     fn update_metadata_field_and_invoke(
@@ -231,7 +231,7 @@ impl<'info> InitEpoch<'info> {
             authority_signer_seeds,
         )?;
         self.update_metadata_field_and_invoke(
-            "royalties",
+            ROYALTY_BASIS_POINTS_FIELD,
             &(500 as u16).to_string(),
             authority_signer_seeds,
         )?;
