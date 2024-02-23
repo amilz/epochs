@@ -4,6 +4,7 @@ use anchor_lang::solana_program::program::{invoke, invoke_signed};
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_2022::Token2022;
 
+use crate::utils::{wns_mint_nft, CreateMintAccountArgs};
 use crate::{EpochError, AUTHORITY_SEED};
 
 #[derive(Accounts)]
@@ -62,89 +63,27 @@ pub struct WnsCpi<'info> {
 
 impl<'info> WnsCpi<'info> {
     pub fn handler(&self, authority_bump: u8) -> Result<()> {
-
-        let instruction_discriminator = sighash("global", "create_mint_account");
-        let authority_bump = &[authority_bump];
-        let authority_seeds = &[AUTHORITY_SEED.as_bytes(), authority_bump];
-        let authority_signer_seeds = &[&authority_seeds[..]];
-
         let instruction_data = CreateMintAccountArgs {
             name: "The Epochs".to_string(),
             symbol: "EPOCH".to_string(),
             uri: "https://something".to_string(),
         };
-        let mut instr_in_bytes: Vec<u8> = Vec::new();
-        instruction_data.serialize(&mut instr_in_bytes)?;
 
-
-        let account_metas = vec![
-            AccountMeta::new(*self.payer.key, true),
-            AccountMeta::new(*self.authority.key, true),
-            AccountMeta::new_readonly(*self.receiver.key, false),
-            AccountMeta::new(*self.mint.key, true),
-            AccountMeta::new(*self.mint_token_account.key, false),
-            AccountMeta::new(*self.extra_metas_account.key, false),
-            AccountMeta::new_readonly(*self.manager.key, false),
-            AccountMeta::new_readonly(*self.system_program.key, false),
-            AccountMeta::new_readonly(*self.rent.to_account_info().key, false),
-            AccountMeta::new_readonly(*self.associated_token_program.key, false),
-            AccountMeta::new_readonly(*self.token_program.key, false),
-            AccountMeta::new_readonly(*self.wns_program.key, false),
-        ];
-    
-
-        invoke_signed(
-            &Instruction {
-                program_id: self.wns_program.key(),
-                accounts: account_metas,
-                data: (instruction_discriminator, instruction_data).try_to_vec().unwrap(),
-            },
-            &[
-                self.payer.to_account_info(),
-                self.authority.to_account_info(),
-                self.receiver.to_account_info(),
-                self.mint.to_account_info(),
-                self.mint_token_account.to_account_info(),
-                self.extra_metas_account.to_account_info(),
-                self.manager.to_account_info(),
-                self.system_program.to_account_info(),
-                self.rent.to_account_info(),
-                self.associated_token_program.to_account_info(),
-                self.token_program.to_account_info(),
-                self.wns_program.to_account_info(),
-            ],
-            authority_signer_seeds,
-        )?;
-
-
-        Ok(())
+        wns_mint_nft(
+            &self.payer,
+            &self.authority,
+            &self.receiver,
+            &self.mint,
+            &self.mint_token_account,
+            &self.extra_metas_account,
+            &self.manager,
+            &self.system_program,
+            &self.rent.to_account_info(),
+            &self.associated_token_program,
+            &self.token_program,
+            &self.wns_program,
+            authority_bump,
+            instruction_data,
+        )
     }
-}
-
-#[derive(AnchorDeserialize, AnchorSerialize)]
-pub struct CreateMintAccountArgs {
-    pub name: String,
-    pub symbol: String,
-    pub uri: String,
-}
-
-pub fn anchor_sighash(name: &str) -> [u8; 8] {
-    let namespace = "global";
-    let preimage = format!("{}:{}", namespace, name);
-    let mut sighash = [0u8; 8];
-    sighash.copy_from_slice(
-        &anchor_lang::solana_program::hash::hash(preimage.as_bytes()).to_bytes()[..8],
-    );
-    sighash
-}
-
-pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
-    let preimage = format!("{}:{}", namespace, name);
-
-    let mut sighash = [0u8; 8];
-    sighash.copy_from_slice(
-        &anchor_lang::solana_program::hash::hash(preimage.as_bytes()).to_bytes()
-            [..8],
-    );
-    sighash
 }
