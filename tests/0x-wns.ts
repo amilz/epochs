@@ -6,7 +6,7 @@ import { airdropToMultiple } from "./utils/utils";
 import { ReputationTracker } from "./utils/reputation";
 import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
-import { getAuthorityPda } from "./utils/pdas";
+import { getAuctionPda, getAuthorityPda } from "./utils/pdas";
 import { assert } from "chai";
 
 const WNS_PROGRAM_ID = new PublicKey("wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM")
@@ -41,15 +41,17 @@ describe("cpi to wns", () => {
         mint.publicKey.toBuffer()
       ],
       WNS_PROGRAM_ID);
+    const auctionPda = getAuctionPda(0, program);
+
     const accounts = {
       payer: payer.publicKey,
       authority: getAuthorityPda(program), //authority.publicKey
-      receiver: payer.publicKey,
+      receiver: auctionPda,
       mint: mint.publicKey,
       mintTokenAccount: getAssociatedTokenAddressSync(
         mint.publicKey,
-        payer.publicKey,
-        false,
+        auctionPda,
+        true,
         TOKEN_2022_PROGRAM_ID
       ),
       extraMetasAccount,
@@ -71,22 +73,22 @@ describe("cpi to wns", () => {
         //.signers([payer, mint, authority])
         .instruction();
 
-        let blockhash = await provider.connection
+      let blockhash = await provider.connection
         .getLatestBlockhash()
         .then(res => res.blockhash);
-    const messageV0 = new TransactionMessage({
+      const messageV0 = new TransactionMessage({
         payerKey: payer.publicKey,
         recentBlockhash: blockhash,
-        instructions: [ ix ],
-    }).compileToV0Message();
-    const txn = new VersionedTransaction(messageV0);
+        instructions: [ix],
+      }).compileToV0Message();
+      const txn = new VersionedTransaction(messageV0);
 
-    txn.sign([payer, mint]);
+      txn.sign([payer, mint]);
 
-    const serialized = txn.serialize();
-    const sig = await provider.connection.sendTransaction(txn);
-    console.log("Signature: ", sig);
-    assert.ok(sig, "Transaction should have confirmed.");
+      const serialized = txn.serialize();
+      const sig = await provider.connection.sendTransaction(txn);
+      console.log("Signature: ", sig);
+      assert.ok(sig, "Transaction should have confirmed.");
 
     } catch (err) {
       console.log("Error: ", err);
