@@ -37,6 +37,10 @@ pub mod bmp {
         claim::handle_claim(ctx, input_epoch)
     }
 
+    pub fn wns_cpi(ctx: Context<WnsCpi>) -> Result<()> {
+        ctx.accounts.handler(ctx.bumps.authority)
+    }
+
 }
 
 
