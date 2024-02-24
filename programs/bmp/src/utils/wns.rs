@@ -74,7 +74,7 @@ pub fn wns_mint_nft<'info>(
     Ok(())
 }
 
-pub fn sighash(namespace: &str, name: &str) -> [u8; 8] {
+fn sighash(namespace: &str, name: &str) -> [u8; 8] {
     let preimage = format!("{}:{}", namespace, name);
     let hash = anchor_lang::solana_program::hash::hash(preimage.as_bytes());
     let mut sighash = [0u8; 8];

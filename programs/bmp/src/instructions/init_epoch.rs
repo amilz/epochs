@@ -61,6 +61,7 @@ pub struct InitEpoch<'info> {
     /// This will be the authority of the Token2022 NFT
     /// CHECK: Just a signer. Safe b/c of seeds/bump
     #[account(
+        mut,
         seeds = [AUTHORITY_SEED.as_bytes()],
         bump,
     )]
@@ -70,6 +71,23 @@ pub struct InitEpoch<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token2022>,
     pub system_program: Program<'info, System>,
+
+    /// NEW FOR WNS
+
+    /// CHECK: must be ata auction/mint/token22/off-curve
+    #[account(mut)]
+    pub auction_ata: UncheckedAccount<'info>,
+
+    /// CHECK: Need to metaseed, mint, WNS pda
+    #[account(mut)]
+    pub extra_metas_account: UncheckedAccount<'info>,
+
+    /// CHECK: must be WNS manager
+    pub manager: UncheckedAccount<'info>,
+
+    pub rent: Sysvar<'info, Rent>,
+    /// CHECK: must be WNS
+    pub wns_program: UncheckedAccount<'info>,
 }
 
 pub fn handle_init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()> {
@@ -81,7 +99,7 @@ pub fn handle_init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()
     let reputation: &mut Account<'_, Reputation> = &mut ctx.accounts.reputation;
     
     // Create the inscriptions and return the traits generated
-    let traits = epoch_inscription.generate_and_set_asset(
+    let _traits = epoch_inscription.generate_and_set_asset(
         current_epoch, 
         payer, 
         ctx.bumps.epoch_inscription
@@ -100,8 +118,9 @@ pub fn handle_init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()
     reputation.increment_with_validation(Points::INITIATE, payer.key())?;
 
     // Mint the Token2022 NFT and send it to the auction ATA
-    ctx.accounts.create_and_mint_nft(ctx.bumps.authority, input_epoch, traits)?;
-
+    // ctx.accounts.create_and_mint_nft(ctx.bumps.authority, input_epoch, traits)?;
+    ctx.accounts.mint_wns_nft(ctx.bumps.authority, current_epoch)?;
+    msg!("Succesful CPI to WNS");
     Ok(())
 
 }

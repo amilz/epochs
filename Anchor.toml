@@ -15,8 +15,8 @@ cluster = "Localnet"
 wallet = "/Users/amilz/.config/solana/id.json"
 
 [scripts]
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/0x-wns.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/0x-wns.ts"
 
 
 [test.validator]

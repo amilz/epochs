@@ -11,7 +11,7 @@ import { assert } from "chai";
 
 const WNS_PROGRAM_ID = new PublicKey("wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM")
 
-describe("cpi to wns", () => {
+describe.skip("cpi to wns", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 

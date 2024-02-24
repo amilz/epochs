@@ -9,9 +9,9 @@ import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
 import { auctionClaim } from "./utils/instructions/claim";
 
-const numberEpochs = 1;
+const numberEpochs = 20;
 
-describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
+describe.only("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 

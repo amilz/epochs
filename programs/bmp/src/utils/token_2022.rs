@@ -23,7 +23,9 @@ use spl_token_metadata_interface::{
     state::{Field, TokenMetadata},
 };
 
-use crate::{utils::format_pubkey, InitEpoch, ALL_ROYALTIES, AUTHORITY_SEED, ROYALTY_BASIS_POINTS_FIELD};
+use crate::{utils::{format_pubkey, CreateMintAccountArgs}, InitEpoch, ALL_ROYALTIES, AUTHORITY_SEED, ROYALTY_BASIS_POINTS_FIELD};
+
+use super::wns_mint_nft;
 
 impl<'info> InitEpoch<'info> {
     fn update_metadata_field_and_invoke(
@@ -250,6 +252,42 @@ impl<'info> InitEpoch<'info> {
 
         Ok(())
     }
+
+    pub fn mint_wns_nft(
+        &self,
+        authority_bump: u8,
+        current_epoch: u64,
+    ) -> Result<()> {
+
+        let token_metadata = CreateMintAccountArgs {
+            name: format!("Epoch #{}", current_epoch),
+            symbol: String::from("EPOCH"),
+            uri: format!(
+                "https://shdw-drive.genesysgo.net/somekey/{}.png",
+                current_epoch
+            ).to_string(),
+        };
+        msg!("CPI TO WNS");
+        wns_mint_nft(
+            &self.payer,
+            &self.authority,
+            &self.auction.to_account_info(),
+            &self.mint,
+            &self.auction_ata,
+            &self.extra_metas_account,
+            &self.manager,
+            &self.system_program,
+            &self.rent.to_account_info(),
+            &self.associated_token_program,
+            &self.token_program,
+            &self.wns_program,
+            authority_bump,
+            token_metadata,
+        )
+
+    }
+
+
 }
 
 // TODO Add NFT to group

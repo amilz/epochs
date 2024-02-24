@@ -1,14 +1,17 @@
-import { Keypair } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuctionPda, getAuthorityPda, getEpochInscriptionPda, getReputationPda } from "../pdas";
+import { getAuctionPda, getAuthorityPda, getEpochInscriptionPda, getReputationPda, getWnsAccounts } from "../pdas";
 import fs from 'fs';
 import { assert } from "chai";
 import { openFile } from "../utils";
 import { Bmp } from "../../../target/types/bmp";
 import { ReputationPoints, ReputationTracker } from "../reputation";
 import { convertBmpToPng } from "../image";
-import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
+import { WNS_PROGRAM_ID } from "../consts";
+
 
 interface MintAssetsForEpochParams {
     epoch: number;
@@ -39,7 +42,13 @@ export async function mintAssetsForEpoch({
     const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 });
     const reputation = getReputationPda(payer.publicKey, program);
     const authority = getAuthorityPda(program);
-
+    const auctionAta = getAssociatedTokenAddressSync(
+        mint.publicKey,
+        auctionPda,
+        true,
+        TOKEN_2022_PROGRAM_ID
+    );
+    const { manager, extraMetasAccount } = getWnsAccounts(mint.publicKey);
     const txRequest = program.methods.initEpoch(new anchor.BN(epoch))
         .accounts({
             payer: payer.publicKey,
@@ -48,7 +57,14 @@ export async function mintAssetsForEpoch({
             reputation,
             mint: mint.publicKey,
             authority,
-            tokenProgram: TOKEN_2022_PROGRAM_ID
+            auctionAta,
+            extraMetasAccount, 
+            manager,
+            systemProgram: anchor.web3.SystemProgram.programId,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+            wnsProgram: WNS_PROGRAM_ID
         }).signers([payer, mint])
         .preInstructions([computeInstruction])
         .rpc();
@@ -79,7 +95,7 @@ export async function mintAssetsForEpoch({
         const filePaths = {
             bmp: `./img-outputs/nouns/ej-${epoch}.bmp`,
             json: `./img-outputs/json/${epoch}.json`,
-            png: `./img-outputs/pn/sol-${epoch}.png`,
+            png: `./img-outputs/pn/wns-${epoch}.png`,
         }
 
         //fs.writeFileSync(filePaths.bmp, data.buffers.imageRaw);
