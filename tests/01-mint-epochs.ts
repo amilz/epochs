@@ -9,9 +9,9 @@ import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
 import { auctionClaim } from "./utils/instructions/claim";
 
-const numberEpochs = 1;
+const numberEpochs = 3;
 
-describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
+describe("Generates a New NFT for Each Epoch", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
@@ -40,8 +40,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
    * 
    */
   for (let i = 0; i < numberEpochs; i++) {
-    let mint = Keypair.generate();
-    it(`Generates asset for epoch ${i} - ${mint.publicKey.toBase58()}`, async () => {
+    it(`Generates asset for epoch ${i}`, async () => {
       let { epoch } = await provider.connection.getEpochInfo();
       while (i > epoch) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -54,8 +53,8 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
         epoch: i,
         program,
         payer,
-        mint,
         expectedReputation: reputationTracker,
+        //logErrAndTable: true
       });
     });
   }
@@ -68,7 +67,6 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
       epoch: randomHighEpoch,
       program,
       payer,
-      mint: Keypair.generate(),
       expectedReputation: reputationTracker,
       expectToFail: {
         errorCode: expectedErrorCode,
@@ -86,7 +84,6 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
       epoch: 0,
       program,
       payer,
-      mint: Keypair.generate(),
       expectedReputation: reputationTracker,
       expectToFail: {
         errorCode: expectedErrorCode,
@@ -100,7 +97,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
 });
 
 const targetEpoch = numberEpochs;
-describe("Epoch Auctions", () => {
+describe("Bids on Auctions", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
@@ -145,7 +142,6 @@ describe("Epoch Auctions", () => {
       epoch: targetEpoch,
       program,
       payer: initiator,
-      mint: Keypair.generate(),
       expectedReputation: initiatorReputationTracker,
     });
     // Bidder bids on the auction
@@ -352,7 +348,6 @@ describe("Epoch Auctions", () => {
 
   });
 
-
   it(`Claims the auction for Epoch # ${targetEpoch}`, async () => {
     let { epoch } = await provider.connection.getEpochInfo();
     while (epoch <= targetEpoch) {
@@ -368,7 +363,8 @@ describe("Epoch Auctions", () => {
       winner: initiator,
       daoTreasury: new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe"),
       creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa"),
-      expectedReputation: initiatorReputationTracker
+      expectedReputation: initiatorReputationTracker,
+      //logErrAndTable: true
     })
   })
 

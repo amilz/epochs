@@ -67,6 +67,21 @@ pub fn handle_bid(ctx: Context<AuctionBid>, input_epoch: u64, bid_amount: u64) -
 }
 
 impl AuctionBid<'_> {
+    pub fn handler(&mut self, 
+        input_epoch: u64, 
+        bid_amount: u64,
+        escrow_bump: u8,
+        reputation_bump: u8
+    ) -> Result<()> {
+        get_and_validate_epoch(input_epoch)?;
+
+        self.validate_bid(bid_amount)?;
+        self.transfer_funds_to_escrow(bid_amount)?;
+        self.transfer_funds_to_previous_high_bidder(escrow_bump)?;
+        self.update_auction_and_reputation(bid_amount, reputation_bump)?;
+
+        Ok(())
+    }
 
     pub fn validate_bid(&self, bid_amount_lamports: u64) -> Result<()> {
         let auction = &self.auction;

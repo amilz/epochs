@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-//use anchor_lang::solana_program::log::sol_log_compute_units;
 
 pub mod utils;
 pub mod constants;
@@ -22,19 +21,19 @@ pub mod bmp {
     use super::*;
 
     pub fn create_collection_nft(ctx: Context<CreateCollectionNft>) -> Result<()> {
-        create_collection_nft::handle_create_collection(ctx)
+        ctx.accounts.handler(ctx.bumps.authority, ctx.bumps.mint)
     }
 
     pub fn init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()> {
-        init_epoch::handle_init_epoch(ctx, input_epoch)
+        ctx.accounts.handler(input_epoch, ctx.bumps.epoch_inscription, ctx.bumps.auction, ctx.bumps.reputation, ctx.bumps.authority, ctx.bumps.mint)
     }
 
     pub fn bid(ctx: Context<AuctionBid>, input_epoch: u64, bid_amount: u64) -> Result<()> {
-        bid::handle_bid(ctx, input_epoch, bid_amount)
+        ctx.accounts.handler(input_epoch, bid_amount, ctx.bumps.auction_escrow, ctx.bumps.reputation)
     }
 
     pub fn claim(ctx: Context<AuctionClaim>, input_epoch: u64) -> Result<()> {
-        claim::handle_claim(ctx, input_epoch)
+        ctx.accounts.handler(input_epoch, ctx.bumps.auction_escrow, ctx.bumps.authority)
     }
 
 }

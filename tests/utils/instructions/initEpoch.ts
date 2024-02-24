@@ -1,22 +1,25 @@
-import { Keypair } from "@solana/web3.js";
+import { Keypair, ComputeBudgetProgram } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuctionPda, getAuthorityPda, getEpochInscriptionPda, getReputationPda } from "../pdas";
+import { getAuctionPda, getAuthorityPda, getCollectionMintPda, getEpochInscriptionPda, getNftMintPda, getReputationPda, getWnsAccounts } from "../pdas";
 import fs from 'fs';
 import { assert } from "chai";
 import { openFile } from "../utils";
 import { Bmp } from "../../../target/types/bmp";
 import { ReputationPoints, ReputationTracker } from "../reputation";
 import { convertBmpToPng } from "../image";
-import { TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
+import { WNS_PROGRAM_ID } from "../consts";
+
 
 interface MintAssetsForEpochParams {
     epoch: number;
     program: Program<Bmp>;
     payer: Keypair;
-    mint: Keypair;
     disableOpenFile?: boolean;
     logMintInfo?: boolean;
+    logErrAndTable?: boolean;
     expectToFail?: {
         errorCode: string;
         assertError?: (error: any) => void;
@@ -28,28 +31,61 @@ export async function mintAssetsForEpoch({
     epoch,
     program,
     payer,
-    mint,
     disableOpenFile = true,
     logMintInfo = false,
+    logErrAndTable = false,
     expectToFail,
     expectedReputation
 }: MintAssetsForEpochParams) {
     const auctionPda = getAuctionPda(epoch, program);
     const epochInscriptionPda = getEpochInscriptionPda(epoch, program);
-    const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 });
+    const computeInstruction = ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 });
     const reputation = getReputationPda(payer.publicKey, program);
     const authority = getAuthorityPda(program);
+    const mint = getNftMintPda(program, epoch);
+    const collectionMint = getCollectionMintPda(program);
+    const { groupAccount } = getWnsAccounts(collectionMint);
+
+    const auctionAta = getAssociatedTokenAddressSync(
+        mint,
+        auctionPda,
+        true,
+        TOKEN_2022_PROGRAM_ID
+    );
+    const { manager, extraMetasAccount, memberAccount } = getWnsAccounts(mint);
+
+    const accounts = {
+        payer: payer.publicKey,
+        epochInscription: epochInscriptionPda,
+        auction: auctionPda,
+        reputation,
+        mint,
+        authority,
+        auctionAta,
+        extraMetasAccount,
+        manager,
+        group: groupAccount,
+        member: memberAccount,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+        wnsProgram: WNS_PROGRAM_ID
+    };
+
+
+
+    if (logErrAndTable) {
+        const tableData = Object.entries(accounts).map(([key, publicKey]) => ({
+            account: key,
+            mint: publicKey.toBase58()
+        }));
+        console.table(tableData);
+    }
 
     const txRequest = program.methods.initEpoch(new anchor.BN(epoch))
-        .accounts({
-            payer: payer.publicKey,
-            epochInscription: epochInscriptionPda,
-            auction: auctionPda,
-            reputation,
-            mint: mint.publicKey,
-            authority,
-            tokenProgram: TOKEN_2022_PROGRAM_ID
-        }).signers([payer, mint])
+        .accounts(accounts)
+        .signers([payer])
         .preInstructions([computeInstruction])
         .rpc();
 
@@ -79,7 +115,7 @@ export async function mintAssetsForEpoch({
         const filePaths = {
             bmp: `./img-outputs/nouns/ej-${epoch}.bmp`,
             json: `./img-outputs/json/${epoch}.json`,
-            png: `./img-outputs/pn/sol-${epoch}.png`,
+            png: `./img-outputs/pn/wns-${epoch}.png`,
         }
 
         //fs.writeFileSync(filePaths.bmp, data.buffers.imageRaw);
@@ -90,7 +126,7 @@ export async function mintAssetsForEpoch({
             openFile(filePaths.bmp);
         }
     } catch (error) {
-        //console.error(`Error minting assets for epoch ${epoch}:`, error);
+        if (logErrAndTable) console.error(error);
         if (expectToFail) {
             if (expectToFail.assertError) {
                 expectToFail.assertError(error);

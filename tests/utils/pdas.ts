@@ -1,6 +1,6 @@
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey, Keypair } from "@solana/web3.js";
-import { SEEDS, TOKEN_METADATA_PROGRAM_ID } from "./consts";
+import { PublicKey } from "@solana/web3.js";
+import { SEEDS, WNS_PROGRAM_ID } from "./consts";
 
 function numberBuffer(value: bigint): Uint8Array {
     const bytes = new Uint8Array(8);
@@ -60,95 +60,68 @@ function getAuthorityPda(program: Program<any>) {
     return authoirtyPda;
 }
 
-function getCollectionPda(program: Program<any>) {
+function getWnsAccounts(mint: PublicKey): {
+    manager: PublicKey,
+    extraMetasAccount: PublicKey,
+    groupAccount: PublicKey
+    memberAccount: PublicKey
+} {
+    const [manager] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("manager")
+        ],
+        WNS_PROGRAM_ID);
+    const [extraMetasAccount] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("extra-account-metas"),
+            mint.toBuffer()
+        ],
+        WNS_PROGRAM_ID);
+
+    const [groupAccount] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("group"),
+            new PublicKey(mint).toBuffer()
+        ],
+        WNS_PROGRAM_ID);
+
+    const [memberAccount] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("member"),
+            new PublicKey(mint).toBuffer()
+        ],
+        WNS_PROGRAM_ID);
+
+    return { manager, extraMetasAccount, groupAccount, memberAccount };
+}
+
+function getCollectionMintPda(program: Program<any>) {
     const [collectionMint] = PublicKey.findProgramAddressSync(
         [Buffer.from(SEEDS.COLLECTION)],
         program.programId
     );
+    return collectionMint;
 }
 
-// Derive the PDA of the metadata account for the mint.
-function getMetadataAddress(mint: PublicKey): PublicKey {
-    const [pda] = PublicKey.findProgramAddressSync(
+function getNftMintPda(program: Program<any>, epoch: number) {
+    const [nftMint] = PublicKey.findProgramAddressSync(
         [
-            Buffer.from("metadata"),
-            TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-            mint.toBuffer()
+            Buffer.from(SEEDS.NFT_MINT),
+            numberBuffer(BigInt(epoch))
         ],
-        TOKEN_METADATA_PROGRAM_ID)
-    return pda;
-}
-
-
-function getMasterEditionAddress(mint: PublicKey): PublicKey {
-    const [pda] = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from("metadata"),
-            TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-            mint.toBuffer(),
-            Buffer.from("edition"),
-        ],
-        TOKEN_METADATA_PROGRAM_ID
+        program.programId
     );
-    return pda;
-}
-
-interface NftAccounts {
-    mintKeypair: Keypair;
-    metadataPda: PublicKey;
-    masterEditionPda: PublicKey;
-}
-
-function createMintMetaAndMasterPdas():NftAccounts {
-    const mintKeypair = Keypair.generate();
-    const metadataPda = getMetadataAddress(mintKeypair.publicKey);
-    const masterEditionPda = getMasterEditionAddress(mintKeypair.publicKey);
-    return { mintKeypair, metadataPda, masterEditionPda };
+    return nftMint;
 }
 
 
-function getInscriptionAccounts(mint: PublicKey) {
-    const inscriptionProgram = new PublicKey('1NSCRfGeyo7wPUazGbaPBUsTM49e1k2aXewHGARfzSo')
-    const [mintInscriptionAccount] = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from("Inscription"),
-            inscriptionProgram.toBuffer(),
-            mint.toBuffer(),
-        ],
-        inscriptionProgram
-    );
-    const [inscriptionMetadataAccount] = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from("Inscription"),
-            inscriptionProgram.toBuffer(),
-            mintInscriptionAccount.toBuffer(),
-        ],
-        inscriptionProgram
-    );
-    // rand # 0-32
-    const shard = Math.floor(Math.random() * 32);
-
-
-    // Example from Mainnet
-    // Shard = 1
-    // 76BsfqxZgmVg114yYtLFBopv6NAqvnxgcLvPKhxUMRHg
-    let [inscriptionShardAccount] = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from("Inscription"),
-            Buffer.from("Shard"),
-            inscriptionProgram.toBuffer(),
-            Buffer.from(shard.toString())
-        ],
-        inscriptionProgram
-    );
-    inscriptionShardAccount = new PublicKey('76BsfqxZgmVg114yYtLFBopv6NAqvnxgcLvPKhxUMRHg');
-
-    return {
-        inscriptionProgram,
-        mintInscriptionAccount,
-        inscriptionMetadataAccount,
-        inscriptionShardAccount
-    }
-}
-
-export { getAuctionPda, getEpochInscriptionPda, getReputationPda, getAuthorityPda, getAuctionEscrowPda };
+export {
+    getAuctionPda,
+    getEpochInscriptionPda,
+    getReputationPda,
+    getAuthorityPda,
+    getAuctionEscrowPda,
+    getWnsAccounts,
+    getCollectionMintPda,
+    getNftMintPda
+};

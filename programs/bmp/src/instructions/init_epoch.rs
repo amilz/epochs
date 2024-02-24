@@ -1,9 +1,18 @@
-use anchor_lang:: prelude::*;
+use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_2022::Token2022};
 
 use crate::utils::validate::get_and_validate_epoch;
 use crate::constants::*;
 use crate::state::*;
+
+use crate::utils::wns_mint_nft;
+use crate::{
+    utils::{
+        wns_add_member, 
+        CreateMintAccountArgs
+    }, 
+    AUTHORITY_SEED
+};
 
 #[derive(Accounts)]
 #[instruction(input_epoch: u64)]
@@ -53,14 +62,18 @@ pub struct InitEpoch<'info> {
     reputation: Account<'info, Reputation>,
 
 
-    /// Mint of the NFT is  a random keypair used for minting.
-    // Might make sense to make a PDA to use for future signing
-    #[account(mut)]
-    pub mint: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [NFT_MINT_SEED.as_bytes(), &input_epoch.to_le_bytes()],
+        bump,
+    )]
+    /// CHECK: This should be a newly created mint account, owned by the group or another relevant account.
+    pub mint: UncheckedAccount<'info>,
 
     /// This will be the authority of the Token2022 NFT
     /// CHECK: Just a signer. Safe b/c of seeds/bump
     #[account(
+        mut,
         seeds = [AUTHORITY_SEED.as_bytes()],
         bump,
     )]
@@ -70,39 +83,126 @@ pub struct InitEpoch<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token2022>,
     pub system_program: Program<'info, System>,
+
+    /// NEW FOR WNS
+
+    /// CHECK: must be ata auction/mint/token22/off-curve
+    #[account(mut)]
+    pub auction_ata: UncheckedAccount<'info>,
+
+    /// CHECK: Need to metaseed, mint, WNS pda
+    #[account(mut)]
+    pub extra_metas_account: UncheckedAccount<'info>,
+
+    /// CHECK: must be WNS manager
+    pub manager: UncheckedAccount<'info>,
+
+    /// CHECK: must be collection/group
+    #[account(mut)]
+    pub group: UncheckedAccount<'info>,
+
+    /// CHECK: must be member
+    #[account(mut)]
+    pub member: UncheckedAccount<'info>,
+
+    pub rent: Sysvar<'info, Rent>,
+    
+    /// CHECK: must be WNS
+    pub wns_program: UncheckedAccount<'info>,
 }
 
-pub fn handle_init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()> {
-    let current_epoch = get_and_validate_epoch(input_epoch)?;
-    let epoch_inscription: &mut Account<'_, EpochInscription> = &mut ctx.accounts.epoch_inscription;
-    let mint: &AccountInfo<'_> = &ctx.accounts.mint;
-    let payer: Pubkey = ctx.accounts.payer.key();
-    let auction: &mut Account<'_, Auction> = &mut ctx.accounts.auction;
-    let reputation: &mut Account<'_, Reputation> = &mut ctx.accounts.reputation;
-    
-    // Create the inscriptions and return the traits generated
-    let traits = epoch_inscription.generate_and_set_asset(
-        current_epoch, 
-        payer, 
-        ctx.bumps.epoch_inscription
-    );
-    
-    // Create the auction
-    auction.create(
-        current_epoch,
-        mint.key(),
-        payer,
-        ctx.bumps.auction,
-    );
+impl<'info> InitEpoch<'info> {
+    pub fn handler (&mut self, 
+        input_epoch: u64, 
+        epoch_inscription_bump: u8,
+        auction_bump: u8,
+        reputation_bump: u8,
+        authority_bump: u8,
+        mint_bump: u8,
+    ) -> Result<()> {
+        let current_epoch = get_and_validate_epoch(input_epoch)?;
+        let epoch_inscription: &mut Account<'_, EpochInscription> = &mut self.epoch_inscription;
+        let mint: &AccountInfo<'_> = &self.mint;
+        let payer: Pubkey = self.payer.key();
+        let auction: &mut Account<'_, Auction> = &mut self.auction;
+        let reputation: &mut Account<'_, Reputation> = &mut self.reputation;
 
-    // Add reputation to the payer
-    reputation.init_if_needed(payer, ctx.bumps.reputation);
-    reputation.increment_with_validation(Points::INITIATE, payer.key())?;
+            
+        // Create the inscriptions and return the traits generated
+        let _traits = epoch_inscription.generate_and_set_asset(
+            current_epoch, 
+            payer, 
+            epoch_inscription_bump
+        );
+        
+        // Create the auction
+        auction.create(
+            current_epoch,
+            mint.key(),
+            payer,
+            auction_bump,
+        );
 
-    // Mint the Token2022 NFT and send it to the auction ATA
-    ctx.accounts.create_and_mint_nft(ctx.bumps.authority, input_epoch, traits)?;
+        // Add reputation to the payer
+        reputation.init_if_needed(payer, reputation_bump);
+        reputation.increment_with_validation(Points::INITIATE, payer.key())?;
 
-    Ok(())
+        // Mint the WNS NFT and send it to the auction ATA
+        self.mint_wns_nft(authority_bump, mint_bump, current_epoch)?;
+        msg!("Succesful CPI to WNS");
 
+        Ok(())
+    }
+
+    pub fn mint_wns_nft(
+        &self,
+        authority_bump: u8,
+        mint_bump: u8,
+        current_epoch: u64,
+    ) -> Result<()> {
+
+        let token_metadata = CreateMintAccountArgs {
+            name: format!("Epoch #{}", current_epoch),
+            symbol: String::from("EPOCH"),
+            uri: format!(
+                "https://shdw-drive.genesysgo.net/somekey/{}.png",
+                current_epoch
+            ).to_string(),
+        };
+        msg!("CPI TO WNS - MINT NFT");
+        wns_mint_nft(
+            &self.payer,
+            &self.authority,
+            &self.auction.to_account_info(),
+            &self.mint,
+            &self.auction_ata,
+            &self.extra_metas_account,
+            &self.manager,
+            &self.system_program,
+            &self.rent.to_account_info(),
+            &self.associated_token_program,
+            &self.token_program,
+            &self.wns_program,
+            authority_bump,
+            mint_bump,
+            current_epoch,
+            token_metadata,
+        )?;
+
+        msg!("CPI TO WNS - ADD MEMBER");
+        wns_add_member(
+            &self.payer,
+            &self.authority,
+            &self.group,
+            &self.member,
+            &self.mint,
+            &self.system_program,
+            &self.token_program,
+            &self.wns_program,
+            authority_bump
+        )?;
+
+        Ok(())
+
+    }
 }
-
