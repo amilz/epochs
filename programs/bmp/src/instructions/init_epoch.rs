@@ -9,7 +9,6 @@ use crate::utils::wns_mint_nft;
 use crate::{
     utils::{
         wns_add_member, 
-        wns_add_royalties, 
         CreateMintAccountArgs
     }, 
     AUTHORITY_SEED
@@ -203,23 +202,7 @@ impl<'info> InitEpoch<'info> {
             authority_bump
         )?;
 
-        msg!("CPI TO WNS - ADD ROYALTIES");
-        wns_add_royalties(
-            &self.payer,
-            &self.authority,
-            &self.mint,
-            &self.extra_metas_account,
-            &self.system_program,
-            &self.rent.to_account_info(),
-            &self.associated_token_program,
-            &self.token_program,
-            &self.wns_program,
-            authority_bump
-        )?;
-
         Ok(())
 
     }
-    
-
 }

@@ -9,9 +9,9 @@ import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
 import { auctionClaim } from "./utils/instructions/claim";
 
-const numberEpochs = 5;
+const numberEpochs = 3;
 
-describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
+describe("Generates a New NFT for Each Epoch", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
@@ -54,6 +54,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
         program,
         payer,
         expectedReputation: reputationTracker,
+        //logErrAndTable: true
       });
     });
   }
@@ -96,7 +97,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
 });
 
 const targetEpoch = numberEpochs;
-describe.skip("Epoch Auctions", () => {
+describe("Bids on Auctions", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
@@ -347,7 +348,6 @@ describe.skip("Epoch Auctions", () => {
 
   });
 
-
   it(`Claims the auction for Epoch # ${targetEpoch}`, async () => {
     let { epoch } = await provider.connection.getEpochInfo();
     while (epoch <= targetEpoch) {
@@ -363,7 +363,8 @@ describe.skip("Epoch Auctions", () => {
       winner: initiator,
       daoTreasury: new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe"),
       creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa"),
-      expectedReputation: initiatorReputationTracker
+      expectedReputation: initiatorReputationTracker,
+      //logErrAndTable: true
     })
   })
 

@@ -2,13 +2,17 @@ use anchor_lang::{prelude::*, system_program::{transfer, Transfer}};
 
 use anchor_spl::{
     associated_token::AssociatedToken,
-    token_2022::{mint_to, MintTo, Token2022},
-    token_interface::{set_authority, spl_token_2022::instruction::AuthorityType, SetAuthority, Mint, TokenAccount},
+    token_2022::Token2022,
+    token_interface::{
+        Mint, 
+        TokenAccount,
+        TransferChecked, transfer_checked,
+    },
 };
 
 use std::str::FromStr;
 
-use crate::utils::verify_epoch_has_passed;
+use crate::utils::{verify_epoch_has_passed, wns_add_royalties};
 use crate::{constants::*, EpochError};
 use crate::state::*;
 
@@ -74,11 +78,19 @@ pub struct AuctionClaim<'info> {
 
     /// CHECK: Just a signer. Safe b/c of seeds/bump
     #[account(
+        mut,
         seeds = [AUTHORITY_SEED.as_bytes()],
         bump,
     )]
     pub authority: AccountInfo<'info>,
 
+    #[account(
+        mut,
+        associated_token::mint = mint,
+        associated_token::authority = auction,
+        associated_token::token_program = token_program
+    )]
+    pub source_ata: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         init,
@@ -93,21 +105,29 @@ pub struct AuctionClaim<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token2022>,
 
-}
+    /// CHECK: Need to metaseed, mint, WNS pda
+    #[account(mut)]
+    pub extra_metas_account: UncheckedAccount<'info>,
+    
+    pub rent: Sysvar<'info, Rent>,
+    
+    /// CHECK: must be WNS
+    pub wns_program: UncheckedAccount<'info>,
 
-pub fn handle_claim(ctx: Context<AuctionClaim>, claim_epoch: u64) -> Result<()> {
-
-    ctx.accounts.verify_epoch(claim_epoch)?;
-    ctx.accounts.verify_winner()?;
-    ctx.accounts.verify_auction_state()?;
-    ctx.accounts.distribute_funds(ctx.bumps.auction_escrow)?;
-    ctx.accounts.distribute_nft(ctx.bumps.authority)?;
-    ctx.accounts.update_auction_and_reputation()?;
-
-    Ok(())
 }
 
 impl AuctionClaim<'_> {
+    pub fn handler(&mut self, claim_epoch: u64, auction_escrow_bump:u8, authority_bump: u8) -> Result<()> {
+        self.verify_epoch(claim_epoch)?;
+        self.verify_winner()?;
+        self.verify_auction_state()?;
+        self.distribute_funds(auction_escrow_bump)?;
+        self.distribute_nft()?;
+        self.add_royalty_hook(authority_bump)?;
+        self.update_auction_and_reputation()?;
+        Ok(())
+    }
+
     pub fn verify_epoch(&self, claim_epoch: u64) -> Result<()> {
         require!(claim_epoch == self.auction.epoch, EpochError::EpochMismatch);
         verify_epoch_has_passed(self.auction.epoch)?;
@@ -157,40 +177,44 @@ impl AuctionClaim<'_> {
         Ok(())
     }
 
-    pub fn distribute_nft(&self, authority_bump: u8) -> Result<()> {
-        let authority_bump = &[authority_bump];
-        let authority_seeds = &[AUTHORITY_SEED.as_bytes(), authority_bump];
-        let authority_signer_seeds = &[&authority_seeds[..]];
 
-        // Mint to the user's wallet
-        msg!("Minting to user's wallet");
-        mint_to(
-            CpiContext::new_with_signer(
-                self.token_program.to_account_info(),
-                MintTo {
-                    mint: self.mint.to_account_info(),
-                    to: self.destination_ata.to_account_info(),
-                    authority: self.authority.to_account_info(),
-                },
-                authority_signer_seeds,
-            ),
-            1,
-        )?;
-        
-        // Set Mint Authority to None
-        let authority_cpi_accounts = SetAuthority {
-            current_authority: self.authority.to_account_info(),
-            account_or_mint: self.mint.to_account_info(),
+    pub fn distribute_nft(&self) -> Result<()> {
+        let bump = &[self.auction.bump];
+        let seeds: &[&[u8]] = &[AUCTION_SEED.as_ref(), &self.auction.epoch.to_le_bytes(), bump];
+        let signer_seeds = &[&seeds[..]];
+
+        let cpi_accounts = TransferChecked {
+            from: self.source_ata.to_account_info().clone(),
+            mint: self.mint.to_account_info().clone(),
+            to: self.destination_ata.to_account_info().clone(),
+            authority: self.auction.to_account_info(),
         };
-        let cpi_ctx = CpiContext::new_with_signer(
-            self.token_program.to_account_info(),
-            authority_cpi_accounts,
-            authority_signer_seeds,
-        );
-        set_authority(cpi_ctx, AuthorityType::MintTokens, None)?;
+        let cpi_program = self.token_program.to_account_info();
+        let cpi_context = CpiContext::new(cpi_program, cpi_accounts).with_signer(signer_seeds);
+        transfer_checked(cpi_context, 1, 0)?;
 
         Ok(())
     }
+
+    pub fn add_royalty_hook(&self, authority_bump: u8) -> Result<()> {
+
+        msg!("CPI TO WNS - ADD ROYALTIES");
+        wns_add_royalties(
+            &self.winner,
+            &self.authority,
+            &self.mint.to_account_info(),
+            &self.extra_metas_account,
+            &self.system_program,
+            &self.rent.to_account_info(),
+            &self.associated_token_program,
+            &self.token_program,
+            &self.wns_program,
+            authority_bump
+        )?;
+
+        Ok(())
+    }
+
 
     pub fn update_auction_and_reputation(&mut self) -> Result<()> {
         let auction = & mut self.auction;

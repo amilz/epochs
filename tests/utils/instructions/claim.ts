@@ -1,11 +1,12 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getReputationPda } from "../pdas";
+import { getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getReputationPda, getWnsAccounts } from "../pdas";
 import { assert } from "chai";
 import { Bmp } from "../../../target/types/bmp";
 import { ReputationPoints, ReputationTracker } from "../reputation";
 import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
+import { WNS_PROGRAM_ID } from "../consts";
 
 interface AuctionClaimParams {
     epoch: number;
@@ -19,6 +20,7 @@ interface AuctionClaimParams {
         assertError?: (error: any) => void;
     };
     expectedReputation: ReputationTracker;
+    logErrAndTable?: boolean;
 }
 
 export async function auctionClaim({
@@ -29,7 +31,8 @@ export async function auctionClaim({
     creatorWallet,
     logMintInfo = false,
     expectToFail,
-    expectedReputation
+    expectedReputation,
+    logErrAndTable = false
 }: AuctionClaimParams) {
     const auctionPda = getAuctionPda(epoch, program);
     const reputation = getReputationPda(winner.publicKey, program);
@@ -37,7 +40,8 @@ export async function auctionClaim({
     const authority = getAuthorityPda(program);
     const { mint } = await program.account.auction.fetch(auctionPda);
     const destinationAta = getAssociatedTokenAddressSync(mint, winner.publicKey, false, TOKEN_2022_PROGRAM_ID);
-
+    const sourceAta = getAssociatedTokenAddressSync(mint, auctionPda, true, TOKEN_2022_PROGRAM_ID);
+    const { extraMetasAccount } = getWnsAccounts(mint);
     try {
 
         const results = await Promise.allSettled([
@@ -52,21 +56,35 @@ export async function auctionClaim({
         const daoPreBalance = results[1].status === 'fulfilled' ? results[1].value : 0;
         const creatorPreBalance = results[2].status === 'fulfilled' ? results[2].value : 0;
         const { highBidLamports: exceptedEscrowWithdraw } = results[3].status === 'fulfilled' ? results[3].value : { highBidLamports: new anchor.BN(0) };
-        
+
+        const accounts = {
+            winner: winner.publicKey,
+            auction: auctionPda,
+            auctionEscrow,
+            reputation,
+            daoTreasury,
+            creatorWallet,
+            authority,
+            mint, // fetch from the auction account
+            destinationAta,
+            sourceAta,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+            extraMetasAccount,
+            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+            wnsProgram: WNS_PROGRAM_ID
+        }
+
+        if (logErrAndTable) {
+            const tableData = Object.entries(accounts).map(([key, publicKey]) => ({
+                account: key,
+                mint: publicKey.toBase58()
+            }));
+            console.table(tableData);
+        }
+
 
         const txRequest = await program.methods.claim(new anchor.BN(epoch))
-            .accounts({
-                winner: winner.publicKey,
-                auction: auctionPda,
-                auctionEscrow,
-                reputation,
-                daoTreasury,
-                creatorWallet,
-                authority,
-                mint, // fetch from the auction account
-                destinationAta,
-                tokenProgram: TOKEN_2022_PROGRAM_ID
-            })
+            .accounts(accounts)
             .signers([winner])
             .rpc();
 
@@ -97,7 +115,7 @@ export async function auctionClaim({
         assert.strictEqual(winnerTokenBalance.value.uiAmount, 1, "Winner token balance should be 1.");
 
     } catch (error) {
-        //console.error(`Error bidding on epoch ${epoch}:`, error);
+        if (logErrAndTable) console.error(`Error claiming on epoch ${epoch}:`, error);
         if (expectToFail) {
             if (expectToFail.assertError) {
                 expectToFail.assertError(error);
