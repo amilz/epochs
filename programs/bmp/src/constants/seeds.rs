@@ -17,3 +17,6 @@ pub const AUTHORITY_SEED: &str = "Authority";
 
 #[constant]
 pub const AUCTION_ESCROW_SEED: &str = "AuctionEscrow";
+
+#[constant]
+pub const NFT_MINT_SEED: &str = "NftMint";

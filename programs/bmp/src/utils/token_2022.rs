@@ -256,6 +256,7 @@ impl<'info> InitEpoch<'info> {
     pub fn mint_wns_nft(
         &self,
         authority_bump: u8,
+        mint_bump: u8,
         current_epoch: u64,
     ) -> Result<()> {
 
@@ -282,6 +283,8 @@ impl<'info> InitEpoch<'info> {
             &self.token_program,
             &self.wns_program,
             authority_bump,
+            mint_bump,
+            current_epoch,
             token_metadata,
         )
 

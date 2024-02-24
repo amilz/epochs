@@ -1,7 +1,7 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuctionPda, getAuthorityPda, getEpochInscriptionPda, getReputationPda, getWnsAccounts } from "../pdas";
+import { getAuctionPda, getAuthorityPda, getEpochInscriptionPda, getNftMintPda, getReputationPda, getWnsAccounts } from "../pdas";
 import fs from 'fs';
 import { assert } from "chai";
 import { openFile } from "../utils";
@@ -17,7 +17,6 @@ interface MintAssetsForEpochParams {
     epoch: number;
     program: Program<Bmp>;
     payer: Keypair;
-    mint: Keypair;
     disableOpenFile?: boolean;
     logMintInfo?: boolean;
     expectToFail?: {
@@ -31,7 +30,6 @@ export async function mintAssetsForEpoch({
     epoch,
     program,
     payer,
-    mint,
     disableOpenFile = true,
     logMintInfo = false,
     expectToFail,
@@ -42,20 +40,21 @@ export async function mintAssetsForEpoch({
     const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 });
     const reputation = getReputationPda(payer.publicKey, program);
     const authority = getAuthorityPda(program);
+    const mint = getNftMintPda(program, epoch);
     const auctionAta = getAssociatedTokenAddressSync(
-        mint.publicKey,
+        mint,
         auctionPda,
         true,
         TOKEN_2022_PROGRAM_ID
     );
-    const { manager, extraMetasAccount } = getWnsAccounts(mint.publicKey);
+    const { manager, extraMetasAccount } = getWnsAccounts(mint);
     const txRequest = program.methods.initEpoch(new anchor.BN(epoch))
         .accounts({
             payer: payer.publicKey,
             epochInscription: epochInscriptionPda,
             auction: auctionPda,
             reputation,
-            mint: mint.publicKey,
+            mint,
             authority,
             auctionAta,
             extraMetasAccount, 
@@ -65,7 +64,7 @@ export async function mintAssetsForEpoch({
             rent: anchor.web3.SYSVAR_RENT_PUBKEY,
             associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
             wnsProgram: WNS_PROGRAM_ID
-        }).signers([payer, mint])
+        }).signers([payer])
         .preInstructions([computeInstruction])
         .rpc();
 

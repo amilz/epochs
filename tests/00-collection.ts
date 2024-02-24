@@ -6,7 +6,7 @@ import { airdropToMultiple } from "./utils/utils";
 import { createCollection } from "./utils/instructions/createCollecion";
 import { assert } from "chai";
 
-describe.only("create new collection", () => {
+describe("create new collection", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 

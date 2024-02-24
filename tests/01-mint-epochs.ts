@@ -11,7 +11,7 @@ import { auctionClaim } from "./utils/instructions/claim";
 
 const numberEpochs = 20;
 
-describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
+describe.only("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
@@ -40,8 +40,7 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
    * 
    */
   for (let i = 0; i < numberEpochs; i++) {
-    let mint = Keypair.generate();
-    it(`Generates asset for epoch ${i} - ${mint.publicKey.toBase58()}`, async () => {
+    it(`Generates asset for epoch ${i}`, async () => {
       let { epoch } = await provider.connection.getEpochInfo();
       while (i > epoch) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -54,7 +53,6 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
         epoch: i,
         program,
         payer,
-        mint,
         expectedReputation: reputationTracker,
       });
     });
@@ -68,7 +66,6 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
       epoch: randomHighEpoch,
       program,
       payer,
-      mint: Keypair.generate(),
       expectedReputation: reputationTracker,
       expectToFail: {
         errorCode: expectedErrorCode,
@@ -86,7 +83,6 @@ describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeF
       epoch: 0,
       program,
       payer,
-      mint: Keypair.generate(),
       expectedReputation: reputationTracker,
       expectToFail: {
         errorCode: expectedErrorCode,
@@ -145,7 +141,6 @@ describe("Epoch Auctions", () => {
       epoch: targetEpoch,
       program,
       payer: initiator,
-      mint: Keypair.generate(),
       expectedReputation: initiatorReputationTracker,
     });
     // Bidder bids on the auction

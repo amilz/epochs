@@ -96,13 +96,25 @@ function getCollectionMintPda(program: Program<any>) {
     return collectionMint;
 }
 
+function getNftMintPda(program: Program<any>, epoch: number) {
+    const [nftMint] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from(SEEDS.NFT_MINT),
+            numberBuffer(BigInt(epoch))
+        ],
+        program.programId
+    );
+    return nftMint;
+}
 
-export { 
-    getAuctionPda, 
-    getEpochInscriptionPda, 
-    getReputationPda, 
-    getAuthorityPda, 
-    getAuctionEscrowPda, 
+
+export {
+    getAuctionPda,
+    getEpochInscriptionPda,
+    getReputationPda,
+    getAuthorityPda,
+    getAuctionEscrowPda,
     getWnsAccounts,
-    getCollectionMintPda
+    getCollectionMintPda,
+    getNftMintPda
 };

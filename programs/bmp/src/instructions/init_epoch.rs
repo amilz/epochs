@@ -53,10 +53,13 @@ pub struct InitEpoch<'info> {
     reputation: Account<'info, Reputation>,
 
 
-    /// Mint of the NFT is  a random keypair used for minting.
-    // Might make sense to make a PDA to use for future signing
-    #[account(mut)]
-    pub mint: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [NFT_MINT_SEED.as_bytes(), &input_epoch.to_le_bytes()],
+        bump,
+    )]
+    /// CHECK: This should be a newly created mint account, owned by the group or another relevant account.
+    pub mint: UncheckedAccount<'info>,
 
     /// This will be the authority of the Token2022 NFT
     /// CHECK: Just a signer. Safe b/c of seeds/bump
@@ -120,7 +123,7 @@ pub fn handle_init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()
 
     // Mint the Token2022 NFT and send it to the auction ATA
     // ctx.accounts.create_and_mint_nft(ctx.bumps.authority, input_epoch, traits)?;
-    ctx.accounts.mint_wns_nft(ctx.bumps.authority, current_epoch)?;
+    ctx.accounts.mint_wns_nft(ctx.bumps.authority, ctx.bumps.mint, current_epoch)?;
     msg!("Succesful CPI to WNS");
     Ok(())
 

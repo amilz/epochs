@@ -3,7 +3,7 @@ use anchor_lang::{
     solana_program::{instruction::Instruction, program::invoke_signed},
 };
 
-use crate::{AUTHORITY_SEED, COLLECTION_SEED};
+use crate::{AUTHORITY_SEED, COLLECTION_SEED, NFT_MINT_SEED};
 
 //-------------------- MINT NFT --------------------
 
@@ -28,11 +28,14 @@ pub fn wns_mint_nft<'info>(
     token_program: &AccountInfo<'info>,
     wns_program: &AccountInfo<'info>,
     authority_bump: u8,
+    mint_bump: u8,
+    current_epoch: u64,
     instruction_data: CreateMintAccountArgs,
 ) -> Result<()> {
     let instruction_discriminator = sighash("global", "create_mint_account");
     let authority_seeds = &[AUTHORITY_SEED.as_bytes(), &[authority_bump]];
-    let authority_signer_seeds: &[&[&[u8]]] = &[&authority_seeds[..]];
+    let mint_seeds = &[NFT_MINT_SEED.as_bytes(),  &current_epoch.to_le_bytes(), &[mint_bump]];
+    let combined_signer_seeds = &[&mint_seeds[..], &authority_seeds[..]];
 
     let account_metas = vec![
         AccountMeta::new(*payer.key, true),
@@ -73,7 +76,7 @@ pub fn wns_mint_nft<'info>(
             token_program.clone(),
             wns_program.clone(),
         ],
-        authority_signer_seeds,
+        combined_signer_seeds,
     )?;
 
     Ok(())
