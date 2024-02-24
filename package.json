@@ -1,4 +1,12 @@
 {
+    "name": "the-epochs",
+    "version": "0.2.0",
+    "author": {
+        "name": "amilz",
+        "url": "https://github.com/amilz"
+    },
+    "description": "on-chain generative art and auction tooling",
+    "license": "UNLICENSED",
     "scripts": {
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
