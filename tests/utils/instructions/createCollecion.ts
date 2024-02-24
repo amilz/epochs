@@ -60,6 +60,8 @@ export async function createCollection({
     try {
 
         const signature = await txRequest;
+        const { blockhash, lastValidBlockHeight } = await program.provider.connection.getLatestBlockhash();
+        await program.provider.connection.confirmTransaction({signature, blockhash, lastValidBlockHeight }, 'confirmed');
         assert.ok(signature, "tx should confirm");
         if (logMintInfo) console.log(`   Collection NFT signature: ${signature}`);
 

@@ -1,7 +1,7 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuctionPda, getAuthorityPda, getEpochInscriptionPda, getNftMintPda, getReputationPda, getWnsAccounts } from "../pdas";
+import { getAuctionPda, getAuthorityPda, getCollectionMintPda, getEpochInscriptionPda, getNftMintPda, getReputationPda, getWnsAccounts } from "../pdas";
 import fs from 'fs';
 import { assert } from "chai";
 import { openFile } from "../utils";
@@ -19,6 +19,7 @@ interface MintAssetsForEpochParams {
     payer: Keypair;
     disableOpenFile?: boolean;
     logMintInfo?: boolean;
+    logAccountsTable?: boolean;
     expectToFail?: {
         errorCode: string;
         assertError?: (error: any) => void;
@@ -32,6 +33,7 @@ export async function mintAssetsForEpoch({
     payer,
     disableOpenFile = true,
     logMintInfo = false,
+    logAccountsTable = false,
     expectToFail,
     expectedReputation
 }: MintAssetsForEpochParams) {
@@ -41,30 +43,49 @@ export async function mintAssetsForEpoch({
     const reputation = getReputationPda(payer.publicKey, program);
     const authority = getAuthorityPda(program);
     const mint = getNftMintPda(program, epoch);
+    const collectionMint = getCollectionMintPda(program);
+    const { groupAccount } = getWnsAccounts(collectionMint);
+
     const auctionAta = getAssociatedTokenAddressSync(
         mint,
         auctionPda,
         true,
         TOKEN_2022_PROGRAM_ID
     );
-    const { manager, extraMetasAccount } = getWnsAccounts(mint);
+    const { manager, extraMetasAccount, memberAccount } = getWnsAccounts(mint);
+
+    const accounts = {
+        payer: payer.publicKey,
+        epochInscription: epochInscriptionPda,
+        auction: auctionPda,
+        reputation,
+        mint,
+        authority,
+        auctionAta,
+        extraMetasAccount, 
+        manager,
+        group: groupAccount,
+        member: memberAccount,
+        systemProgram: anchor.web3.SystemProgram.programId,
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
+        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
+        wnsProgram: WNS_PROGRAM_ID
+    };
+
+
+    
+    if (logAccountsTable) {
+        const tableData = Object.entries(accounts).map(([key, publicKey]) => ({
+            account: key,
+            mint: publicKey.toBase58()
+        }));
+        console.table(tableData);
+    }
+        
     const txRequest = program.methods.initEpoch(new anchor.BN(epoch))
-        .accounts({
-            payer: payer.publicKey,
-            epochInscription: epochInscriptionPda,
-            auction: auctionPda,
-            reputation,
-            mint,
-            authority,
-            auctionAta,
-            extraMetasAccount, 
-            manager,
-            systemProgram: anchor.web3.SystemProgram.programId,
-            tokenProgram: TOKEN_2022_PROGRAM_ID,
-            rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-            associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
-            wnsProgram: WNS_PROGRAM_ID
-        }).signers([payer])
+        .accounts(accounts)
+        .signers([payer])
         .preInstructions([computeInstruction])
         .rpc();
 

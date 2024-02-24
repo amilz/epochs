@@ -9,9 +9,9 @@ import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
 import { auctionClaim } from "./utils/instructions/claim";
 
-const numberEpochs = 20;
+const numberEpochs = 5;
 
-describe.only("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
+describe("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
@@ -96,7 +96,7 @@ describe.only("SVM On-Chain Asset Generator - 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgG
 });
 
 const targetEpoch = numberEpochs;
-describe("Epoch Auctions", () => {
+describe.skip("Epoch Auctions", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 

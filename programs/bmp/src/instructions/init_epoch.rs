@@ -88,6 +88,14 @@ pub struct InitEpoch<'info> {
     /// CHECK: must be WNS manager
     pub manager: UncheckedAccount<'info>,
 
+    /// CHECK: must be collection/group
+    #[account(mut)]
+    pub group: UncheckedAccount<'info>,
+
+    /// CHECK: must be member
+    #[account(mut)]
+    pub member: UncheckedAccount<'info>,
+
     pub rent: Sysvar<'info, Rent>,
     
     /// CHECK: must be WNS

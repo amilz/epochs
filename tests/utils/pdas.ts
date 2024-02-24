@@ -64,6 +64,7 @@ function getWnsAccounts(mint: PublicKey): {
     manager: PublicKey,
     extraMetasAccount: PublicKey,
     groupAccount: PublicKey
+    memberAccount: PublicKey
 } {
     const [manager] = PublicKey.findProgramAddressSync(
         [
@@ -84,8 +85,14 @@ function getWnsAccounts(mint: PublicKey): {
         ],
         WNS_PROGRAM_ID);
 
+    const [memberAccount] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("member"),
+            new PublicKey(mint).toBuffer()
+        ],
+        WNS_PROGRAM_ID);
 
-    return { manager, extraMetasAccount, groupAccount };
+    return { manager, extraMetasAccount, groupAccount, memberAccount };
 }
 
 function getCollectionMintPda(program: Program<any>) {

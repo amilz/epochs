@@ -5,6 +5,14 @@ use anchor_lang::{
 
 use crate::{AUTHORITY_SEED, COLLECTION_SEED, NFT_MINT_SEED};
 
+fn sighash(namespace: &str, name: &str) -> [u8; 8] {
+    let preimage = format!("{}:{}", namespace, name);
+    let hash = anchor_lang::solana_program::hash::hash(preimage.as_bytes());
+    let mut sighash = [0u8; 8];
+    sighash.copy_from_slice(&hash.to_bytes()[..8]);
+    sighash
+}
+
 //-------------------- MINT NFT --------------------
 
 #[derive(AnchorDeserialize, AnchorSerialize)]
@@ -82,14 +90,6 @@ pub fn wns_mint_nft<'info>(
     Ok(())
 }
 
-fn sighash(namespace: &str, name: &str) -> [u8; 8] {
-    let preimage = format!("{}:{}", namespace, name);
-    let hash = anchor_lang::solana_program::hash::hash(preimage.as_bytes());
-    let mut sighash = [0u8; 8];
-    sighash.copy_from_slice(&hash.to_bytes()[..8]);
-    sighash
-}
-
 //-------------------- CREATE GROUP ACCOUNT --------------------
 
 #[derive(AnchorDeserialize, AnchorSerialize)]
@@ -161,6 +161,60 @@ pub fn wns_create_group<'info>(
             wns_program.clone(),
         ],
         combined_signer_seeds,
+    )?;
+
+    Ok(())
+}
+
+// ------------------- ADD MEMBER TO GROUP --------------------
+
+
+pub fn wns_add_member<'info>(
+    payer: &AccountInfo<'info>,
+    authority: &AccountInfo<'info>,
+    group: &AccountInfo<'info>,
+    member: &AccountInfo<'info>,
+    mint: &AccountInfo<'info>,
+    system_program: &AccountInfo<'info>,
+    token_program: &AccountInfo<'info>,
+    wns_program: &AccountInfo<'info>,
+    authority_bump: u8,
+) -> Result<()> {
+    let instruction_discriminator = sighash("global", "add_group_to_mint");
+
+    let authority_seeds = &[AUTHORITY_SEED.as_bytes(), &[authority_bump]];
+    let authority_signer_seeds = &[&authority_seeds[..]];
+
+    let account_metas = vec![
+        AccountMeta::new(*payer.key, true),
+        AccountMeta::new(*authority.key, true), 
+        AccountMeta::new(*group.key, false),
+        AccountMeta::new(*member.key, false),
+        AccountMeta::new(*mint.key, false),
+        AccountMeta::new_readonly(*system_program.key, false),
+        AccountMeta::new_readonly(*token_program.key, false),
+        AccountMeta::new_readonly(*wns_program.key, false),
+    ];
+
+    let instr_data = (instruction_discriminator).try_to_vec().unwrap();
+
+    invoke_signed(
+        &Instruction {
+            program_id: *wns_program.key, // Adjust if the program_id should be different
+            accounts: account_metas,
+            data: instr_data,
+        },
+        &[
+            payer.clone(),
+            authority.clone(),
+            group.clone(),
+            member.clone(),
+            mint.clone(),
+            system_program.clone(),
+            token_program.clone(),
+            wns_program.clone(),
+        ],
+        authority_signer_seeds,
     )?;
 
     Ok(())
