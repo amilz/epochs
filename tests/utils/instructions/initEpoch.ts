@@ -1,4 +1,4 @@
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Keypair, ComputeBudgetProgram } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
 import { getAuctionPda, getAuthorityPda, getCollectionMintPda, getEpochInscriptionPda, getNftMintPda, getReputationPda, getWnsAccounts } from "../pdas";
@@ -19,7 +19,7 @@ interface MintAssetsForEpochParams {
     payer: Keypair;
     disableOpenFile?: boolean;
     logMintInfo?: boolean;
-    logAccountsTable?: boolean;
+    logErrAndTable?: boolean;
     expectToFail?: {
         errorCode: string;
         assertError?: (error: any) => void;
@@ -33,13 +33,13 @@ export async function mintAssetsForEpoch({
     payer,
     disableOpenFile = true,
     logMintInfo = false,
-    logAccountsTable = false,
+    logErrAndTable = false,
     expectToFail,
     expectedReputation
 }: MintAssetsForEpochParams) {
     const auctionPda = getAuctionPda(epoch, program);
     const epochInscriptionPda = getEpochInscriptionPda(epoch, program);
-    const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 });
+    const computeInstruction = ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 });
     const reputation = getReputationPda(payer.publicKey, program);
     const authority = getAuthorityPda(program);
     const mint = getNftMintPda(program, epoch);
@@ -62,7 +62,7 @@ export async function mintAssetsForEpoch({
         mint,
         authority,
         auctionAta,
-        extraMetasAccount, 
+        extraMetasAccount,
         manager,
         group: groupAccount,
         member: memberAccount,
@@ -74,15 +74,15 @@ export async function mintAssetsForEpoch({
     };
 
 
-    
-    if (logAccountsTable) {
+
+    if (logErrAndTable) {
         const tableData = Object.entries(accounts).map(([key, publicKey]) => ({
             account: key,
             mint: publicKey.toBase58()
         }));
         console.table(tableData);
     }
-        
+
     const txRequest = program.methods.initEpoch(new anchor.BN(epoch))
         .accounts(accounts)
         .signers([payer])
@@ -126,7 +126,7 @@ export async function mintAssetsForEpoch({
             openFile(filePaths.bmp);
         }
     } catch (error) {
-        //console.error(`Error minting assets for epoch ${epoch}:`, error);
+        if (logErrAndTable) console.error(error);
         if (expectToFail) {
             if (expectToFail.assertError) {
                 expectToFail.assertError(error);

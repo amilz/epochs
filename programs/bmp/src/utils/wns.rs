@@ -3,7 +3,7 @@ use anchor_lang::{
     solana_program::{instruction::Instruction, program::invoke_signed},
 };
 
-use crate::{AUTHORITY_SEED, COLLECTION_SEED, NFT_MINT_SEED};
+use crate::{AUTHORITY_SEED, COLLECTION_SEED, CREATOR_WALLET, DAO_TREASURY_WALLET, NFT_MINT_SEED};
 
 fn sighash(namespace: &str, name: &str) -> [u8; 8] {
     let preimage = format!("{}:{}", namespace, name);
@@ -211,6 +211,114 @@ pub fn wns_add_member<'info>(
             member.clone(),
             mint.clone(),
             system_program.clone(),
+            token_program.clone(),
+            wns_program.clone(),
+        ],
+        authority_signer_seeds,
+    )?;
+
+    Ok(())
+}
+
+// ------------------- ADD TRANSFER HOOK --------------------
+
+/* 
+
+pub struct AddRoyalties<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+    #[account(mut)]
+    pub authority: Signer<'info>,
+    #[account(
+        mut,
+        mint::token_program = token_program,
+    )]
+    pub mint: Box<InterfaceAccount<'info, Mint>>,
+    /// CHECK: This account's data is a buffer of TLV data
+    #[account(
+        seeds = [META_LIST_ACCOUNT_SEED, mint.key().as_ref()],
+        bump,
+    )]
+    pub extra_metas_account: UncheckedAccount<'info>,
+    pub system_program: Program<'info, System>,
+    pub rent: Sysvar<'info, Rent>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub token_program: Program<'info, Token2022>,
+}
+
+
+*/
+
+#[derive(AnchorDeserialize, AnchorSerialize)]
+pub struct CreatorWithShare {
+    pub address: String,
+    pub share: u8,
+}
+
+#[derive(AnchorDeserialize, AnchorSerialize)]
+pub struct AddRoyaltiesArgs {
+    pub royalty_basis_points: u16,
+    pub creators: Vec<CreatorWithShare>,
+}
+
+pub fn wns_add_royalties <'info>(
+    payer: &AccountInfo<'info>,
+    authority: &AccountInfo<'info>,
+    mint: &AccountInfo<'info>,
+    extra_metas_account: &AccountInfo<'info>,
+    system_program: &AccountInfo<'info>,
+    rent: &AccountInfo<'info>,
+    associated_token_program: &AccountInfo<'info>,
+    token_program: &AccountInfo<'info>,
+    wns_program: &AccountInfo<'info>,
+    authority_bump: u8,
+) -> Result<()> {
+    let instruction_discriminator = sighash("global", "add_royalties_to_mint");
+
+    let authority_seeds = &[AUTHORITY_SEED.as_bytes(), &[authority_bump]];
+    let authority_signer_seeds = &[&authority_seeds[..]];
+
+    let creator_share: CreatorWithShare = CreatorWithShare {
+        address: CREATOR_WALLET.to_string(),
+        share: 20,
+    };
+    let dao_share: CreatorWithShare = CreatorWithShare {
+        address: DAO_TREASURY_WALLET.to_string(),
+        share: 80,
+    };
+    let royalties_args = AddRoyaltiesArgs {
+        royalty_basis_points: 100,
+        creators: vec![creator_share, dao_share],
+    };
+
+    let account_metas = vec![
+        AccountMeta::new(*payer.key, true),
+        AccountMeta::new(*authority.key, true), 
+        AccountMeta::new(*mint.key, false),
+        AccountMeta::new(*extra_metas_account.key, false), 
+        AccountMeta::new_readonly(*system_program.key, false),
+        AccountMeta::new_readonly(*rent.to_account_info().key, false),
+        AccountMeta::new_readonly(*associated_token_program.key, false),
+        AccountMeta::new_readonly(*token_program.key, false),
+        AccountMeta::new_readonly(*wns_program.key, false),
+    ];
+
+    let instr_data = (instruction_discriminator, royalties_args).try_to_vec().unwrap();
+
+    invoke_signed(
+        &Instruction {
+            program_id: *wns_program.key, // Adjust if the program_id should be different
+            accounts: account_metas,
+            data: instr_data,
+        },
+        &[
+            payer.clone(),
+            authority.clone(),
+            mint.clone(),
+            extra_metas_account.clone(),
+            system_program.clone(),
+            rent.clone(),
+            associated_token_program.clone(),
             token_program.clone(),
             wns_program.clone(),
         ],

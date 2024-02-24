@@ -23,7 +23,7 @@ use spl_token_metadata_interface::{
     state::{Field, TokenMetadata},
 };
 
-use crate::{utils::{format_pubkey, wns_add_member, CreateMintAccountArgs}, InitEpoch, ALL_ROYALTIES, AUTHORITY_SEED, ROYALTY_BASIS_POINTS_FIELD};
+use crate::{utils::{format_pubkey, wns_add_member, wns_add_royalties, CreateMintAccountArgs}, InitEpoch, ALL_ROYALTIES, AUTHORITY_SEED, ROYALTY_BASIS_POINTS_FIELD};
 
 use super::wns_mint_nft;
 
@@ -300,6 +300,21 @@ impl<'info> InitEpoch<'info> {
             &self.wns_program,
             authority_bump
         )?;
+
+        msg!("CPI TO WNS - ADD ROYALTIES");
+        wns_add_royalties(
+            &self.payer,
+            &self.authority,
+            &self.mint,
+            &self.extra_metas_account,
+            &self.system_program,
+            &self.rent.to_account_info(),
+            &self.associated_token_program,
+            &self.token_program,
+            &self.wns_program,
+            authority_bump
+        )?;
+
         Ok(())
 
     }
