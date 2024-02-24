@@ -60,7 +60,11 @@ function getAuthorityPda(program: Program<any>) {
     return authoirtyPda;
 }
 
-function getWnsAccounts(mint: PublicKey): { manager: PublicKey, extraMetasAccount: PublicKey } {
+function getWnsAccounts(mint: PublicKey): {
+    manager: PublicKey,
+    extraMetasAccount: PublicKey,
+    groupAccount: PublicKey
+} {
     const [manager] = PublicKey.findProgramAddressSync(
         [
             Buffer.from("manager")
@@ -72,7 +76,33 @@ function getWnsAccounts(mint: PublicKey): { manager: PublicKey, extraMetasAccoun
             mint.toBuffer()
         ],
         WNS_PROGRAM_ID);
-    return { manager, extraMetasAccount };
+
+    const [groupAccount] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("group"),
+            new PublicKey(mint).toBuffer()
+        ],
+        WNS_PROGRAM_ID);
+
+
+    return { manager, extraMetasAccount, groupAccount };
 }
 
-export { getAuctionPda, getEpochInscriptionPda, getReputationPda, getAuthorityPda, getAuctionEscrowPda, getWnsAccounts };
+function getCollectionMintPda(program: Program<any>) {
+    const [collectionMint] = PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.COLLECTION)],
+        program.programId
+    );
+    return collectionMint;
+}
+
+
+export { 
+    getAuctionPda, 
+    getEpochInscriptionPda, 
+    getReputationPda, 
+    getAuthorityPda, 
+    getAuctionEscrowPda, 
+    getWnsAccounts,
+    getCollectionMintPda
+};

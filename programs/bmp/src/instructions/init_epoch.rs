@@ -86,6 +86,7 @@ pub struct InitEpoch<'info> {
     pub manager: UncheckedAccount<'info>,
 
     pub rent: Sysvar<'info, Rent>,
+    
     /// CHECK: must be WNS
     pub wns_program: UncheckedAccount<'info>,
 }

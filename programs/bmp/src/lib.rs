@@ -22,7 +22,7 @@ pub mod bmp {
     use super::*;
 
     pub fn create_collection_nft(ctx: Context<CreateCollectionNft>) -> Result<()> {
-        create_collection_nft::handle_create_collection(ctx)
+        ctx.accounts.handler(ctx.bumps.authority)
     }
 
     pub fn init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()> {
@@ -35,10 +35,6 @@ pub mod bmp {
 
     pub fn claim(ctx: Context<AuctionClaim>, input_epoch: u64) -> Result<()> {
         claim::handle_claim(ctx, input_epoch)
-    }
-
-    pub fn wns_cpi(ctx: Context<WnsCpi>) -> Result<()> {
-        ctx.accounts.handler(ctx.bumps.authority)
     }
 
 }
