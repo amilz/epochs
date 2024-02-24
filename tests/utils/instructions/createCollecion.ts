@@ -1,7 +1,7 @@
 import { Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuthorityPda, getWnsAccounts } from "../pdas";
+import { getAuthorityPda, getCollectionMintPda, getWnsAccounts } from "../pdas";
 import { assert } from "chai";
 import { Bmp } from "../../../target/types/bmp";
 import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
@@ -12,7 +12,6 @@ import { WNS_PROGRAM_ID } from "../consts";
 interface createCollectionParams {
     program: Program<Bmp>;
     payer: Keypair;
-    mint: Keypair;
     logMintInfo?: boolean;
     expectToFail?: {
         errorCode: string;
@@ -23,26 +22,26 @@ interface createCollectionParams {
 export async function createCollection({
     program,
     payer,
-    mint,
     logMintInfo = false,
     expectToFail,
 }: createCollectionParams) {
-    const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 });
+    const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 140_000 });
     const authority = getAuthorityPda(program);
+    const mint = getCollectionMintPda(program);
     const authorityAta = getAssociatedTokenAddressSync(
-        mint.publicKey,
+        mint,
         authority,
         true,
         TOKEN_2022_PROGRAM_ID
     );
-    const { manager, groupAccount } = getWnsAccounts(mint.publicKey);
+    const { manager, groupAccount } = getWnsAccounts(mint);
 
     const accounts = {
         payer: payer.publicKey,
         authority,
         receiver: authority,
         group: groupAccount,
-        mint: mint.publicKey,
+        mint: mint,
         mintTokenAccount: authorityAta,
         manager,
         systemProgram: anchor.web3.SystemProgram.programId,
@@ -52,13 +51,9 @@ export async function createCollection({
         wnsProgram: WNS_PROGRAM_ID
     };
 
-    for (let key in accounts) {
-        //console.log(key, accounts[key].toBase58());
-    }
-
     const txRequest = program.methods.createCollectionNft()
         .accounts(accounts)
-        .signers([payer, mint])
+        .signers([payer])
         .preInstructions([computeInstruction])
         .rpc();
 

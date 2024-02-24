@@ -1,6 +1,9 @@
-use anchor_lang::{ prelude::*, solana_program::{instruction::Instruction, program::invoke_signed}};
+use anchor_lang::{
+    prelude::*,
+    solana_program::{instruction::Instruction, program::invoke_signed},
+};
 
-use crate::AUTHORITY_SEED;
+use crate::{AUTHORITY_SEED, COLLECTION_SEED};
 
 //-------------------- MINT NFT --------------------
 
@@ -46,7 +49,9 @@ pub fn wns_mint_nft<'info>(
         AccountMeta::new_readonly(*wns_program.key, false),
     ];
 
-    let instr_data = (instruction_discriminator, instruction_data).try_to_vec().unwrap();
+    let instr_data = (instruction_discriminator, instruction_data)
+        .try_to_vec()
+        .unwrap();
 
     invoke_signed(
         &Instruction {
@@ -82,7 +87,6 @@ fn sighash(namespace: &str, name: &str) -> [u8; 8] {
     sighash
 }
 
-
 //-------------------- CREATE GROUP ACCOUNT --------------------
 
 #[derive(AnchorDeserialize, AnchorSerialize)]
@@ -107,13 +111,14 @@ pub fn wns_create_group<'info>(
     token_program: &AccountInfo<'info>,
     wns_program: &AccountInfo<'info>,
     authority_bump: u8,
+    mint_bump: u8,
     args: CreateGroupAccountArgs,
 ) -> Result<()> {
     let instruction_discriminator = sighash("global", "create_group_account");
 
-    // Assuming AUTHORITY_SEED and authority_bump are defined elsewhere in your program.
     let authority_seeds = &[AUTHORITY_SEED.as_bytes(), &[authority_bump]];
-    let authority_signer_seeds: &[&[&[u8]]] = &[&authority_seeds[..]];
+    let mint_seeds = &[COLLECTION_SEED.as_bytes(), &[mint_bump]];
+    let combined_signer_seeds = &[&mint_seeds[..], &authority_seeds[..]];
 
     let account_metas = vec![
         AccountMeta::new(*payer.key, true),
@@ -152,9 +157,8 @@ pub fn wns_create_group<'info>(
             token_program.clone(),
             wns_program.clone(),
         ],
-        authority_signer_seeds,
+        combined_signer_seeds,
     )?;
 
     Ok(())
 }
-

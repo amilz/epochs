@@ -22,7 +22,7 @@ pub mod bmp {
     use super::*;
 
     pub fn create_collection_nft(ctx: Context<CreateCollectionNft>) -> Result<()> {
-        ctx.accounts.handler(ctx.bumps.authority)
+        ctx.accounts.handler(ctx.bumps.authority, ctx.bumps.mint)
     }
 
     pub fn init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()> {

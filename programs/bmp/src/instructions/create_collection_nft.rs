@@ -3,7 +3,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token_2022::Token2022;
 
 use crate::utils::{wns_create_group, CreateGroupAccountArgs};
-use crate::AUTHORITY_SEED;
+use crate::{AUTHORITY_SEED, COLLECTION_SEED};
 
 #[derive(Accounts)]
 pub struct CreateCollectionNft<'info> {
@@ -26,8 +26,13 @@ pub struct CreateCollectionNft<'info> {
     /// CHECK: This account will hold the group data, make sure it is properly initialized.
     pub group: UncheckedAccount<'info>,
 
-    #[account(mut)]
-    pub mint: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [COLLECTION_SEED.as_bytes()],
+        bump,
+    )]
+    /// CHECK: This should be a newly created mint account, owned by the group or another relevant account.
+    pub mint: UncheckedAccount<'info>,
 
     #[account(mut)]
     /// CHECK: This should be an ATA for the mint, owned by the group or another relevant account.
@@ -46,7 +51,7 @@ pub struct CreateCollectionNft<'info> {
 }
 
 impl<'info> CreateCollectionNft<'info> {
-    pub fn handler(&self, authority_bump: u8) -> Result<()> {
+    pub fn handler(&self, authority_bump: u8, mint_bump:u8) -> Result<()> {
         let group_account_args = CreateGroupAccountArgs {
             name: "GroupName".to_string(),
             symbol: "GRP".to_string(),
@@ -68,6 +73,7 @@ impl<'info> CreateCollectionNft<'info> {
             &self.token_program,
             &self.wns_program,
             authority_bump,
+            mint_bump,
             group_account_args,
         )
     }

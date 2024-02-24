@@ -23,17 +23,13 @@ describe.only("create new collection", () => {
   });
 
   it("creates a collection nft", async () => {
-    const mint = Keypair.generate();
-
     try {
       await createCollection({
         program,
         payer,
-        mint,
       })
     } catch (err) {
-      console.log("Error: ", err);
-      assert.fail('error minting');
+      assert.fail('error minting', err);
     }
 
   });

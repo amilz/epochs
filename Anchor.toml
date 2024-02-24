@@ -16,8 +16,7 @@ wallet = "/Users/amilz/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-# test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/0x-wns.ts"
-
+init_idl = "anchor idl init 7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R --filepath target/idl/bmp.json"
 
 [test.validator]
 url = "https://api.mainnet-beta.solana.com"
