@@ -1,9 +1,19 @@
-use anchor_lang:: prelude::*;
+use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_2022::Token2022};
 
 use crate::utils::validate::get_and_validate_epoch;
 use crate::constants::*;
 use crate::state::*;
+
+use crate::utils::wns_mint_nft;
+use crate::{
+    utils::{
+        wns_add_member, 
+        wns_add_royalties, 
+        CreateMintAccountArgs
+    }, 
+    AUTHORITY_SEED
+};
 
 #[derive(Accounts)]
 #[instruction(input_epoch: u64)]
@@ -102,38 +112,114 @@ pub struct InitEpoch<'info> {
     pub wns_program: UncheckedAccount<'info>,
 }
 
-pub fn handle_init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()> {
-    let current_epoch = get_and_validate_epoch(input_epoch)?;
-    let epoch_inscription: &mut Account<'_, EpochInscription> = &mut ctx.accounts.epoch_inscription;
-    let mint: &AccountInfo<'_> = &ctx.accounts.mint;
-    let payer: Pubkey = ctx.accounts.payer.key();
-    let auction: &mut Account<'_, Auction> = &mut ctx.accounts.auction;
-    let reputation: &mut Account<'_, Reputation> = &mut ctx.accounts.reputation;
-    
-    // Create the inscriptions and return the traits generated
-    let _traits = epoch_inscription.generate_and_set_asset(
-        current_epoch, 
-        payer, 
-        ctx.bumps.epoch_inscription
-    );
-    
-    // Create the auction
-    auction.create(
-        current_epoch,
-        mint.key(),
-        payer,
-        ctx.bumps.auction,
-    );
+impl<'info> InitEpoch<'info> {
+    pub fn handler (&mut self, 
+        input_epoch: u64, 
+        epoch_inscription_bump: u8,
+        auction_bump: u8,
+        reputation_bump: u8,
+        authority_bump: u8,
+        mint_bump: u8,
+    ) -> Result<()> {
+        let current_epoch = get_and_validate_epoch(input_epoch)?;
+        let epoch_inscription: &mut Account<'_, EpochInscription> = &mut self.epoch_inscription;
+        let mint: &AccountInfo<'_> = &self.mint;
+        let payer: Pubkey = self.payer.key();
+        let auction: &mut Account<'_, Auction> = &mut self.auction;
+        let reputation: &mut Account<'_, Reputation> = &mut self.reputation;
 
-    // Add reputation to the payer
-    reputation.init_if_needed(payer, ctx.bumps.reputation);
-    reputation.increment_with_validation(Points::INITIATE, payer.key())?;
+            
+        // Create the inscriptions and return the traits generated
+        let _traits = epoch_inscription.generate_and_set_asset(
+            current_epoch, 
+            payer, 
+            epoch_inscription_bump
+        );
+        
+        // Create the auction
+        auction.create(
+            current_epoch,
+            mint.key(),
+            payer,
+            auction_bump,
+        );
 
-    // Mint the Token2022 NFT and send it to the auction ATA
-    // ctx.accounts.create_and_mint_nft(ctx.bumps.authority, input_epoch, traits)?;
-    ctx.accounts.mint_wns_nft(ctx.bumps.authority, ctx.bumps.mint, current_epoch)?;
-    msg!("Succesful CPI to WNS");
-    Ok(())
+        // Add reputation to the payer
+        reputation.init_if_needed(payer, reputation_bump);
+        reputation.increment_with_validation(Points::INITIATE, payer.key())?;
+
+        // Mint the WNS NFT and send it to the auction ATA
+        self.mint_wns_nft(authority_bump, mint_bump, current_epoch)?;
+        msg!("Succesful CPI to WNS");
+
+        Ok(())
+    }
+
+    pub fn mint_wns_nft(
+        &self,
+        authority_bump: u8,
+        mint_bump: u8,
+        current_epoch: u64,
+    ) -> Result<()> {
+
+        let token_metadata = CreateMintAccountArgs {
+            name: format!("Epoch #{}", current_epoch),
+            symbol: String::from("EPOCH"),
+            uri: format!(
+                "https://shdw-drive.genesysgo.net/somekey/{}.png",
+                current_epoch
+            ).to_string(),
+        };
+        msg!("CPI TO WNS - MINT NFT");
+        wns_mint_nft(
+            &self.payer,
+            &self.authority,
+            &self.auction.to_account_info(),
+            &self.mint,
+            &self.auction_ata,
+            &self.extra_metas_account,
+            &self.manager,
+            &self.system_program,
+            &self.rent.to_account_info(),
+            &self.associated_token_program,
+            &self.token_program,
+            &self.wns_program,
+            authority_bump,
+            mint_bump,
+            current_epoch,
+            token_metadata,
+        )?;
+
+        msg!("CPI TO WNS - ADD MEMBER");
+        wns_add_member(
+            &self.payer,
+            &self.authority,
+            &self.group,
+            &self.member,
+            &self.mint,
+            &self.system_program,
+            &self.token_program,
+            &self.wns_program,
+            authority_bump
+        )?;
+
+        msg!("CPI TO WNS - ADD ROYALTIES");
+        wns_add_royalties(
+            &self.payer,
+            &self.authority,
+            &self.mint,
+            &self.extra_metas_account,
+            &self.system_program,
+            &self.rent.to_account_info(),
+            &self.associated_token_program,
+            &self.token_program,
+            &self.wns_program,
+            authority_bump
+        )?;
+
+        Ok(())
+
+    }
+    
 
 }
-

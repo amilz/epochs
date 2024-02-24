@@ -26,7 +26,7 @@ pub mod bmp {
     }
 
     pub fn init_epoch(ctx: Context<InitEpoch>, input_epoch: u64) -> Result<()> {
-        init_epoch::handle_init_epoch(ctx, input_epoch)
+        ctx.accounts.handler(input_epoch, ctx.bumps.epoch_inscription, ctx.bumps.auction, ctx.bumps.reputation, ctx.bumps.authority, ctx.bumps.mint)
     }
 
     pub fn bid(ctx: Context<AuctionBid>, input_epoch: u64, bid_amount: u64) -> Result<()> {
