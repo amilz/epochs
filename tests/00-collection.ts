@@ -6,23 +6,19 @@ import { airdropToMultiple } from "./utils/utils";
 import { createCollection } from "./utils/instructions/createCollecion";
 import { assert } from "chai";
 
-describe("create new collection", () => {
+describe("Create a new WNS Colleciton NFT", () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
 
   const payer = Keypair.generate();
-  const authority = Keypair.generate();
-
-  // Initializes a local reputation tracker to mirror expected on-chain reputation changes.
-  // This allows us to predict the expected state and verify against the actual on-chain state.
 
   const program = anchor.workspace.Bmp as Program<Bmp>;
 
   before(async () => {
-    await airdropToMultiple([authority.publicKey, payer.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
+    await airdropToMultiple([payer.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
   });
 
-  it("creates a collection nft", async () => {
+  it("Creates a collection nft", async () => {
     try {
       await createCollection({
         program,
@@ -32,6 +28,19 @@ describe("create new collection", () => {
       assert.fail('error minting', err);
     }
 
+  });
+  it(`Fails to regenerate collection nft`, async () => {
+    const expectedErrorCode = "0x0"; // 0x0 is attempt to reinit account
+    await createCollection({
+      program,
+      payer,
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          assert.include(error.message, expectedErrorCode, 'The error message should contain 0x0');
+        }
+      }
+    })
   });
 
 });
