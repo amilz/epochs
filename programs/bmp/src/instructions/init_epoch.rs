@@ -1,3 +1,41 @@
+use std::str::FromStr;
+
+/// The `InitEpoch` instruction initializes a new epoch  NFT: This includes selecting traits, generating epoch inscriptions, 
+/// setting up an auction for the epoch, updating the payer's reputation, minting a new NFT for the epoch, 
+/// and adding the new NFT to the collection. 
+///
+/// # Instruction Context
+///
+/// - `payer`: The account initiating the new epoch. Must be a signer.
+/// - `epoch_inscription`: A new account to store the inscription for the epoch, initialized here.
+/// - `auction`: A new account to store the auction details for the epoch, initialized here.
+/// - `reputation`: The reputation account for the payer, initialized if needed.
+/// - `mint`: The mint account for the new NFT associated with the epoch.
+/// - `authority`: The authority account, used for signing transactions related to the new epoch.
+/// - `auction_ata`: The Associated Token Account for holding the auction's NFT.
+/// - `extra_metas_account`: An account for storing extra metadata related to the epoch or NFT.
+/// - `manager`: The manager account for the system, involved in administrative operations.
+/// - `group`: The group account associated with the new epoch, typically related to the NFT or auction.
+/// - `member`: The member account being added to the group in the new epoch.
+/// - `system_program`, `rent`, `associated_token_program`, `token_program`: Standard Solana and SPL programs required for account and token operations.
+/// - `wns_program`: The program account responsible for managing the overall system, including epochs, auctions, and NFTs.
+///
+/// # Arguments
+///
+/// - `input_epoch`: The identifier for the new epoch, typically a sequential number or timestamp.
+///
+/// # Functionality
+///
+/// This instruction performs several key operations to initiate a new epoch:
+/// - Validates the input epoch to ensure it's the correct and expected epoch for the transition.
+/// - Initializes the `epoch_inscription` and `auction` accounts with relevant details for the new epoch.
+/// - Updates the `reputation` account of the payer to reflect their participation in initiating the epoch.
+/// - Mints a new NFT representing the epoch and assigns it to the `auction_ata` for the upcoming auction.
+/// - Adds a new member to the specified group, marking their participation in the new epoch.
+///
+
+
+
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_2022::Token2022};
 
@@ -61,13 +99,12 @@ pub struct InitEpoch<'info> {
     )]
     reputation: Account<'info, Reputation>,
 
-
+    /// CHECK: New NFT Mint (will be init by WNS Program via CPI - address is derived based on epoch #)
     #[account(
         mut,
         seeds = [NFT_MINT_SEED.as_bytes(), &input_epoch.to_le_bytes()],
         bump,
     )]
-    /// CHECK: This should be a newly created mint account, owned by the group or another relevant account.
     pub mint: UncheckedAccount<'info>,
 
     /// This will be the authority of the Token2022 NFT
@@ -84,30 +121,31 @@ pub struct InitEpoch<'info> {
     pub token_program: Program<'info, Token2022>,
     pub system_program: Program<'info, System>,
 
-    /// NEW FOR WNS
-
     /// CHECK: must be ata auction/mint/token22/off-curve
     #[account(mut)]
     pub auction_ata: UncheckedAccount<'info>,
 
-    /// CHECK: Need to metaseed, mint, WNS pda
+    /// CHECK: Extra Metas (PDA Validated in WNS Program)
     #[account(mut)]
     pub extra_metas_account: UncheckedAccount<'info>,
 
-    /// CHECK: must be WNS manager
+    /// CHECK: must be WNS manager (PDA Validated in WNS Program)
     pub manager: UncheckedAccount<'info>,
 
-    /// CHECK: must be collection/group
+    /// CHECK: must be collection/group (PDA Validated in WNS Program)
     #[account(mut)]
     pub group: UncheckedAccount<'info>,
 
-    /// CHECK: must be member
+    /// CHECK: must be member (PDA Validated in WNS Program)
     #[account(mut)]
     pub member: UncheckedAccount<'info>,
 
     pub rent: Sysvar<'info, Rent>,
     
     /// CHECK: must be WNS
+    #[account(
+        address = Pubkey::from_str(WNS_PROGRAM).unwrap()
+    )]
     pub wns_program: UncheckedAccount<'info>,
 }
 

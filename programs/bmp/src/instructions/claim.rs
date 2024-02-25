@@ -1,3 +1,40 @@
+/// The `AuctionClaim` instruction allows the auction winner to claim their prize (NFT) and 
+/// distributes the auction's escrowed funds to the DAO treasury and the NFT creator. 
+/// This instruction also updates the winner's reputation and marks the auction as claimed.
+///
+/// # Instruction Context
+///
+/// - `winner`: The account of the auction winner. Must be a signer and the high bidder of the auction.
+/// - `auction`: The auction account that will be marked as claimed. It is seeded on the user-input epoch.
+/// - `auction_escrow`: The escrow account holding the auction's funds, which will be distributed to the DAO treasury and the creator.
+/// - `reputation`: The account storing the reputation for the winner, updated as a result of winning the auction.
+/// - `dao_treasury`: The DAO treasury account receiving a portion of the auction's funds.
+/// - `creator_wallet`: The NFT creator's wallet receiving a portion of the auction's funds.
+/// - `mint`: The mint of the NFT being auctioned (this is seeded on the epoch)
+/// - `source_ata`: The token account holding the NFT to be transferred to the winner.
+/// - `destination_ata`: The winner's token account where the NFT will be transferred.
+/// - `authority`: The program's authority used to sign transactions.
+/// - `extra_metas_account`: Account holding extra metadata, used when adding royalty information.
+/// - `wns_program`: The WNS program account, used for adding royalty information.
+/// - `system_program`, `associated_token_program`, `token_program`, `rent`: System and SPL Token program accounts used for token transfers and account rent.
+///
+/// # Instruction Arguments
+///
+/// - `claim_epoch`: The epoch during which the claim is made. Used to verify the auction's timing constraints.
+///
+/// # Errors
+///
+/// This instruction may return the following errors:
+///
+/// - `EpochError::EpochMismatch`: If the `claim_epoch` does not match the auction's epoch.
+/// - `EpochError::InvalidWinner`: If the `winner` account is not the high bidder in the auction.
+/// - `EpochError::AuctionAlreadyClaimed`: If the auction state is not `UnClaimed`, indicating the prize has already been claimed.
+/// - `EpochError::InvalidTreasury`: If the `dao_treasury` account does not match the expected DAO treasury pubkey.
+/// - `EpochError::InvalidCreator`: If the `creator_wallet` account does not match the expected creator pubkey.
+/// - `EpochError::Overflow` or `EpochError::Underflow`: In calculations related to fund distributions.
+///
+
+
 use anchor_lang::{prelude::*, system_program::{transfer, Transfer}};
 
 use anchor_spl::{
@@ -20,7 +57,7 @@ use crate::state::*;
 #[instruction(claim_epoch: u64)]
 pub struct AuctionClaim<'info> {
 
-    /// Anybody can bid on an auction.
+    /// Only winner can bid on an auction.
     /// No constraits--just need to be a signer
     #[account(mut, signer)]
     winner: SystemAccount<'info>,
@@ -59,8 +96,6 @@ pub struct AuctionClaim<'info> {
 
     system_program: Program<'info, System>,
 
-
-
     #[account(
         mut,
         address = Pubkey::from_str(DAO_TREASURY_WALLET).unwrap() @ EpochError::InvalidTreasury
@@ -76,7 +111,7 @@ pub struct AuctionClaim<'info> {
     #[account(mut)]
     pub mint: InterfaceAccount<'info, Mint>,
 
-    /// CHECK: Just a signer. Safe b/c of seeds/bump
+    /// CHECK: Program Authority: The account that will be used to sign transactions
     #[account(
         mut,
         seeds = [AUTHORITY_SEED.as_bytes()],
@@ -101,17 +136,19 @@ pub struct AuctionClaim<'info> {
     )]
     pub destination_ata: InterfaceAccount<'info, TokenAccount>,
     
-
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Program<'info, Token2022>,
 
-    /// CHECK: Need to metaseed, mint, WNS pda
+    /// CHECK: Extra Metas (PDA Validated in WNS Program)
     #[account(mut)]
     pub extra_metas_account: UncheckedAccount<'info>,
     
     pub rent: Sysvar<'info, Rent>,
     
     /// CHECK: must be WNS
+    #[account(
+        address = Pubkey::from_str(WNS_PROGRAM).unwrap()
+    )]
     pub wns_program: UncheckedAccount<'info>,
 
 }
@@ -128,21 +165,26 @@ impl AuctionClaim<'_> {
         Ok(())
     }
 
+    /// Verifies that the claim epoch matches the auction's epoch and that the epoch has passed.
     pub fn verify_epoch(&self, claim_epoch: u64) -> Result<()> {
         require!(claim_epoch == self.auction.epoch, EpochError::EpochMismatch);
         verify_epoch_has_passed(self.auction.epoch)?;
         Ok(())
     }
 
+    /// Verifies that the winner is the high bidder in the auction.
     pub fn verify_winner(&self) -> Result<()> {
         require!(self.auction.high_bidder == self.winner.key(), EpochError::InvalidWinner);
         Ok(())
     }
 
+    /// Verifies that the auction is in the `UnClaimed` state.
     pub fn verify_auction_state(&self) -> Result<()> {
         require!(self.auction.state == AuctionState::UnClaimed, EpochError::AuctionAlreadyClaimed);
         Ok(())
     }
+
+    /// Distributes the auction's escrowed funds to the DAO treasury and the NFT creator.
     pub fn distribute_funds(&self, escrow_bump: u8) -> Result<()> {
         let escrow_balance: u64 = self.auction.high_bid_lamports;
         let dao_treasury_lamports = escrow_balance.checked_mul(80).ok_or_else(|| EpochError::Overflow)? / 100;
@@ -178,6 +220,7 @@ impl AuctionClaim<'_> {
     }
 
 
+    /// Transfers the NFT from the auction's escrow account to the winner's token account.
     pub fn distribute_nft(&self) -> Result<()> {
         let bump = &[self.auction.bump];
         let seeds: &[&[u8]] = &[AUCTION_SEED.as_ref(), &self.auction.epoch.to_le_bytes(), bump];
@@ -196,9 +239,9 @@ impl AuctionClaim<'_> {
         Ok(())
     }
 
+    /// CPI to WNS to add royalty information to the NFT's metadata.
     pub fn add_royalty_hook(&self, authority_bump: u8) -> Result<()> {
 
-        msg!("CPI TO WNS - ADD ROYALTIES");
         wns_add_royalties(
             &self.winner,
             &self.authority,
@@ -215,7 +258,7 @@ impl AuctionClaim<'_> {
         Ok(())
     }
 
-
+    /// Updates the auction state and the reputation of the winner.
     pub fn update_auction_and_reputation(&mut self) -> Result<()> {
         let auction = & mut self.auction;
         let reputation = & mut self.reputation;

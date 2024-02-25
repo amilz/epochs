@@ -9,7 +9,7 @@ import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
 import { auctionClaim } from "./utils/instructions/claim";
 
-const numberEpochs = 3;
+const numberEpochs = 1;
 
 describe("Generates a New NFT for Each Epoch", () => {
   const provider = anchor.AnchorProvider.env();

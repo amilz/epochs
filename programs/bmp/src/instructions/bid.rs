@@ -1,3 +1,30 @@
+/// Represents the `AuctionBid` instruction, which allows anybody to bid on an auction.
+/// This instruction updates the auction state, transfers funds to the auction escrow account,
+/// returns funds to the previous high bidder, and updates the reputation of the bidder.
+/// 
+/// # Instruction Context
+/// 
+/// - `bidder`: The account of the bidder. Must be a signer.
+/// - `auction`: The auction account to be updated based on the bid. The account is seeded on the user-input epoch.
+/// - `auction_escrow`: The auction escrow account that holds the funds for the auction.
+/// - `high_bidder`: The account of the previous high bidder. Their funds will be returned to them.
+/// - `reputation`: The account that stores the reputation for the bidder. The account is seeded on the user's pubkey.
+/// - `system_program`: The system program account.
+/// 
+/// # Instruction Arguments
+///
+/// - `input_epoch`: The user-input epoch used to seed the auction account.
+/// - `bid_amount`: The amount of the bid in lamports.
+/// 
+/// # Errors
+/// 
+/// This instruction can return the following errors:
+/// 
+/// - `EpochError::InvalidPreviousBidder`: If the previous high bidder is not the expected account.
+/// - `EpochError::BidTooLow`: If the bid amount is lower than the minimum bid amount.
+/// - `EpochError::InvalidEpoch`: If the input epoch is invalid.
+/// 
+
 use anchor_lang:: prelude::*;
 use anchor_lang::solana_program::native_token::LAMPORTS_PER_SOL;
 use anchor_lang::system_program::{transfer, Transfer};
@@ -83,6 +110,7 @@ impl AuctionBid<'_> {
         Ok(())
     }
 
+    /// Validates the bid amount is greater than the minimum bid amount.
     pub fn validate_bid(&self, bid_amount_lamports: u64) -> Result<()> {
         let auction = &self.auction;
         let high_bid_lamports = auction.high_bid_lamports;
@@ -101,6 +129,7 @@ impl AuctionBid<'_> {
         Ok(())
     }
 
+    /// Transfers the bid amount from the bidder to the auction escrow account.
     pub fn transfer_funds_to_escrow(&self, bid_amount: u64) -> Result<()>   {
         transfer(
             CpiContext::new(
@@ -115,6 +144,7 @@ impl AuctionBid<'_> {
         Ok(())
     }
     
+    /// Transfers the previous high bid amount from the auction escrow account to the previous high bidder.
     pub fn transfer_funds_to_previous_high_bidder(&self, escrow_bump: u8) -> Result<()> {
         require!(self.auction.high_bidder == self.high_bidder.key(), EpochError::InvalidPreviousBidder);
         let previous_high_bid_lamports = self.auction.high_bid_lamports;
@@ -141,6 +171,7 @@ impl AuctionBid<'_> {
         Ok(())
     }
     
+    /// Updates the auction state and the reputation of the bidder.
     pub fn update_auction_and_reputation(&mut self, bid_amount: u64, reputation_bump: u8) -> Result<()> {
         let auction = & mut self.auction;
         let reputation = & mut self.reputation;

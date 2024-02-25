@@ -1,3 +1,20 @@
+/// The `CreateCollectionNft` instruction facilitates the creation of the Epochs Collection NFT (intended to only be used once and then can remove ix)
+/// This is achieved through a CPI to the WNS token_program
+///
+/// # Instruction Context
+///
+/// - `payer`: The account responsible for paying transaction fees and any other associated costs. Must be a signer.
+/// - `authority`: The Program Derived Account (PDA) that acts as the authority for the collection, capable of signing transactions.
+///   It is also used as the receiver for the collection NFT to maintain centralized control.
+/// - `receiver`: the authoity account will hold the collection NFT.
+/// - `group`: An account that will hold the metadata and state of the collection group. Initialized by the WNS program.
+/// - `mint`: The mint account for the collection NFT, uniquely identified and constrained by the `COLLECTION_SEED`.
+/// - `mint_token_account`: The Associated Token Account (ATA) for the collection NFT, expected to be owned by the collection group or the authority.
+/// - `manager`: The WNS manager account, overseeing operations within the WNS program.
+/// - `system_program`, `rent`, `associated_token_program`, `token_program`: Standard Solana and SPL programs required for account and token operations.
+/// - `wns_program`: The WNS program account, responsible for handling domain and collection logic within the ecosystem.
+///
+
 use std::str::FromStr;
 
 use anchor_lang::prelude::*;
@@ -13,9 +30,8 @@ use crate::{AUTHORITY_SEED, COLLECTION_SEED, WNS_PROGRAM};
 pub struct CreateCollectionNft<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
-
-    // Program Authority: The account that will be used to sign transactions
-    /// CHECK: can be any account
+    
+    /// CHECK: Program Authority: The account that will be used to sign transactions
     #[account(
         mut,
         seeds = [AUTHORITY_SEED.as_bytes()],
@@ -70,7 +86,7 @@ impl<'info> CreateCollectionNft<'info> {
             uri: "https://groupinfo.example.com".to_string(),
             max_size: 100, // Example max size
         };
-
+        
         wns_create_group(
             &self.payer,
             &self.authority,
