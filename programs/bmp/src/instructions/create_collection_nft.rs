@@ -24,7 +24,7 @@ use anchor_spl::{
 };
 
 use crate::utils::{wns_create_group, CreateGroupAccountArgs};
-use crate::{AUTHORITY_SEED, COLLECTION_SEED, WNS_PROGRAM};
+use crate::{EpochError, AUTHORITY_SEED, COLLECTION_SEED, WNS_PROGRAM};
 
 #[derive(Accounts)]
 pub struct CreateCollectionNft<'info> {
@@ -73,7 +73,7 @@ pub struct CreateCollectionNft<'info> {
     
     /// CHECK: must be WNS
     #[account(
-        address = Pubkey::from_str(WNS_PROGRAM).unwrap()
+        address = Pubkey::from_str(WNS_PROGRAM).unwrap() @ EpochError::InvalidWnsProgram
     )]
     pub wns_program: UncheckedAccount<'info>,
 }

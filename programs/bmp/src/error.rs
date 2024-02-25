@@ -45,4 +45,10 @@ pub enum EpochError {
 
     #[msg("Integer underflow")]
     Underflow,
+
+
+    // WNS Errors
+
+    #[msg("Invalid WNS Program")]
+    InvalidWnsProgram,
 }

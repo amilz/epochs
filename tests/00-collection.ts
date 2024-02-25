@@ -18,6 +18,24 @@ describe("Create a new WNS Colleciton NFT", () => {
     await airdropToMultiple([payer.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
   });
 
+  it("Cannot create a collection NFT with incorrect WNS Program ID", async () => {
+    const expectedErrorCode = "InvalidWnsProgram";
+    await createCollection({
+      program,
+      payer,
+      accountOverrides: {
+        wnsProgram: anchor.web3.SystemProgram.programId,
+      },
+      expectToFail: {
+        errorCode: expectedErrorCode,
+        assertError: (error) => {
+          assert.isTrue(error instanceof anchor.AnchorError, "Expected an AnchorError");
+          assert.include(error.error.errorCode.code, expectedErrorCode, `Expected error code to be '${expectedErrorCode}'`);
+        }
+      }
+    })
+  })
+
   it("Creates a collection nft", async () => {
     try {
       await createCollection({

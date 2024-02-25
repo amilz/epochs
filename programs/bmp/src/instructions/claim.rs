@@ -147,7 +147,7 @@ pub struct AuctionClaim<'info> {
     
     /// CHECK: must be WNS
     #[account(
-        address = Pubkey::from_str(WNS_PROGRAM).unwrap()
+        address = Pubkey::from_str(WNS_PROGRAM).unwrap() @ EpochError::InvalidWnsProgram
     )]
     pub wns_program: UncheckedAccount<'info>,
 

@@ -44,6 +44,7 @@ use crate::constants::*;
 use crate::state::*;
 
 use crate::utils::wns_mint_nft;
+use crate::EpochError;
 use crate::{
     utils::{
         wns_add_member, 
@@ -144,7 +145,7 @@ pub struct InitEpoch<'info> {
     
     /// CHECK: must be WNS
     #[account(
-        address = Pubkey::from_str(WNS_PROGRAM).unwrap()
+        address = Pubkey::from_str(WNS_PROGRAM).unwrap() @ EpochError::InvalidWnsProgram
     )]
     pub wns_program: UncheckedAccount<'info>,
 }

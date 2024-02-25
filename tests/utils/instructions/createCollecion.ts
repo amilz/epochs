@@ -7,7 +7,11 @@ import { Bmp } from "../../../target/types/bmp";
 import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
 import { WNS_PROGRAM_ID } from "../consts";
+import { AllInstructions } from "@coral-xyz/anchor/dist/cjs/program/namespace/types";
+import { PartialAccounts } from "@coral-xyz/anchor/dist/cjs/program/namespace/methods";
 
+type AllMyInstructions = AllInstructions<Bmp>;
+type PartialCollectionNftInstructionAccounts = PartialAccounts<Extract<AllMyInstructions, { name: "createCollectionNft" }>["accounts"][number]>;
 
 interface createCollectionParams {
     program: Program<Bmp>;
@@ -17,6 +21,7 @@ interface createCollectionParams {
         errorCode: string;
         assertError?: (error: any) => void;
     };
+    accountOverrides?: PartialCollectionNftInstructionAccounts;
 }
 
 export async function createCollection({
@@ -24,6 +29,7 @@ export async function createCollection({
     payer,
     logMintInfo = false,
     expectToFail,
+    accountOverrides = {} // Default to an empty object if not provided
 }: createCollectionParams) {
     const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 140_000 });
     const authority = getAuthorityPda(program);
@@ -36,7 +42,7 @@ export async function createCollection({
     );
     const { manager, groupAccount } = getWnsAccounts(mint);
 
-    const accounts = {
+    const defaultAccounts = {
         payer: payer.publicKey,
         authority,
         receiver: authority,
@@ -50,6 +56,8 @@ export async function createCollection({
         associatedTokenProgram: ASSOCIATED_PROGRAM_ID,
         wnsProgram: WNS_PROGRAM_ID
     };
+
+    const accounts = { ...defaultAccounts, ...accountOverrides };
 
     const txRequest = program.methods.createCollectionNft()
         .accounts(accounts)
