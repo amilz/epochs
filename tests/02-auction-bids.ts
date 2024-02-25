@@ -43,7 +43,7 @@ describe("Bids on Auctions", () => {
    * (though this should not happen in practice, as the test should be run in order of epochs). 
    * 
    */
-  it(`Multiple Bids on Epoch # ${targetEpoch}`, async () => {
+  it(`Multiple Bids on Single Auction`, async () => {
     let { epoch } = await provider.connection.getEpochInfo();
     while (epoch < targetEpoch) {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -80,7 +80,7 @@ describe("Bids on Auctions", () => {
     });
   });
 
-  it(`Fails submit a low bid on Epoch # ${targetEpoch}`, async () => {
+  it(`Fails submit a low bid in auction}`, async () => {
     const expectedErrorCode = "BidTooLow";
     await bidOnAuction({
       bidAmount: LAMPORTS_PER_SOL / 2,
@@ -99,7 +99,7 @@ describe("Bids on Auctions", () => {
     });
   });
 
-  it(`Fails submit wrong epoch (too low) for Epoch # ${targetEpoch}`, async () => {
+  it(`Fails submit wrong epoch (too low) for auction`, async () => {
     const expectedErrorCode1 = "AccountNotInitialized";
     const expectedErrorCode2 = "PastEpochNotAllowed";
     // this is likley a throw if an older auction PDA is passed
@@ -126,7 +126,7 @@ describe("Bids on Auctions", () => {
     });
   });
 
-  it(`Fails submit wrong epoch (too high) for Epoch # ${targetEpoch}`, async () => {
+  it(`Fails submit wrong epoch (too high) for auction`, async () => {
     const expectedErrorCode1 = "AccountNotInitialized";
     const expectedErrorCode2 = "FutureEpochNotAllowed";
 
@@ -150,7 +150,7 @@ describe("Bids on Auctions", () => {
     });
   });
 
-  it(`Fails submit a bid with wrong prevBidder on Epoch # ${targetEpoch}`, async () => {
+  it(`Fails submit a bid with wrong prevBidder for auction`, async () => {
     const expectedErrorCode = "InvalidPreviousBidder";
     
     await bidOnAuction({
@@ -170,7 +170,7 @@ describe("Bids on Auctions", () => {
     });
   });
 
-  it(`Fails to claim with wrong winner # ${targetEpoch}`, async () => {
+  it(`Fails to claim with wrong winner for auction`, async () => {
     let { epoch } = await provider.connection.getEpochInfo();
     while (epoch <= targetEpoch) {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -204,7 +204,7 @@ describe("Bids on Auctions", () => {
 
   });
 
-  it(`Fails to claim with wrong Treasury # ${targetEpoch}`, async () => {
+  it(`Fails to claim with wrong Treasury`, async () => {
     let { epoch } = await provider.connection.getEpochInfo();
     while (epoch <= targetEpoch) {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -234,7 +234,7 @@ describe("Bids on Auctions", () => {
 
   });
 
-  it(`Fails to claim with wrong Creator # ${targetEpoch}`, async () => {
+  it(`Fails to claim with wrong Creator`, async () => {
     let { epoch } = await provider.connection.getEpochInfo();
     while (epoch <= targetEpoch) {
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -264,7 +264,7 @@ describe("Bids on Auctions", () => {
 
   });
 
-  it(`Claims the auction for Epoch # ${targetEpoch}`, async () => {
+  it(`Claims the auction for Epoch`, async () => {
     let { epoch } = await provider.connection.getEpochInfo();
     while (epoch <= targetEpoch) {
       await new Promise(resolve => setTimeout(resolve, 1000));
