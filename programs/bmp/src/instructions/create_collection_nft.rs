@@ -1,44 +1,53 @@
+use std::str::FromStr;
+
 use anchor_lang::prelude::*;
-use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token_2022::Token2022;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_2022::Token2022,
+};
 
 use crate::utils::{wns_create_group, CreateGroupAccountArgs};
-use crate::{AUTHORITY_SEED, COLLECTION_SEED};
+use crate::{AUTHORITY_SEED, COLLECTION_SEED, WNS_PROGRAM};
 
 #[derive(Accounts)]
 pub struct CreateCollectionNft<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    // This accoutable or a signer in the context of creating a group account.
+    // Program Authority: The account that will be used to sign transactions
+    /// CHECK: can be any account
     #[account(
         mut,
         seeds = [AUTHORITY_SEED.as_bytes()],
         bump,
     )]
-    /// CHECK: can be any account
     pub authority: UncheckedAccount<'info>,
 
-    /// CHECK: can be any account
+    /// CHECK: Set to be the same as the authority account
+    #[account(
+        address = authority.key()
+    )]
     pub receiver: UncheckedAccount<'info>,
 
+    /// CHECK: This account will hold the collection data (PDA Validated in WNS Program)
     #[account(mut)]
-    /// CHECK: This account will hold the group data, make sure it is properly initialized.
     pub group: UncheckedAccount<'info>,
 
+    // Collection NFT Address is derived from the Collection Seed, so only 1 can be created
+    /// CHECK: WNS inits it as a Mint Account
     #[account(
         mut,
         seeds = [COLLECTION_SEED.as_bytes()],
         bump,
     )]
-    /// CHECK: This should be a newly created mint account, owned by the group or another relevant account.
     pub mint: UncheckedAccount<'info>,
 
-    #[account(mut)]
+    // ATA Validated by WNS (Owner: Authtority, Mint: Mint Account, Program: Token2022, Off-curve)
     /// CHECK: This should be an ATA for the mint, owned by the group or another relevant account.
+    #[account(mut)]
     pub mint_token_account: UncheckedAccount<'info>,
 
-    /// CHECK: Can be any account, likely used for permission checks or metadata.
+    /// CHECK: WNS Manager Account (PDA Validated in WNS Program)
     pub manager: UncheckedAccount<'info>,
 
     pub system_program: Program<'info, System>,
@@ -47,6 +56,9 @@ pub struct CreateCollectionNft<'info> {
     pub token_program: Program<'info, Token2022>,
     
     /// CHECK: must be WNS
+    #[account(
+        address = Pubkey::from_str(WNS_PROGRAM).unwrap()
+    )]
     pub wns_program: UncheckedAccount<'info>,
 }
 
@@ -62,7 +74,7 @@ impl<'info> CreateCollectionNft<'info> {
         wns_create_group(
             &self.payer,
             &self.authority,
-            &self.receiver,
+            &self.authority,
             &self.group,
             &self.mint,
             &self.mint_token_account,
