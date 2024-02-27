@@ -107,7 +107,8 @@ export async function auctionClaim({
             program.provider.connection.getBalance(creatorWallet),
             program.provider.connection.getTokenAccountBalance(destinationAta),
         ]);
-        const expectedDaoGain = exceptedEscrowWithdraw.toNumber() * 0.8;
+        // DAO Value rounded down to simulate rust's integer division behavior
+        const expectedDaoGain = Math.floor(exceptedEscrowWithdraw.toNumber() * 0.8);
         const expectedCreatorGain = exceptedEscrowWithdraw.toNumber() - expectedDaoGain;
         assert.strictEqual(escrowPostBalance, escrowPreBalance - exceptedEscrowWithdraw.toNumber(), "Auction escrow should have the expected balance");
         assert.strictEqual(daoPostBalance, daoPreBalance + expectedDaoGain, "Dao treasury should have the expected balance");

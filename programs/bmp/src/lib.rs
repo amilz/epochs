@@ -36,6 +36,10 @@ pub mod bmp {
         ctx.accounts.handler(input_epoch, ctx.bumps.auction_escrow, ctx.bumps.authority)
     }
 
+    pub fn transfer_example(ctx: Context<TransferExample>) -> Result<()> {
+        ctx.accounts.handler()
+    }
+
 }
 
 

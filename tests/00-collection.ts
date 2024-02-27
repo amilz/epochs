@@ -2,7 +2,7 @@ import { Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Bmp } from "../target/types/bmp";
-import { airdropToMultiple } from "./utils/utils";
+import { airdropToMultiple, initIdlToChain } from "./utils/utils";
 import { createCollection } from "./utils/instructions/createCollecion";
 import { assert } from "chai";
 
@@ -15,6 +15,7 @@ describe("Create a new WNS Colleciton NFT", () => {
   const program = anchor.workspace.Bmp as Program<Bmp>;
 
   before(async () => {
+    await initIdlToChain();
     await airdropToMultiple([payer.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
   });
 

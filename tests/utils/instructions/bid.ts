@@ -79,8 +79,10 @@ export async function bidOnAuction({
             program.provider.connection.getBalance(highBidder)
         ]);
 
-        assert.strictEqual(finalEscrowBalance, initialEscrowBalance + bidAmount - prevBid.toNumber(), "After tx, final escrow should have the previous balance plus the new bid amount minus the previous bid amount");
-        assert.strictEqual(prevBidderFinalBalance, prevBidderInitialBalance + prevBid.toNumber(), "Previous bidder should have had their bid refunded");
+        assert.strictEqual(finalEscrowBalance, initialEscrowBalance + bidAmount - prevBid.toNumber(), `After tx, final escrow should have the previous balance plus the new bid amount minus the previous bid amount - ${signature}`);
+        
+        if (highBidder.toBase58() === bidder.publicKey.toBase58()) return; // need to skip this if previous bidder is the same as the current bidder
+        assert.strictEqual(prevBidderFinalBalance, prevBidderInitialBalance + prevBid.toNumber(), `Previous bidder should have had their bid refunded - ${signature}`);
 
     } catch (error) {
         //console.error(`Error bidding on epoch ${epoch}:`, error);

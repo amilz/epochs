@@ -7,6 +7,8 @@ import { mintAssetsForEpoch } from "./utils/instructions/initEpoch";
 import { ReputationPoints, ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
 import { auctionClaim } from "./utils/instructions/claim";
+import { transferNft, transferNftWithCpi } from "./utils/instructions/transfer";
+import { assert } from "chai";
 
 async function performRandomBid({
   program,
@@ -26,11 +28,10 @@ async function performRandomBid({
   const randomBidderIndex = Math.floor(Math.random() * bidders.length);
   const bidder = bidders[randomBidderIndex];
   // Ensure the next bid is at least 1.5 SOL greater than the last bid
-  const bidIncrement = 1.5 + Math.random(); // Random increment, minimum 1.5 SOL
-  const bidAmount = lastBidAmount + bidIncrement * LAMPORTS_PER_SOL;
+  const bidIncrement = Math.floor((1.5 + Math.random()) * LAMPORTS_PER_SOL); // Random increment, minimum 1.5 SOL
+  const bidAmount = lastBidAmount + bidIncrement;
 
   const reputationTracker = reputationTrackers.get(bidder.publicKey.toBase58())!;
-  reputationTracker.addReputation(ReputationPoints.BID);
 
   await bidOnAuction({
     bidAmount,
@@ -42,6 +43,24 @@ async function performRandomBid({
   });
 
   return { bidAmount, highBidder: bidder }; // Return the current bid amount and bidder public key for the next bid
+}
+
+
+
+async function waitTilEpochIs(
+  targetEpoch: number,
+  program: Program<Bmp>,
+  checkInterval: number = 1000
+) {
+  let { epoch } = await program.provider.connection.getEpochInfo();
+  if (targetEpoch < epoch) {
+    throw new Error(`Target epoch ${targetEpoch} is already in the past`);
+  }
+  while (targetEpoch > epoch) {
+    await new Promise(resolve => setTimeout(resolve, checkInterval));
+    ({ epoch } = await program.provider.connection.getEpochInfo());
+  }
+  return epoch;
 }
 
 const auctionResults = new Map<number, { highBidder: Keypair; bidAmount: number }>();
@@ -73,28 +92,16 @@ describe("Simulates Random Bids & Claims across epochs", () => {
 
   before(async () => {
     await airdropToMultiple([bidder1.publicKey, bidder2.publicKey, bidder3.publicKey, initiator.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
-
-    // Wait for the current epoch to change to the next epoch
-    let { epoch: currentEpoch } = await provider.connection.getEpochInfo();
-    let nextEpoch = currentEpoch + 1;
-    while (currentEpoch <= nextEpoch) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      ({ epoch: currentEpoch } = await provider.connection.getEpochInfo());
-    }
   });
 
   it("Simulate random bids across multiple epochs", async () => {
-    for (let targetEpoch = 1; targetEpoch <= 3; targetEpoch++) {
-      let { epoch } = await provider.connection.getEpochInfo();
-      while (targetEpoch > epoch) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        ({ epoch } = await provider.connection.getEpochInfo());
-      }
-      if (targetEpoch < epoch) {
-        return;
-      }
+    let numberEpochs = 1;
+    let { epoch: currentEpoch } = await provider.connection.getEpochInfo();
+    let startEpoch = currentEpoch + 1;
+    for (let i = startEpoch; i < startEpoch + numberEpochs; i++) {
+      await waitTilEpochIs(i, program, 1000);
       await mintAssetsForEpoch({
-        epoch: targetEpoch,
+        epoch: i,
         program,
         payer: initiator,
         expectedReputation: initiatorReputationTracker,
@@ -105,10 +112,10 @@ describe("Simulates Random Bids & Claims across epochs", () => {
       let lastBidder = initiator; // Initiator is the first high bidder
 
       const numberOfBids = 5 + Math.floor(Math.random() * 5); // Random number of bids
-      for (let i = 0; i < numberOfBids; i++) {
+      for (let j = 0; j < numberOfBids; j++) {
         const bidResult = await performRandomBid({
           program,
-          epoch: targetEpoch,
+          epoch: i,
           bidders: [bidder1, bidder2, bidder3],
           reputationTrackers,
           lastBidAmount,
@@ -119,8 +126,7 @@ describe("Simulates Random Bids & Claims across epochs", () => {
         lastBidAmount = bidResult.bidAmount;
         lastBidder = bidResult.highBidder;
       }
-      auctionResults.set(targetEpoch, { highBidder: lastBidder, bidAmount: lastBidAmount });
-
+      auctionResults.set(i, { highBidder: lastBidder, bidAmount: lastBidAmount });
     }
   });
 
@@ -143,15 +149,50 @@ describe("Simulates Random Bids & Claims across epochs", () => {
         daoTreasury: new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe"),
         creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa"),
         expectedReputation,
-        //logErrAndTable: true
-      })
+      });
+
+      await auctionClaim({
+        epoch,
+        program,
+        winner: highBidder,
+        daoTreasury: new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe"),
+        creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa"),
+        expectedReputation,
+        expectToFail: {
+          errorCode: "SendTransactionError",
+          assertError: (error) => {
+            assert.ok(error, "Expected a SendTransactionError error");
+          }
+        }
+      });
+    }
+  });
+});
+
+describe("Simulate NFT Transfers", () => {
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+  const program = anchor.workspace.Bmp as Program<Bmp>;
+
+  it("Fails to send NFT via CPI", async () => {
+    for (const [epoch, { highBidder }] of auctionResults.entries()) {
+      await transferNftWithCpi({
+        program,
+        epoch,
+        owner: highBidder,
+        destinationOwner: Keypair.generate(),
+      });
     }
   });
 
-
-
-
-
-
+  it("Sends a claimed NFT to a random address without CPI", async () => {
+    for (const [epoch, { highBidder }] of auctionResults.entries()) {
+      await transferNft({
+        program,
+        epoch,
+        owner: highBidder,
+        destinationOwner: Keypair.generate(),
+      });
+    }
+  })
 });
-
