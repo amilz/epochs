@@ -13,7 +13,7 @@ pub use instructions::*;
 pub use state::*;
 pub use error::*;
 
-declare_id!("7s3va6xk3MHzL3rpqdxoVZKiNWdWcMEHgGi9FeFv1g8R");
+declare_id!("epochsiFg8ornJS22urHE3jgveYuFydxPC79tdcbYc8");
 
 #[program]
 pub mod bmp {
