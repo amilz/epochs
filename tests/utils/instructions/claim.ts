@@ -56,6 +56,7 @@ export async function auctionClaim({
         const daoPreBalance = results[1].status === 'fulfilled' ? results[1].value : 0;
         const creatorPreBalance = results[2].status === 'fulfilled' ? results[2].value : 0;
         const { highBidLamports: exceptedEscrowWithdraw } = results[3].status === 'fulfilled' ? results[3].value : { highBidLamports: new anchor.BN(0) };
+        const computeInstruction = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 300_000 });
 
         const accounts = {
             winner: winner.publicKey,
@@ -85,6 +86,7 @@ export async function auctionClaim({
 
         const txRequest = await program.methods.claim(new anchor.BN(epoch))
             .accounts(accounts)
+            .preInstructions([computeInstruction])
             .signers([winner])
             .rpc();
 
