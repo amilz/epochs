@@ -32,3 +32,7 @@ program = "./tests/genesis/wns.so"
 [[test.validator.account]]
 address = "9SUrE3EPBoXVjNywEDHSJKJdxebs8H8sLgEWdueEvnKX"
 filename = "./tests/genesis/manager.json"
+
+[[test.genesis]]
+address = "AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73"
+program = "./tests/genesis/asset_program.so"
