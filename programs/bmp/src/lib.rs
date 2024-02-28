@@ -40,6 +40,10 @@ pub mod bmp {
         ctx.accounts.handler()
     }
 
+    pub fn oss_create(ctx: Context<OssCreate>) -> Result<()> {
+        ctx.accounts.handler()
+    }
+
 }
 
 
