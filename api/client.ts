@@ -1,10 +1,12 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { Connection, TransactionInstruction, PublicKey } from "@solana/web3.js";
 import { Bmp, IDL } from "./utils/idl";
-import { EPOCH_PROGRAM_ID } from "./utils";
+import { EPOCH_PROGRAM_ID, getAuctionPda, getNftMintPda, getReputationPda } from "./utils";
 import { createInitCollectionIx } from "./instructions/createInitCollectionIx";
 import { createInitEpochIx } from "./instructions/createInitEpochIx";
 import { createBidIx } from "./instructions/createBidIx";
+import { ApiError, SolanaQueryType } from "./errors";
+import { createClaimIx } from "./instructions/createClaimIx";
 
 interface EpochClientArgs {
     connection: Connection;
@@ -56,6 +58,53 @@ export class EpochClient {
         const epoch = await this.getCurrentEpoch();
         const instruction = await createBidIx({ program: this.program, bidAmount, epoch, bidder, highBidder });
         return instruction;
+    }
+
+    public async createClaimInstruction({ winner, epoch }: {
+        winner: PublicKey,
+        epoch: number
+    }): Promise<TransactionInstruction> {
+        await this.verifyEpochHasPassed(epoch);
+        const instruction = await createClaimIx({ epoch, program: this.program, winner });
+        return instruction;
+    }
+
+    private async verifyEpochHasPassed(epoch: number): Promise<void> {
+        const currentEpoch = await this.getCurrentEpoch();
+        if (epoch < currentEpoch) {
+            return Promise.resolve();
+        } else {
+            return Promise.reject(ApiError.solanaQueryError(SolanaQueryType.INVALID_EPOCH));
+        }
+    }
+
+    public async fetchAuction({ epoch }: { epoch: number }) {
+        const auction = getAuctionPda(epoch, this.program);
+        const data = await this.program.account.auction.fetch(auction);
+        return data;
+    }
+
+    public async fetchReputation({ user }: { user: PublicKey }) {
+        const reputation = getReputationPda(user, this.program);
+        const data = await this.program.account.reputation.fetch(reputation);
+        return data;
+    }
+
+    public async fetchNftMintByEpoch({ epoch }: { epoch: number }) {
+        await this.verifyEpochHasPassed(epoch);
+        const mint = getNftMintPda(this.program, epoch);
+        return mint;
+    }
+
+    public async getCurrenAuctionDetails() {
+        const epoch = await this.getCurrentEpoch();
+        try {
+            const auction = await this.fetchAuction({ epoch });
+            if (!auction) { throw ApiError.solanaQueryError(SolanaQueryType.AUCTION_NOT_INITIALIZED) }
+            return { auction };
+        } catch (error) {
+            throw ApiError.solanaQueryError(SolanaQueryType.AUCTION_NOT_INITIALIZED);
+        }
     }
 
     // TODO: Add methods for interacting with the program

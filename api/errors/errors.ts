@@ -46,6 +46,7 @@ export class ApiError extends Error {
             400
         );
     }
+    
     public static solanaTxError(txType: SolanaTxType): ApiError {
         return new ApiError(
             ApiErrorCode.SOLANA_TX_ERROR,
@@ -85,6 +86,7 @@ export enum ApiErrorCode {
     MISSING_PARAMETER = 2,
     SOLANA_TX_ERROR = 3,
     SOLANA_QUERY_ERROR = 4,
+    SOLANA_REQUEST_ERROR = 5
 }
 
 export enum SolanaTxType {
@@ -95,9 +97,10 @@ export enum SolanaTxType {
 export enum SolanaQueryType {
     INVALID_ARGUMENT = 0,
     NO_WALLET_CONNECTED = 1,
-    UNKNOWN = 2
+    UNKNOWN = 2,
+    INVALID_EPOCH = 3,
+    AUCTION_NOT_INITIALIZED = 4,
 }
-
 
 
 export interface ApiResponse<T> {

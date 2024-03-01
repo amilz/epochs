@@ -17,17 +17,17 @@ import {
 import { ApiError, SolanaQueryType, SolanaTxType } from "../errors";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 
-interface AuctionBidParams {
+interface ClaimParams {
     epoch: number;
     program: Program<Bmp>;
     winner: PublicKey;
 }
 
-export async function createBidIx({
+export async function createClaimIx({
     epoch,
     program,
     winner,
-}: AuctionBidParams): Promise<TransactionInstruction> {
+}: ClaimParams): Promise<TransactionInstruction> {
     const auctionPda = getAuctionPda(epoch, program);
     const reputation = getReputationPda(winner, program);
     const auctionEscrow = getAuctionEscrowPda(program);
