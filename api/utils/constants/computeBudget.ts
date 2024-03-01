@@ -1,0 +1,3 @@
+export const COMPUTE_BUDGET = {
+    CREATE_COLLECTION: 140_000,
+}
