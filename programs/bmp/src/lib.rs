@@ -44,6 +44,14 @@ pub mod bmp {
         ctx.accounts.handler()
     }
 
+    pub fn oss_create_blob(ctx: Context<OssCreate>) -> Result<()> {
+        ctx.accounts.handle_blob()
+    }
+
+    pub fn oss_create_rest(ctx: Context<OssCreate>) -> Result<()> {
+        ctx.accounts.handle_rest()
+    }
+
 }
 
 
