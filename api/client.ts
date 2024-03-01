@@ -1,12 +1,13 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { Connection, TransactionInstruction, PublicKey } from "@solana/web3.js";
 import { Bmp, IDL } from "./utils/idl";
-import { EPOCH_PROGRAM_ID, getAuctionPda, getNftMintPda, getReputationPda } from "./utils";
+import { EPOCH_PROGRAM_ID, getAuctionPda, getEpochInscriptionPda, getNftMintPda, getReputationPda } from "./utils";
 import { createInitCollectionIx } from "./instructions/createInitCollectionIx";
 import { createInitEpochIx } from "./instructions/createInitEpochIx";
 import { createBidIx } from "./instructions/createBidIx";
 import { ApiError, SolanaQueryType } from "./errors";
 import { createClaimIx } from "./instructions/createClaimIx";
+import Jimp from "jimp";
 
 interface EpochClientArgs {
     connection: Connection;
@@ -96,7 +97,7 @@ export class EpochClient {
         return mint;
     }
 
-    public async getCurrenAuctionDetails() {
+    public async fetchCurrenAuctionDetails() {
         const epoch = await this.getCurrentEpoch();
         try {
             const auction = await this.fetchAuction({ epoch });
@@ -107,6 +108,41 @@ export class EpochClient {
         }
     }
 
-    // TODO: Add methods for interacting with the program
+    /**
+     * Fetches an image associated with a given epoch, processes it, and returns the image
+     * in a web-friendly PNG format encoded in Base64. This method is useful in web applications
+     * where image data needs to be dynamically fetched and displayed, such as in a React app.
+     *
+     * @param params - An object containing the epoch number.
+     * @param params.epoch - The epoch number for which to fetch the associated image.
+     * @returns A Promise that resolves to an object containing the epoch, inscription public key,
+     * raw buffer data of image and json, and the processed PNG image as a Base64-encoded string.
+     *
+     * @example
+     * ```typescript
+     *    // Assuming you have a class or service instance `yourService` where this method is defined
+     *    async function displayEpochImage(epoch: number) {
+     *        const { png } = await EpochClient.fetchInscriptionByEpoch({ epoch });
+     *        const imageSrc = `data:image/png;base64,${png}`;
+     *        // Use `imageSrc` in an <img> tag in your React component
+     *        // For example:
+     *        return <img src={imageSrc} alt={`Image for epoch ${epoch}`} />;
+     *    }
+     * ```
+     */
+
+    public async fetchInscriptionByEpoch({ epoch }: { epoch: number }) {
+        const inscription = getEpochInscriptionPda(epoch, this.program);
+        const { buffers } = await this.program.account.epochInscription.fetch(inscription);
+        const image = await Jimp.read(buffers.imageRaw);
+        image.resize(640, 640, Jimp.RESIZE_NEAREST_NEIGHBOR);
+        // HELP HERE?
+        const png = await image.getBase64Async(Jimp.MIME_PNG);
+        return { epoch, inscription, buffers, png };
+    }
+
 
 }
+
+// TODO: Add methods for interacting with the program
+
