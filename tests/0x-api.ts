@@ -92,7 +92,7 @@ describe.only("Tests Epochs API", async () => {
         }
     });
 
-    it("Should Claim the auction", async () => {
+    it("Should claim the auction after epoch ends", async () => {
         const { epoch: initialEpoch } = await epochClient.connection.getEpochInfo();
         let currentEpoch = initialEpoch;
         while (currentEpoch === initialEpoch) {
