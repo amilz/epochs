@@ -11,9 +11,8 @@ describe("Create a new WNS Colleciton NFT", () => {
   anchor.setProvider(provider);
 
   const payer = Keypair.generate();
-
   const program = anchor.workspace.Bmp as Program<Bmp>;
-
+  
   before(async () => {
     await initIdlToChain();
     await airdropToMultiple([payer.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);

@@ -1,5 +1,5 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { Connection, TransactionInstruction, PublicKey } from "@solana/web3.js";
+import { Connection, TransactionInstruction, PublicKey, ComputeBudgetProgram } from "@solana/web3.js";
 import { Bmp, IDL } from "./utils/idl";
 import { EPOCH_PROGRAM_ID, getAuctionPda, getEpochInscriptionPda, getNftMintPda, getReputationPda } from "./utils";
 import { createInitCollectionIx } from "./instructions/createInitCollectionIx";
@@ -8,6 +8,7 @@ import { createBidIx } from "./instructions/createBidIx";
 import { ApiError, SolanaQueryType } from "./errors";
 import { createClaimIx } from "./instructions/createClaimIx";
 import Jimp from "jimp";
+import { COMPUTE_BUDGET } from "./utils/constants/computeBudget";
 
 interface EpochClientArgs {
     connection: Connection;
@@ -16,11 +17,13 @@ interface EpochClientArgs {
 
 export class EpochClient {
     private readonly program: Program<Bmp>;
+    public readonly connection: Connection;
 
     private constructor({ connection, wallet = {} as Wallet }: EpochClientArgs) {
         const provider: AnchorProvider = new AnchorProvider(
             connection,
             wallet,
+            // TODO add override options
             AnchorProvider.defaultOptions()
         );
         const program: Program<Bmp> = new Program(
@@ -29,10 +32,16 @@ export class EpochClient {
             provider
         );
         this.program = program;
+        this.connection = connection;
     }
 
     public static from(connection: Connection): EpochClient {
         return new EpochClient({ connection });
+    }
+
+    public static local(): EpochClient {
+        // TODO Mimic https://github.com/coral-xyz/anchor/blob/2f552a17f5e4cb0f5b075240c2645b6485e59752/ts/packages/anchor/src/provider.ts#L87
+        return new EpochClient({ connection: new Connection("http://localhost:8899", 'processed') });
     }
 
     private async getCurrentEpoch(): Promise<number> {
@@ -45,18 +54,23 @@ export class EpochClient {
         return intruction;
     }
 
-    public async createInitEpochInstruction({ payer }: { payer: PublicKey }): Promise<TransactionInstruction> {
+    public async createInitEpochInstruction({ payer }: { payer: PublicKey }): Promise<{
+        computeInstruction: TransactionInstruction,
+        initInstruction: TransactionInstruction
+    }> {
+        const computeInstruction = ComputeBudgetProgram.setComputeUnitLimit({ units: COMPUTE_BUDGET.INITIALIZE_EPOCH });
+
         const epoch = await this.getCurrentEpoch();
-        const instruction = await createInitEpochIx({ epoch, program: this.program, payer });
-        return instruction;
+        const initInstruction = await createInitEpochIx({ epoch, program: this.program, payer });
+        return { computeInstruction, initInstruction };
     }
 
-    public async createBidInstruction({ bidAmount, bidder, highBidder }: {
+    public async createBidInstruction({ bidAmount, bidder }: {
         bidAmount: number,
         bidder: PublicKey,
-        highBidder: PublicKey
     }): Promise<TransactionInstruction> {
         const epoch = await this.getCurrentEpoch();
+        const { highBidder } = await this.fetchAuction({ epoch });
         const instruction = await createBidIx({ program: this.program, bidAmount, epoch, bidder, highBidder });
         return instruction;
     }
@@ -141,8 +155,7 @@ export class EpochClient {
         return { epoch, inscription, buffers, png };
     }
 
-
 }
 
 // TODO: Add methods for interacting with the program
-
+// e.g., validate bid amount

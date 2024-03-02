@@ -30,7 +30,7 @@ export async function createInitCollectionIx({
         authority,
         receiver: authority,
         group: groupAccount,
-        mint: mint,
+        mint,
         mintTokenAccount: authorityAta,
         manager,
         systemProgram: SYSTEM_PROGRAM,
