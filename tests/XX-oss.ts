@@ -4,7 +4,7 @@ import { Program } from "@coral-xyz/anchor";
 import { Bmp } from "../target/types/bmp";
 import { airdropToMultiple, initIdlToChain } from "./utils/utils";
 import { assert } from "chai";
-import { getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda } from "@epochs/api/utils";
+import { getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda } from "@epochs/api/utils";
 
 import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
@@ -31,7 +31,10 @@ describe.only("Create a new OSS Mint", () => {
         [bidder1.publicKey.toBase58(), bidder1ReputationTracker],
         [bidder2.publicKey.toBase58(), bidder2ReputationTracker],
         [bidder3.publicKey.toBase58(), bidder3ReputationTracker],
-    ])
+    ]);
+
+    const auctionResults = new Map<number, { highBidder: Keypair; bidAmount: number }>();
+    const table = {};
 
     const TEST_EPOCH = 0;
 
@@ -64,8 +67,8 @@ describe.only("Create a new OSS Mint", () => {
             tx.sign(payer);
             const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [payer]);
 
-            console.log('asset', groupAsset.toBase58());
-            console.log('txid', sig);
+            table['group'] = groupAsset.toBase58();
+            table['groupTx'] = sig;
             assert.ok(sig, 'should have signature');
         } catch (err) {
             console.log(err);
@@ -117,8 +120,8 @@ describe.only("Create a new OSS Mint", () => {
             tx.lastValidBlockHeight = lastValidBlockHeight;
             tx.sign(payer);
             const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [payer]);
-            console.log('asset', asset.toBase58());
-            console.log('sig', sig);
+            table['asset'] = asset.toBase58();
+            table['assetTx'] = sig;
             assert.ok(sig, 'should have signature');
 
         } catch (err) {
@@ -145,6 +148,56 @@ describe.only("Create a new OSS Mint", () => {
             lastBidAmount = bidResult.bidAmount;
             lastBidder = bidResult.highBidder;
         }
+        auctionResults.set(TEST_EPOCH, { highBidder: lastBidder, bidAmount: lastBidAmount });
+
+    });
+
+    it("Auction winner claims rewards", async () => {
+        await waitTilEpochIs(TEST_EPOCH + 1, program);
+
+        const auctionPda = getAuctionPda(TEST_EPOCH, program);
+        const { highBidder } = await program.account.auction.fetch(auctionPda);
+        const auctionEscrow = getAuctionEscrowPda(program);
+        const reputationPda = getReputationPda(highBidder, program);
+        const asset = getNftMintPda(program, TEST_EPOCH);
+
+        const signer = auctionResults.get(TEST_EPOCH)!.highBidder;
+
+        const accounts = {
+            winner: highBidder,
+            auction: auctionPda,
+            auctionEscrow,
+            reputation: reputationPda,
+            systemProgram: anchor.web3.SystemProgram.programId,
+            daoTreasury: new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe"),
+            creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa"),
+            asset,
+            authority: groupAuthority,
+            ossProgram: new anchor.web3.PublicKey('AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73'),
+        };
+
+
+        try {
+            const ix = await program.methods.ossClaim(new anchor.BN(TEST_EPOCH))
+                .accounts(accounts)
+                .instruction();
+
+            const tx = new anchor.web3.Transaction().add(ix);
+            const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
+            tx.recentBlockhash = blockhash;
+            tx.lastValidBlockHeight = lastValidBlockHeight;
+            tx.sign(payer);
+            const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [signer]);
+            table['claimTx'] = sig;
+            assert.ok(sig, 'should have signature');
+        } catch (err) {
+            console.log(err);
+            assert.fail('error minting', err);
+        }
+
+    });
+    after(() => {
+        console.table(table);
     });
 
 });
@@ -194,3 +247,21 @@ async function performRandomBid({
     return { bidAmount, highBidder: bidder }; // Return the current bid amount and bidder public key for the next bid
 }
 
+
+
+
+async function waitTilEpochIs(
+    targetEpoch: number,
+    program: Program<Bmp>,
+    checkInterval: number = 1000
+) {
+    let { epoch } = await program.provider.connection.getEpochInfo();
+    if (targetEpoch < epoch) {
+        throw new Error(`Target epoch ${targetEpoch} is already in the past`);
+    }
+    while (targetEpoch > epoch) {
+        await new Promise(resolve => setTimeout(resolve, checkInterval));
+        ({ epoch } = await program.provider.connection.getEpochInfo());
+    }
+    return epoch;
+}

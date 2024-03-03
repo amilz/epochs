@@ -56,6 +56,10 @@ pub mod bmp {
         ctx.accounts.handler(input_epoch, ctx.bumps.auction, ctx.bumps.reputation)
     }
 
+    pub fn oss_claim(ctx: Context<OssClaim>, input_epoch: u64) -> Result<()> {
+        ctx.accounts.handler(input_epoch, ctx.bumps.auction_escrow, ctx.bumps.authority)
+    }
+
 }
 
 
