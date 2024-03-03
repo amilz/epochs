@@ -1,11 +1,15 @@
 use std::str::FromStr;
 
 use crate::{
-    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_WALLET_1, DAO_TREASURY_WALLET
+    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, AUTHORITY_SEED,
+    COLLECTION_SEED, CREATOR_WALLET_1, DAO_TREASURY_WALLET, NFT_MINT_SEED,
 };
 use anchor_lang::{
     prelude::*,
-    solana_program::{instruction::Instruction, program::{invoke, invoke_signed}},
+    solana_program::{
+        instruction::Instruction,
+        program::invoke_signed,
+    },
 };
 use nifty_asset::{
     extensions::{CreatorsBuilder, ExtensionBuilder, LinksBuilder},
@@ -15,9 +19,15 @@ use nifty_asset::{
 };
 
 #[derive(Accounts)]
+#[instruction(input_epoch: u64)]
 pub struct OssCreate<'info> {
-    #[account(mut)]
-    pub asset: Signer<'info>,
+    /// CHECK: New NFT Mint (will be init by WNS Program via CPI - address is derived based on epoch #)
+    #[account(
+        mut,
+        seeds = [NFT_MINT_SEED.as_bytes(), &input_epoch.to_le_bytes()],
+        bump,
+    )]
+    pub asset: UncheckedAccount<'info>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -47,7 +57,7 @@ pub struct OssCreate<'info> {
 }
 
 impl<'info> OssCreate<'info> {
-    pub fn handle_blob(&self) -> Result<()> {
+    pub fn generate_inscription(&self, current_epoch: u64, asset_bump: u8) -> Result<()> {
         let account_infos = vec![
             self.asset.to_account_info(),
             self.payer.to_account_info(),
@@ -55,12 +65,24 @@ impl<'info> OssCreate<'info> {
             self.system_program.to_account_info(),
         ];
 
-        self.allocate_blob(&account_infos)?;
+        let asset_seeds = &[
+            NFT_MINT_SEED.as_bytes(),
+            &current_epoch.to_le_bytes(),
+            &[asset_bump],
+        ];
+        let asset_signer_seeds: &[&[&[u8]]; 1] = &[&asset_seeds[..]];
+
+        self.allocate_blob(&account_infos, asset_signer_seeds)?;
 
         Ok(())
     }
 
-    pub fn handle_rest(&self, authority_bump: u8) -> Result<()> {
+    pub fn create_asset_w_metadata(
+        &self,
+        authority_bump: u8,
+        asset_bump: u8,
+        current_epoch: u64,
+    ) -> Result<()> {
         let account_infos = vec![
             self.asset.to_account_info(),
             self.payer.to_account_info(),
@@ -69,16 +91,23 @@ impl<'info> OssCreate<'info> {
             self.system_program.to_account_info(),
         ];
 
+        let asset_seeds = &[
+            NFT_MINT_SEED.as_bytes(),
+            &current_epoch.to_le_bytes(),
+            &[asset_bump],
+        ];
+        let asset_signer_seeds: &[&[&[u8]]; 1] = &[&asset_seeds[..]];
+
         //TBD/TODO: Might not need this (since at collection-level)
-        //self.write_creators(&account_infos)?;
-        self.write_links(&account_infos)?;
-        self.create_asset(&account_infos)?;
+        //self.write_creators(&account_infos, asset_signer_seeds)?;
+        self.write_links(&account_infos, asset_signer_seeds)?;
+        self.create_asset(&account_infos, asset_signer_seeds)?;
         self.add_to_group(authority_bump)?;
 
         Ok(())
     }
 
-    fn allocate_blob(&self, account_infos: &[AccountInfo]) -> Result<()> {
+    fn allocate_blob(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
         log_heap_usage(1);
 
         let current_epoch = Clock::get()?.epoch;
@@ -139,13 +168,13 @@ impl<'info> OssCreate<'info> {
             data: serialized_instruction_data,
         };
 
-        invoke(&allocate_blob_ix, account_infos)?;
+        invoke_signed(&allocate_blob_ix, account_infos, signer_seeds)?;
         log_heap_usage(7);
 
         Ok(())
     }
 
-    fn _write_creators(&self, account_infos: &[AccountInfo]) -> Result<()> {
+    fn _write_creators(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
         let mut creators = CreatorsBuilder::default();
         creators.add(&self.payer.key(), true, 10);
         creators.add(&Pubkey::from_str(DAO_TREASURY_WALLET).unwrap(), true, 80);
@@ -163,12 +192,12 @@ impl<'info> OssCreate<'info> {
             })
             .instruction();
 
-        invoke(&creator_ix, account_infos)?;
+        invoke_signed(&creator_ix, account_infos, signer_seeds)?;
 
         Ok(())
     }
 
-    fn write_links(&self, account_infos: &[AccountInfo]) -> Result<()> {
+    fn write_links(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
         let mut links_builder = LinksBuilder::default();
         links_builder.add(
             "metadata",
@@ -191,12 +220,12 @@ impl<'info> OssCreate<'info> {
             })
             .instruction();
 
-        invoke(&links_ix, account_infos)?;
+        invoke_signed(&links_ix, account_infos, signer_seeds)?;
 
         Ok(())
     }
 
-    fn create_asset(&self, account_infos: &[AccountInfo]) -> Result<()> {
+    fn create_asset(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
         let create_ix = CreateBuilder::new()
             .asset(self.asset.key())
             .authority(self.authority.key())
@@ -209,7 +238,7 @@ impl<'info> OssCreate<'info> {
             .mutable(false)
             .instruction();
 
-        invoke(&create_ix, account_infos)?;
+        invoke_signed(&create_ix, account_infos, signer_seeds)?;
 
         Ok(())
     }
@@ -236,7 +265,6 @@ impl<'info> OssCreate<'info> {
 
         Ok(())
     }
-
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize)]

@@ -6,7 +6,7 @@ import { airdropToMultiple, initIdlToChain } from "./utils/utils";
 import { assert } from "chai";
 import { convertBmpToPng } from "./utils/image";
 import { EpochClient } from "@epochs/api";
-import { getAuthorityPda, getCollectionMintPda } from "@epochs/api/utils";
+import { getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda } from "@epochs/api/utils";
 
 describe.only("Create a new OSS Mint", () => {
     const provider = anchor.AnchorProvider.env();
@@ -33,11 +33,6 @@ describe.only("Create a new OSS Mint", () => {
             systemProgram: anchor.web3.SystemProgram.programId,
             ossProgram: new anchor.web3.PublicKey('AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73'),
         };
-        const tableData = Object.entries(accounts).map(([key, publicKey]) => ({
-            account: key,
-            mint: publicKey.toBase58()
-        }));
-        console.table(tableData);
 
 
         try {
@@ -62,37 +57,50 @@ describe.only("Create a new OSS Mint", () => {
     });
 
     it("Creates an OSS NFT w/ 2 ix", async () => {
-        const asset = Keypair.generate();
+        const asset = getNftMintPda(program, 0);
+        const auctionPda = getAuctionPda(0, program);
+        const reputationPda = getReputationPda(payer.publicKey, program);
+
+        const accounts = {
+            payer: payer.publicKey,
+            asset,
+            group: groupAsset,
+            authority: groupAuthority,
+            systemProgram: anchor.web3.SystemProgram.programId,
+            ossProgram: new anchor.web3.PublicKey('AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73'),
+        };
+
+        const auctionAccounts = {
+            payer: payer.publicKey,
+            auction: auctionPda,
+            reputation: reputationPda,
+            asset,
+            systemProgram: anchor.web3.SystemProgram.programId,
+        };
+        
+
+        //printTableData(accounts);
+
         try {
-            const ixBlob = await program.methods.ossCreateBlob()
-                .accounts({
-                    payer: payer.publicKey,
-                    asset: asset.publicKey,
-                    group: groupAsset,
-                    authority: groupAuthority,
-                    systemProgram: anchor.web3.SystemProgram.programId,
-                    ossProgram: new anchor.web3.PublicKey('AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73'),
-                })
+            const ixBlob = await program.methods.ossCreateBlob(new anchor.BN(0))
+                .accounts(accounts)
                 .instruction();
 
-
-            const ixRestrict = await program.methods.ossCreateRest()
-                .accounts({
-                    payer: payer.publicKey,
-                    asset: asset.publicKey,
-                    group: groupAsset,
-                    authority: groupAuthority,
-                    systemProgram: anchor.web3.SystemProgram.programId,
-                    ossProgram: new anchor.web3.PublicKey('AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73'),
-                })
+            const ixRestrict = await program.methods.ossCreateRest(new anchor.BN(0))
+                .accounts(accounts)
                 .instruction();
-            const tx = new anchor.web3.Transaction().add(ixBlob).add(ixRestrict);
+
+            const ixAuction = await program.methods.ossInitAuction(new anchor.BN(0))
+                .accounts(auctionAccounts)
+                .instruction();
+
+            const tx = new anchor.web3.Transaction().add(ixBlob).add(ixRestrict).add(ixAuction);
             const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
             tx.recentBlockhash = blockhash;
             tx.lastValidBlockHeight = lastValidBlockHeight;
-            tx.sign(payer, asset);
-            const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [payer, asset]);
-            console.log('asset', asset.publicKey.toBase58());
+            tx.sign(payer);
+            const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [payer]);
+            console.log('asset', asset.toBase58());
             console.log('sig', sig);
             assert.ok(sig, 'should have signature');
 
@@ -105,3 +113,12 @@ describe.only("Create a new OSS Mint", () => {
 
 
 });
+
+
+function printTableData(accounts: Record<string, anchor.web3.PublicKey>) {
+    const tableData = Object.entries(accounts).map(([key, publicKey]) => ({
+        account: key,
+        mint: publicKey.toBase58()
+    }));
+    console.table(tableData);
+}

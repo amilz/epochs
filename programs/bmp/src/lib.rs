@@ -40,16 +40,20 @@ pub mod bmp {
         ctx.accounts.handler()
     }
 
-    pub fn oss_create_blob(ctx: Context<OssCreate>) -> Result<()> {
-        ctx.accounts.handle_blob()
+    pub fn oss_create_blob(ctx: Context<OssCreate>, input_epoch: u64) -> Result<()> {
+        ctx.accounts.generate_inscription(input_epoch, ctx.bumps.asset)
     }
 
-    pub fn oss_create_rest(ctx: Context<OssCreate>) -> Result<()> {
-        ctx.accounts.handle_rest(ctx.bumps.authority)
+    pub fn oss_create_rest(ctx: Context<OssCreate>, input_epoch: u64) -> Result<()> {
+        ctx.accounts.create_asset_w_metadata(ctx.bumps.authority, ctx.bumps.asset, input_epoch)
     }
 
     pub fn oss_create_group(ctx: Context<OssCreateGroup>) -> Result<()> {
         ctx.accounts.handler(ctx.bumps.authority, ctx.bumps.asset)
+    }
+
+    pub fn oss_init_auction(ctx: Context<OssInitAuction>, input_epoch: u64) -> Result<()> {
+        ctx.accounts.handler(input_epoch, ctx.bumps.auction, ctx.bumps.reputation)
     }
 
 }
