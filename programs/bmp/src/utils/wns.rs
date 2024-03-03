@@ -3,7 +3,7 @@ use anchor_lang::{
     solana_program::{instruction::Instruction, program::invoke_signed},
 };
 
-use crate::{AUTHORITY_SEED, COLLECTION_SEED, CREATOR_WALLET, DAO_TREASURY_WALLET, NFT_MINT_SEED};
+use crate::{AUTHORITY_SEED, COLLECTION_SEED, CREATOR_WALLET_1, DAO_TREASURY_WALLET, NFT_MINT_SEED};
 
 fn sighash(namespace: &str, name: &str) -> [u8; 8] {
     let preimage = format!("{}:{}", namespace, name);
@@ -279,7 +279,7 @@ pub fn wns_add_royalties <'info>(
     let authority_signer_seeds = &[&authority_seeds[..]];
 
     let creator_share: CreatorWithShare = CreatorWithShare {
-        address: CREATOR_WALLET.to_string(),
+        address: CREATOR_WALLET_1.to_string(),
         share: 20,
     };
     let dao_share: CreatorWithShare = CreatorWithShare {

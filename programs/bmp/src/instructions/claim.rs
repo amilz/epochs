@@ -104,7 +104,7 @@ pub struct AuctionClaim<'info> {
 
     #[account(
         mut,
-        address = Pubkey::from_str(CREATOR_WALLET).unwrap() @EpochError::InvalidCreator
+        address = Pubkey::from_str(CREATOR_WALLET_1).unwrap() @EpochError::InvalidCreator
     )]
     creator_wallet: SystemAccount<'info>,
 

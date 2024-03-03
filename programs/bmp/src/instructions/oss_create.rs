@@ -1,13 +1,15 @@
 use std::str::FromStr;
 
-use crate::{generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, CREATOR_WALLET, DAO_TREASURY_WALLET};
+use crate::{
+    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_WALLET_1, DAO_TREASURY_WALLET
+};
 use anchor_lang::{
     prelude::*,
-    solana_program::{instruction::Instruction, program::invoke},
+    solana_program::{instruction::Instruction, program::{invoke, invoke_signed}},
 };
 use nifty_asset::{
-    extensions::{CreatorsBuilder, ExtensionBuilder, ExtensionData, Links, LinksBuilder},
-    instructions::{AllocateBuilder, CreateBuilder},
+    extensions::{CreatorsBuilder, ExtensionBuilder, LinksBuilder},
+    instructions::{AllocateBuilder, CreateBuilder, GroupBuilder},
     types::{Extension, ExtensionType, Standard},
     ID as NiftyAssetID,
 };
@@ -20,6 +22,21 @@ pub struct OssCreate<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
+    /// CHECK: WNS inits it as a Mint Account
+    #[account(
+        mut,
+        seeds = [COLLECTION_SEED.as_bytes()],
+        bump,
+    )]
+    pub group: UncheckedAccount<'info>,
+
+    /// CHECK: Program Authority: The account that will be used to sign transactions
+    #[account(
+        seeds = [AUTHORITY_SEED.as_bytes()],
+        bump,
+    )]
+    pub authority: UncheckedAccount<'info>,
+
     pub system_program: Program<'info, System>,
 
     /// CHECK: use address constraint
@@ -30,33 +47,6 @@ pub struct OssCreate<'info> {
 }
 
 impl<'info> OssCreate<'info> {
-    pub fn handler(&self) -> Result<()> {
-        let account_infos = vec![
-            self.asset.to_account_info(),
-            self.payer.to_account_info(),
-            self.oss_program.to_account_info(),
-            self.system_program.to_account_info(),
-        ];
-
-        log_heap_usage();
-
-        self.allocate_blob(&account_infos)?;
-
-        log_heap_usage();
-
-        self.write_creators(&account_infos)?;
-
-        log_heap_usage();
-
-        self.write_links(&account_infos)?;
-
-        log_heap_usage();
-
-        self.create_asset(&account_infos)?;
-
-        Ok(())
-    }
-
     pub fn handle_blob(&self) -> Result<()> {
         let account_infos = vec![
             self.asset.to_account_info(),
@@ -65,68 +55,101 @@ impl<'info> OssCreate<'info> {
             self.system_program.to_account_info(),
         ];
 
-
-        
-
-
         self.allocate_blob(&account_infos)?;
 
         Ok(())
     }
 
-    pub fn handle_rest(&self) -> Result<()> {
+    pub fn handle_rest(&self, authority_bump: u8) -> Result<()> {
         let account_infos = vec![
             self.asset.to_account_info(),
             self.payer.to_account_info(),
+            self.authority.to_account_info(),
             self.oss_program.to_account_info(),
             self.system_program.to_account_info(),
         ];
 
-        self.write_creators(&account_infos)?;
+        //TBD/TODO: Might not need this (since at collection-level)
+        //self.write_creators(&account_infos)?;
         self.write_links(&account_infos)?;
         self.create_asset(&account_infos)?;
+        self.add_to_group(authority_bump)?;
 
         Ok(())
     }
-
 
     fn allocate_blob(&self, account_infos: &[AccountInfo]) -> Result<()> {
+        log_heap_usage(1);
+
         let current_epoch = Clock::get()?.epoch;
         let assets = generate_asset(current_epoch, self.payer.key());
+        log_heap_usage(2);
 
+        let json_raw = generate_json_metadata(current_epoch, self.payer.key(), assets.1).unwrap();
+        log_heap_usage(3);
 
-        let img_raw = generate_json_metadata(
-            current_epoch,
-            self.payer.key(),
-            assets.1,
-        ).unwrap();
+        let bmp_raw = &assets.0;
 
-        let bmp_raw = assets.0;
-        let mut data = Vec::new();
-/*         data.extend_from_slice(&bmp_raw);
-        data.extend_from_slice(&img_raw); */
+        // Estimate total size
+        let total_size: usize = bmp_raw.len() + json_raw.len();
+        log_heap_usage(4);
+        // Create Vec with exact capacity
+        let mut data = Vec::with_capacity(total_size);
+        log_heap_usage(5);
 
-        let allocate_blob_ix: Instruction = AllocateBuilder::new()
-            .asset(self.asset.key())
-            .payer(Some(self.payer.key()))
-            .system_program(Some(self.system_program.key()))
-            .extension(Extension {
-                extension_type: ExtensionType::Blob,
-                length: data.len() as u32,
-                data: Some(data),
-            })
-            .instruction();
+        // Write data directly into Vec
+        data.extend_from_slice(&bmp_raw);
+        data.extend_from_slice(&json_raw);
+        log_heap_usage(6);
+
+        let extension_data = Extension {
+            extension_type: ExtensionType::Blob, // Assuming ExtensionType::Blob is an enum or similar
+            length: data.len() as u32,
+            data: Some(data), // The actual data you want to include
+        };
+
+        let instruction_data = AllocateInstructionData {
+            discriminator: 4, // Assuming '4' is the correct discriminator for your instruction
+        };
+
+        let mut serialized_extension_data = match extension_data.try_to_vec() {
+            Ok(data) => data,
+            Err(e) => return Err(e.into()), // Handle the serialization error appropriately
+        };
+
+        let mut serialized_instruction_data = match instruction_data.try_to_vec() {
+            Ok(data) => data,
+            Err(e) => return Err(e.into()), // Handle the serialization error appropriately
+        };
+
+        // Append the serialized extension data to the instruction data
+        serialized_instruction_data.append(&mut serialized_extension_data);
+
+        // Define the accounts involved in the instruction
+        let accounts = vec![
+            AccountMeta::new(self.asset.key(), true), // Asset account, assuming it's a signer
+            AccountMeta::new(self.payer.key(), true), // Payer account, assuming it's a signer
+            AccountMeta::new_readonly(self.system_program.key(), false), // System program, readonly
+        ];
+
+        // Construct the instruction
+        let allocate_blob_ix = Instruction {
+            program_id: self.oss_program.key(), // Replace `crate::ASSET_ID` with the actual program ID for the Allocate instruction
+            accounts,
+            data: serialized_instruction_data,
+        };
 
         invoke(&allocate_blob_ix, account_infos)?;
+        log_heap_usage(7);
 
         Ok(())
     }
 
-    fn write_creators(&self, account_infos: &[AccountInfo]) -> Result<()> {
+    fn _write_creators(&self, account_infos: &[AccountInfo]) -> Result<()> {
         let mut creators = CreatorsBuilder::default();
         creators.add(&self.payer.key(), true, 10);
         creators.add(&Pubkey::from_str(DAO_TREASURY_WALLET).unwrap(), true, 80);
-        creators.add(&Pubkey::from_str(CREATOR_WALLET).unwrap(), true, 10);
+        creators.add(&Pubkey::from_str(CREATOR_WALLET_1).unwrap(), true, 10);
         let creators_data = creators.build();
 
         let creator_ix: Instruction = AllocateBuilder::new()
@@ -176,8 +199,8 @@ impl<'info> OssCreate<'info> {
     fn create_asset(&self, account_infos: &[AccountInfo]) -> Result<()> {
         let create_ix = CreateBuilder::new()
             .asset(self.asset.key())
-            .authority(self.payer.key())
-            .holder(self.payer.key())
+            .authority(self.authority.key())
+            .holder(self.authority.key())
             .group(None)
             .payer(Some(self.payer.key()))
             .system_program(Some(self.system_program.key()))
@@ -190,4 +213,33 @@ impl<'info> OssCreate<'info> {
 
         Ok(())
     }
+
+    fn add_to_group(&self, authority_bump: u8) -> Result<()> {
+        let add_to_group_ix = GroupBuilder::new()
+            .asset(self.asset.key())
+            .group(self.group.key())
+            .authority(self.authority.key())
+            .instruction();
+
+        let authority_seeds = &[AUTHORITY_SEED.as_bytes(), &[authority_bump]];
+        let signers_seeds = &[&authority_seeds[..]];
+
+        let account_infos = vec![
+            self.asset.to_account_info(),
+            self.payer.to_account_info(),
+            self.oss_program.to_account_info(),
+            self.group.to_account_info(),
+            self.authority.to_account_info(),
+        ];
+
+        invoke_signed(&add_to_group_ix, &account_infos, signers_seeds)?;
+
+        Ok(())
+    }
+
+}
+
+#[derive(AnchorDeserialize, AnchorSerialize)]
+struct AllocateInstructionData {
+    discriminator: u8,
 }

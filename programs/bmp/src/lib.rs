@@ -40,16 +40,16 @@ pub mod bmp {
         ctx.accounts.handler()
     }
 
-    pub fn oss_create(ctx: Context<OssCreate>) -> Result<()> {
-        ctx.accounts.handler()
-    }
-
     pub fn oss_create_blob(ctx: Context<OssCreate>) -> Result<()> {
         ctx.accounts.handle_blob()
     }
 
     pub fn oss_create_rest(ctx: Context<OssCreate>) -> Result<()> {
-        ctx.accounts.handle_rest()
+        ctx.accounts.handle_rest(ctx.bumps.authority)
+    }
+
+    pub fn oss_create_group(ctx: Context<OssCreateGroup>) -> Result<()> {
+        ctx.accounts.handler(ctx.bumps.authority, ctx.bumps.asset)
     }
 
 }

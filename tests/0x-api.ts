@@ -3,7 +3,7 @@ import { Keypair, Transaction, sendAndConfirmTransaction, LAMPORTS_PER_SOL } fro
 import { airdropToMultiple, initIdlToChain } from "./utils/utils";
 import { assert } from "chai";
 
-describe.only("Tests Epochs API", async () => {
+describe("Tests Epochs API", async () => {
     const epochClient = EpochClient.local();
     const payer = Keypair.generate();
 
