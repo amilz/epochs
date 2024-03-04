@@ -114,6 +114,24 @@ function getNftMintPda(program: Program<any>, epoch: number) {
     return nftMint;
 }
 
+function getMinterPda(program: Program<any>) {
+    const [minter] = PublicKey.findProgramAddressSync(
+        [Buffer.from(SEEDS.MINTER)],
+        program.programId
+    );
+    return minter;
+}
+
+function getMinterClaimPda(program: Program<any>, payer: PublicKey) {
+    const [minterClaim] = PublicKey.findProgramAddressSync(
+        [
+            Buffer.from("MinterClaim"),
+            payer.toBuffer()
+        ],
+        program.programId
+    );
+    return minterClaim;
+}
 
 export {
     getAuctionPda,
@@ -123,5 +141,7 @@ export {
     getAuctionEscrowPda,
     getWnsAccounts,
     getCollectionMintPda,
-    getNftMintPda
+    getNftMintPda,
+    getMinterPda,
+    getMinterClaimPda
 };

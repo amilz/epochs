@@ -70,7 +70,7 @@ function runShellCommand(command: string): Promise<string> {
 async function initIdlToChain() {
     try {
         const output = await runShellCommand('anchor run init_idl');
-        console.log(`  `, output);
+        // console.log(`  `, output);
     } catch (error) {
         console.error('Command failed:', error);
     }

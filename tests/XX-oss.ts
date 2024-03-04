@@ -8,9 +8,11 @@ import { getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getCollectionMintP
 
 import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
+import { AUTHORITY } from "./utils/consts";
+import { getMinterClaimPda, getMinterPda } from "./utils/pdas";
 
 
-describe.only("Create a new OSS Mint", () => {
+describe.only("Create a new OSS Collection, Mint, and Auction", () => {
     const provider = anchor.AnchorProvider.env();
     anchor.setProvider(provider);
 
@@ -36,12 +38,12 @@ describe.only("Create a new OSS Mint", () => {
     const auctionResults = new Map<number, { highBidder: Keypair; bidAmount: number }>();
     const table = {};
 
-    const TEST_EPOCH = 0;
+    const TEST_EPOCH = 577; // using warp slot 18464 / 32 slots/epoch = 577 epochs
 
 
     before(async () => {
         await initIdlToChain();
-        await airdropToMultiple([payer.publicKey, bidder1.publicKey, bidder2.publicKey, bidder3.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
+        await airdropToMultiple([AUTHORITY.publicKey, payer.publicKey, bidder1.publicKey, bidder2.publicKey, bidder3.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
     });
 
     it("Creats a group OSS NFT", async () => {
@@ -196,11 +198,69 @@ describe.only("Create a new OSS Mint", () => {
         }
 
     });
-    after(() => {
-        console.table(table);
-    });
 
 });
+
+describe.only("Simulates retroactive mint", () => {
+    const provider = anchor.AnchorProvider.env();
+    anchor.setProvider(provider);
+    const program = anchor.workspace.Bmp as Program<Bmp>;
+
+    it("Initiates the Minter", async () => {
+
+        const accounts = {
+            authority: AUTHORITY.publicKey,
+            minter: getMinterPda(program),
+            systemProgram: anchor.web3.SystemProgram.programId,
+        };
+
+        const now = new Date().getTime();
+        // 5 seconds from now:
+        const target = new Date(now + 5 * 1000).getTime();
+        const tomorrow = new Date(now + 24 * 60 * 60 * 1000).getTime();
+
+        try {
+            const ix = await program.methods.ossInitMinter(new anchor.BN(500), new anchor.BN(target/1000))
+                .accounts(accounts)
+                .instruction();
+
+            const tx = new anchor.web3.Transaction().add(ix);
+            const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
+            tx.recentBlockhash = blockhash;
+            tx.lastValidBlockHeight = lastValidBlockHeight;
+            tx.sign(AUTHORITY);
+            const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [AUTHORITY]);
+            assert.ok(sig, 'should have signature');
+        } catch (err) {
+            console.log(err);
+            assert.fail('error minting', err);
+        }
+
+    });
+
+    it("Claims a lot of mints mint", async () => {
+        const numberOfMints = 100;
+        try {
+            const minters = Array.from({ length: numberOfMints }, (_, i) => Keypair.generate());
+            await airdropToMultiple(minters.map(m => m.publicKey), provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            const claimPromises = minters.map(async (minter, i) => {
+                return performMinterClaim(minter, program, provider);
+            });
+            await Promise.all(claimPromises);
+            const state = await program.account.minter.fetch(getMinterPda(program));
+            assert.equal(state.itemsRedeemed.toNumber(), numberOfMints, "1 Mint expected for each minter");
+    
+        } catch (err) {
+            console.log(err);
+            assert.fail('error minting', err);
+        }
+    });
+
+
+
+});
+
 
 
 function printTableData(accounts: Record<string, anchor.web3.PublicKey>) {
@@ -265,3 +325,30 @@ async function waitTilEpochIs(
     }
     return epoch;
 }
+
+async function performMinterClaim(payer: anchor.web3.Keypair, program: Program<Bmp>, provider: anchor.Provider) {
+    const accounts = {
+        payer: payer.publicKey,
+        minter: getMinterPda(program),
+        minterClaim: getMinterClaimPda(program, payer.publicKey),
+        systemProgram: anchor.web3.SystemProgram.programId,
+    };
+
+    try {
+        const ix = await program.methods.ossMinterClaim()
+            .accounts(accounts)
+            .instruction();
+
+        const tx = new anchor.web3.Transaction().add(ix);
+        const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
+        tx.recentBlockhash = blockhash;
+        tx.lastValidBlockHeight = lastValidBlockHeight;
+        tx.sign(payer);
+        const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [payer]);
+        assert.ok(sig, 'should have signature');
+    } catch (err) {
+        console.log(err);
+        assert.fail('error minting', err);
+    }
+}
+

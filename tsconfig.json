@@ -1,11 +1,21 @@
 {
-            "compilerOptions": {
-              "types": ["mocha", "chai", "node"],
-              "typeRoots": ["./node_modules/@types"],
-              "lib": ["es2015", "esnext", "dom"],
-              "module": "commonjs",
-              "target": "es6",
-              "esModuleInterop": true
-            }
-          }
-          
+  "compilerOptions": {
+    "types": [
+      "mocha",
+      "chai",
+      "node"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "lib": [
+      "es2015",
+      "esnext",
+      "dom"
+    ],
+    "module": "commonjs",
+    "target": "es6",
+    "esModuleInterop": true,
+    "resolveJsonModule": true
+  }
+}

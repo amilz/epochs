@@ -60,6 +60,14 @@ pub mod bmp {
         ctx.accounts.handler(input_epoch, ctx.bumps.auction_escrow, ctx.bumps.authority)
     }
 
+    pub fn oss_init_minter(ctx: Context<OssInitMinter>, items_available: u64, start_time: i64) -> Result<()> {
+        ctx.accounts.handler(ctx.bumps.minter, items_available, start_time)
+    }
+
+    pub fn oss_minter_claim(ctx: Context<ClaimMint>) -> Result<()> {
+        ctx.accounts.handler(ctx.bumps.minter_claim)
+    }
+
 }
 
 

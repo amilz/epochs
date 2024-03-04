@@ -21,6 +21,8 @@ init_idl = "anchor idl init epochsiFg8ornJS22urHE3jgveYuFydxPC79tdcbYc8 --filepa
 [test.validator]
 url = "https://api.mainnet-beta.solana.com"
 slots_per_epoch = "32"
+warp_slot = "18464"
+# MAKE SURE TO UPDATE TESTS WHEN UPDATING THIS
 
 [test]
 startup_wait = 10000

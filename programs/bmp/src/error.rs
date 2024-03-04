@@ -51,4 +51,21 @@ pub enum EpochError {
 
     #[msg("Invalid WNS Program")]
     InvalidWnsProgram,
+
+    // Minter Errors
+
+    #[msg("Minter is not active")]
+    MinterNotActive,
+
+    #[msg("Minter is empty")]
+    MinterEmpty,
+
+    #[msg("Minter has not started")]
+    MinterNotStarted,
+
+    #[msg("Cannot start minter in the past")]
+    MinterStartTimeInPast,
+
+    #[msg("Minter cannot have more items than the current epoch")]
+    MinterTooManyItems
 }
