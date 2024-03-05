@@ -4,13 +4,15 @@ import { Program } from "@coral-xyz/anchor";
 import { Bmp } from "../target/types/bmp";
 import { airdropToMultiple, initIdlToChain } from "./utils/utils";
 import { assert } from "chai";
-import { getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda } from "@epochs/api/utils";
+import { convertBmpToPng, getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda } from "@epochs/api/utils";
 
 import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
 import { AUTHORITY } from "./utils/consts";
 import { getMinterClaimPda, getMinterPda } from "./utils/pdas";
+import { Asset } from "./utils/deserialize";
 
+import fs from 'fs';
 
 describe.only("Create a new OSS Collection, Mint, and Auction", () => {
     const provider = anchor.AnchorProvider.env();
@@ -100,15 +102,12 @@ describe.only("Create a new OSS Collection, Mint, and Auction", () => {
             systemProgram: anchor.web3.SystemProgram.programId,
         };
 
-
-        //printTableData(accounts);
-
         try {
             const ixBlob = await program.methods.ossCreateBlob(new anchor.BN(TEST_EPOCH))
                 .accounts(accounts)
                 .instruction();
 
-            const ixRestrict = await program.methods.ossCreateRest(new anchor.BN(TEST_EPOCH))
+            const ixRest = await program.methods.ossCreateRest(new anchor.BN(TEST_EPOCH))
                 .accounts(accounts)
                 .instruction();
 
@@ -116,14 +115,19 @@ describe.only("Create a new OSS Collection, Mint, and Auction", () => {
                 .accounts(auctionAccounts)
                 .instruction();
 
-            const tx = new anchor.web3.Transaction().add(ixBlob).add(ixRestrict).add(ixAuction);
+            const tx = new anchor.web3.Transaction().add(ixBlob).add(ixRest).add(ixAuction);
             const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
             tx.recentBlockhash = blockhash;
             tx.lastValidBlockHeight = lastValidBlockHeight;
             tx.sign(payer);
             const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [payer]);
-            table['asset'] = asset.toBase58();
-            table['assetTx'] = sig;
+
+            const { data } = await program.provider.connection.getAccountInfo(asset);
+
+            const deserializedAsset = Asset.deserialize(data);
+            const { extensions, ...assetWithoutExtensions } = deserializedAsset;
+            // TODO Add Tests on the assetWithoutExtensions
+
             assert.ok(sig, 'should have signature');
 
         } catch (err) {
@@ -201,7 +205,7 @@ describe.only("Create a new OSS Collection, Mint, and Auction", () => {
 
 });
 
-describe.only("Simulates retroactive mint", () => {
+describe("Simulates retroactive mint", () => {
     const provider = anchor.AnchorProvider.env();
     anchor.setProvider(provider);
     const program = anchor.workspace.Bmp as Program<Bmp>;
@@ -251,7 +255,7 @@ describe.only("Simulates retroactive mint", () => {
                 });
                 await Promise.all(claimPromises);
                 const state = await program.account.minter.fetch(getMinterPda(program));
-                assert.equal(state.itemsRedeemed.toNumber(), (numberOfMints * (i+1)), "1 Mint expected for each minter");
+                assert.equal(state.itemsRedeemed.toNumber(), (numberOfMints * (i + 1)), "1 Mint expected for each minter");
                 const redeemPromises = minters.map(async (minter, i) => {
                     return performMinterRedeem(minter, program, provider);
                 });
@@ -270,13 +274,7 @@ describe.only("Simulates retroactive mint", () => {
 
 
 
-function printTableData(accounts: Record<string, anchor.web3.PublicKey>) {
-    const tableData = Object.entries(accounts).map(([key, publicKey]) => ({
-        account: key,
-        mint: publicKey.toBase58()
-    }));
-    console.table(tableData);
-}
+
 
 
 async function performRandomBid({

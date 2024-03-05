@@ -78,7 +78,13 @@ async function initIdlToChain() {
 
 
 
-
+function printTableData(accounts: Record<string, PublicKey>) {
+    const tableData = Object.entries(accounts).map(([key, publicKey]) => ({
+        account: key,
+        mint: publicKey.toBase58()
+    }));
+    console.table(tableData);
+}
 
 
 
@@ -87,5 +93,6 @@ async function initIdlToChain() {
 export {
     airdropToMultiple,
     openFile,
-    initIdlToChain
+    initIdlToChain,
+    printTableData
 };
