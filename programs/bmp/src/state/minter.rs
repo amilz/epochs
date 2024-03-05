@@ -47,12 +47,13 @@ impl Minter {
     pub fn redeem_item(&mut self) -> Result<()> {
         self.is_active()?;
         self.items_redeemed += 1;
+
+        if self.items_redeemed == self.items_available {
+            self.active = false;
+        }
+
         Ok(())
     }
 
-    pub fn deactivate_minter(&mut self) -> Result<()> {
-        self.active = false;
-        Ok(())
-    }
 
 }

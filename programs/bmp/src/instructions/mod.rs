@@ -9,6 +9,7 @@ pub mod oss_init_auction;
 pub mod oss_claim;
 pub mod oss_init_minter;
 pub mod oss_minter_claim;
+pub mod oss_redeem;
 
 pub use create_collection_nft::*;
 pub use init_epoch::*;
@@ -21,3 +22,4 @@ pub use oss_init_auction::*;
 pub use oss_claim::*;
 pub use oss_init_minter::*;
 pub use oss_minter_claim::*;
+pub use oss_redeem::*;

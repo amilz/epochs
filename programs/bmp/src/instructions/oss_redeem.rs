@@ -1,8 +1,7 @@
 use std::str::FromStr;
 
 use crate::{
-    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, AUTHORITY_SEED,
-    COLLECTION_SEED, CREATOR_WALLET_1, DAO_TREASURY_WALLET, NFT_MINT_SEED,
+    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, MinterClaim, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_WALLET_1, DAO_TREASURY_WALLET, MINTER_CLAIM_SEED, NFT_MINT_SEED
 };
 use anchor_lang::{
     prelude::*,
@@ -19,12 +18,11 @@ use nifty_asset::{
 };
 
 #[derive(Accounts)]
-#[instruction(input_epoch: u64)]
-pub struct OssCreate<'info> {
+pub struct OssRedeem<'info> {
     /// CHECK: New NFT Mint (will be init by OSS Program via CPI - address is derived based on epoch #)
     #[account(
         mut,
-        seeds = [NFT_MINT_SEED.as_bytes(), &input_epoch.to_le_bytes()],
+        seeds = [NFT_MINT_SEED.as_bytes(), &minter_claim.epoch.to_le_bytes()],
         bump,
     )]
     pub asset: UncheckedAccount<'info>,
@@ -47,6 +45,17 @@ pub struct OssCreate<'info> {
     )]
     pub authority: UncheckedAccount<'info>,
 
+    #[account(
+        // mut,
+        // TODO NEED TO EITHER WAIT TIL MINT CONFIG IS EMPTY
+        // OR GET RID OF CLOSE...b/c then they could re-init
+        // close = payer,
+        seeds = [MINTER_CLAIM_SEED.as_bytes(), payer.key().as_ref()],
+        bump = minter_claim.bump,
+        constraint = minter_claim.claimer == payer.key()
+    )]
+    pub minter_claim: Account<'info, MinterClaim>,
+
     pub system_program: Program<'info, System>,
 
     /// CHECK: use address constraint
@@ -56,8 +65,11 @@ pub struct OssCreate<'info> {
     pub oss_program: UncheckedAccount<'info>,
 }
 
-impl<'info> OssCreate<'info> {
-    pub fn generate_inscription(&self, current_epoch: u64, asset_bump: u8) -> Result<()> {
+impl<'info> OssRedeem<'info> {
+    pub fn generate_inscription(&self, asset_bump: u8) -> Result<()> {
+        let minter_claim = &self.minter_claim;
+        let mint_epoch= minter_claim.epoch;
+
         let account_infos = vec![
             self.asset.to_account_info(),
             self.payer.to_account_info(),
@@ -67,7 +79,7 @@ impl<'info> OssCreate<'info> {
 
         let asset_seeds = &[
             NFT_MINT_SEED.as_bytes(),
-            &current_epoch.to_le_bytes(),
+            &mint_epoch.to_le_bytes(),
             &[asset_bump],
         ];
         let asset_signer_seeds: &[&[&[u8]]; 1] = &[&asset_seeds[..]];
@@ -81,7 +93,6 @@ impl<'info> OssCreate<'info> {
         &self,
         authority_bump: u8,
         asset_bump: u8,
-        current_epoch: u64,
     ) -> Result<()> {
         let account_infos = vec![
             self.asset.to_account_info(),
@@ -91,6 +102,7 @@ impl<'info> OssCreate<'info> {
             self.system_program.to_account_info(),
         ];
 
+        let current_epoch = self.minter_claim.epoch;
         let asset_seeds = &[
             NFT_MINT_SEED.as_bytes(),
             &current_epoch.to_le_bytes(),
@@ -108,47 +120,39 @@ impl<'info> OssCreate<'info> {
     }
 
     fn allocate_blob(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
-        log_heap_usage(1);
 
-        let current_epoch = Clock::get()?.epoch;
+        let current_epoch = self.minter_claim.epoch;
         let assets = generate_asset(current_epoch, self.payer.key());
-        log_heap_usage(2);
 
         let json_raw = generate_json_metadata(current_epoch, self.payer.key(), assets.1).unwrap();
-        log_heap_usage(3);
 
         let bmp_raw = &assets.0;
 
-        // Estimate total size
         let total_size: usize = bmp_raw.len() + json_raw.len();
-        log_heap_usage(4);
-        // Create Vec with exact capacity
         let mut data = Vec::with_capacity(total_size);
-        log_heap_usage(5);
 
         // Write data directly into Vec
         data.extend_from_slice(&bmp_raw);
         data.extend_from_slice(&json_raw);
-        log_heap_usage(6);
 
         let extension_data = Extension {
-            extension_type: ExtensionType::Blob, // Assuming ExtensionType::Blob is an enum or similar
+            extension_type: ExtensionType::Blob, 
             length: data.len() as u32,
-            data: Some(data), // The actual data you want to include
+            data: Some(data), 
         };
 
         let instruction_data = AllocateInstructionData {
-            discriminator: 4, // Assuming '4' is the correct discriminator for your instruction
+            discriminator: 4, 
         };
 
         let mut serialized_extension_data = match extension_data.try_to_vec() {
             Ok(data) => data,
-            Err(e) => return Err(e.into()), // Handle the serialization error appropriately
+            Err(e) => return Err(e.into()),
         };
 
         let mut serialized_instruction_data = match instruction_data.try_to_vec() {
             Ok(data) => data,
-            Err(e) => return Err(e.into()), // Handle the serialization error appropriately
+            Err(e) => return Err(e.into()),
         };
 
         // Append the serialized extension data to the instruction data
@@ -156,9 +160,9 @@ impl<'info> OssCreate<'info> {
 
         // Define the accounts involved in the instruction
         let accounts = vec![
-            AccountMeta::new(self.asset.key(), true), // Asset account, assuming it's a signer
-            AccountMeta::new(self.payer.key(), true), // Payer account, assuming it's a signer
-            AccountMeta::new_readonly(self.system_program.key(), false), // System program, readonly
+            AccountMeta::new(self.asset.key(), true),
+            AccountMeta::new(self.payer.key(), true),
+            AccountMeta::new_readonly(self.system_program.key(), false),
         ];
 
         // Construct the instruction

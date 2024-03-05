@@ -68,6 +68,14 @@ pub mod bmp {
         ctx.accounts.handler(ctx.bumps.minter_claim)
     }
 
+    pub fn oss_redeem_blob(ctx: Context<OssRedeem>) -> Result<()> {
+        ctx.accounts.generate_inscription(ctx.bumps.asset)
+    }
+
+    pub fn oss_redeem_rest(ctx: Context<OssRedeem>) -> Result<()> {
+        ctx.accounts.create_asset_w_metadata(ctx.bumps.authority, ctx.bumps.asset)
+    }
+
 }
 
 
