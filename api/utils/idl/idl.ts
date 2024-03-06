@@ -3,7 +3,17 @@ export type Bmp = {
   "name": "bmp",
   "constants": [
     {
-      "name": "CREATOR_WALLET",
+      "name": "AUTHORITY",
+      "type": "string",
+      "value": "\"AUTHbpGeSBi6tHHxnStySJhrwQfm5tLZQRcL2pCiVweL\""
+    },
+    {
+      "name": "CREATOR_WALLET_1",
+      "type": "string",
+      "value": "\"zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa\""
+    },
+    {
+      "name": "CREATOR_WALLET_2",
       "type": "string",
       "value": "\"zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa\""
     },
@@ -51,6 +61,16 @@ export type Bmp = {
       "name": "NFT_MINT_SEED",
       "type": "string",
       "value": "\"NftMint\""
+    },
+    {
+      "name": "MINTER_SEED",
+      "type": "string",
+      "value": "\"Minter\""
+    },
+    {
+      "name": "MINTER_CLAIM_SEED",
+      "type": "string",
+      "value": "\"MinterClaim\""
     },
     {
       "name": "GREEN_SCREEN",
@@ -467,6 +487,354 @@ export type Bmp = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "ossCreateBlob",
+      "accounts": [
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "inputEpoch",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "ossCreateRest",
+      "accounts": [
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "inputEpoch",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "ossCreateGroup",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "ossInitAuction",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "auction",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "reputation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asset",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "inputEpoch",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "ossClaim",
+      "accounts": [
+        {
+          "name": "winner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "auction",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "auctionEscrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "reputation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daoTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creatorWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "inputEpoch",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "ossInitMinter",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "minter",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "itemsAvailable",
+          "type": "u64"
+        },
+        {
+          "name": "startTime",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "ossMinterClaim",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "minter",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "minterClaim",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "ossRedeemBlob",
+      "accounts": [
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "minterClaim",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "ossRedeemRest",
+      "accounts": [
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "minterClaim",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -522,6 +890,54 @@ export type Bmp = {
             "type": {
               "defined": "EpochBuffers"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "minterClaim",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claimer",
+            "type": "publicKey"
+          },
+          {
+            "name": "epoch",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "minter",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "itemsAvailable",
+            "type": "u64"
+          },
+          {
+            "name": "itemsRedeemed",
+            "type": "u64"
+          },
+          {
+            "name": "startTime",
+            "type": "i64"
+          },
+          {
+            "name": "active",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }
@@ -728,6 +1144,31 @@ export type Bmp = {
       "code": 6012,
       "name": "InvalidWnsProgram",
       "msg": "Invalid WNS Program"
+    },
+    {
+      "code": 6013,
+      "name": "MinterNotActive",
+      "msg": "Minter is not active"
+    },
+    {
+      "code": 6014,
+      "name": "MinterEmpty",
+      "msg": "Minter is empty"
+    },
+    {
+      "code": 6015,
+      "name": "MinterNotStarted",
+      "msg": "Minter has not started"
+    },
+    {
+      "code": 6016,
+      "name": "MinterStartTimeInPast",
+      "msg": "Cannot start minter in the past"
+    },
+    {
+      "code": 6017,
+      "name": "MinterTooManyItems",
+      "msg": "Minter cannot have more items than the current epoch"
     }
   ]
 };
@@ -737,7 +1178,17 @@ export const IDL: Bmp = {
   "name": "bmp",
   "constants": [
     {
-      "name": "CREATOR_WALLET",
+      "name": "AUTHORITY",
+      "type": "string",
+      "value": "\"AUTHbpGeSBi6tHHxnStySJhrwQfm5tLZQRcL2pCiVweL\""
+    },
+    {
+      "name": "CREATOR_WALLET_1",
+      "type": "string",
+      "value": "\"zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa\""
+    },
+    {
+      "name": "CREATOR_WALLET_2",
       "type": "string",
       "value": "\"zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa\""
     },
@@ -785,6 +1236,16 @@ export const IDL: Bmp = {
       "name": "NFT_MINT_SEED",
       "type": "string",
       "value": "\"NftMint\""
+    },
+    {
+      "name": "MINTER_SEED",
+      "type": "string",
+      "value": "\"Minter\""
+    },
+    {
+      "name": "MINTER_CLAIM_SEED",
+      "type": "string",
+      "value": "\"MinterClaim\""
     },
     {
       "name": "GREEN_SCREEN",
@@ -1201,6 +1662,354 @@ export const IDL: Bmp = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "ossCreateBlob",
+      "accounts": [
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "inputEpoch",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "ossCreateRest",
+      "accounts": [
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "inputEpoch",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "ossCreateGroup",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "ossInitAuction",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "auction",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "reputation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asset",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "inputEpoch",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "ossClaim",
+      "accounts": [
+        {
+          "name": "winner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "auction",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "auctionEscrow",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "reputation",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "daoTreasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creatorWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "inputEpoch",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "ossInitMinter",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "minter",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "itemsAvailable",
+          "type": "u64"
+        },
+        {
+          "name": "startTime",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "ossMinterClaim",
+      "accounts": [
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "minter",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "minterClaim",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "ossRedeemBlob",
+      "accounts": [
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "minterClaim",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "ossRedeemRest",
+      "accounts": [
+        {
+          "name": "asset",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "minterClaim",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "ossProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -1256,6 +2065,54 @@ export const IDL: Bmp = {
             "type": {
               "defined": "EpochBuffers"
             }
+          }
+        ]
+      }
+    },
+    {
+      "name": "minterClaim",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "claimer",
+            "type": "publicKey"
+          },
+          {
+            "name": "epoch",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "minter",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "itemsAvailable",
+            "type": "u64"
+          },
+          {
+            "name": "itemsRedeemed",
+            "type": "u64"
+          },
+          {
+            "name": "startTime",
+            "type": "i64"
+          },
+          {
+            "name": "active",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }
@@ -1462,6 +2319,31 @@ export const IDL: Bmp = {
       "code": 6012,
       "name": "InvalidWnsProgram",
       "msg": "Invalid WNS Program"
+    },
+    {
+      "code": 6013,
+      "name": "MinterNotActive",
+      "msg": "Minter is not active"
+    },
+    {
+      "code": 6014,
+      "name": "MinterEmpty",
+      "msg": "Minter is empty"
+    },
+    {
+      "code": 6015,
+      "name": "MinterNotStarted",
+      "msg": "Minter has not started"
+    },
+    {
+      "code": 6016,
+      "name": "MinterStartTimeInPast",
+      "msg": "Cannot start minter in the past"
+    },
+    {
+      "code": 6017,
+      "name": "MinterTooManyItems",
+      "msg": "Minter cannot have more items than the current epoch"
     }
   ]
 };
