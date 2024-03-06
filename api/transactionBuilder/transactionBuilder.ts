@@ -268,15 +268,15 @@ export class TransactionBuilder {
     public async redeemFromMinter({
         payer
     }: RedeemFromMinterParams): Promise<Transaction> {
-        const minterClaim = getMinterClaimPda(this.program, payer);
-        const claim = await this.program.account.minterClaim.fetch(minterClaim);
+        const timeMachineReceipt = getMinterClaimPda(this.program, payer);
+        const claim = await this.program.account.timeMachineReceipt.fetch(timeMachineReceipt);
 
         const accounts = {
             asset: getNftMintPda(this.program, claim.epoch.toNumber()),
             payer: payer,
             group: getCollectionMintPda(this.program),
             authority: getAuthorityPda(this.program),
-            minterClaim: minterClaim,
+            minterClaim: timeMachineReceipt,
             systemProgram: SystemProgram.programId,
             ossProgram: NIFTY_PROGRAM_ID
         };

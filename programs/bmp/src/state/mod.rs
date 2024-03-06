@@ -1,9 +1,9 @@
 pub mod auction;
 pub mod reputation;
-pub mod minter;
-pub mod minter_claim;
+pub mod time_machine;
+pub mod time_machine_receipt;
 
 pub use auction::*;
 pub use reputation::*;
-pub use minter::*;
-pub use minter_claim::*;
+pub use time_machine::*;
+pub use time_machine_receipt::*;

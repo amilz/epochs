@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::{
-    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, MinterClaim, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_WALLET_1, DAO_TREASURY_WALLET, MINTER_CLAIM_SEED, NFT_MINT_SEED
+    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, TimeMachineReceipt, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_WALLET_1, DAO_TREASURY_WALLET, MINTER_CLAIM_SEED, NFT_MINT_SEED
 };
 use anchor_lang::{
     prelude::*,
@@ -54,7 +54,7 @@ pub struct OssRedeem<'info> {
         bump = minter_claim.bump,
         constraint = minter_claim.claimer == payer.key()
     )]
-    pub minter_claim: Account<'info, MinterClaim>,
+    pub minter_claim: Account<'info, TimeMachineReceipt>,
 
     pub system_program: Program<'info, System>,
 

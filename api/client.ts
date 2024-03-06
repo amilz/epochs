@@ -148,8 +148,8 @@ export class EpochClient {
     }
 
     public async fetchMinterDetails() {
-        const minter = getMinterPda(this.program);
-        const data = await this.program.account.minter.fetch(minter);
+        const timeMachine = getMinterPda(this.program);
+        const data = await this.program.account.timeMachine.fetch(timeMachine);
         return data;
     }
 

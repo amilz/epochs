@@ -462,7 +462,31 @@ export type Bmp = {
       }
     },
     {
-      "name": "minterClaim",
+      "name": "reputation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contributor",
+            "type": "publicKey"
+          },
+          {
+            "name": "reputation",
+            "type": "u64"
+          },
+          {
+            "name": "initialized",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "timeMachineReceipt",
       "type": {
         "kind": "struct",
         "fields": [
@@ -482,7 +506,12 @@ export type Bmp = {
       }
     },
     {
-      "name": "minter",
+      "name": "timeMachine",
+      "docs": [
+        "An asset minter for retroactive epochs.",
+        "The machine will enable the generation of a fixed number of items",
+        "to represent previously occuring epochs."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -500,30 +529,6 @@ export type Bmp = {
           },
           {
             "name": "active",
-            "type": "bool"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "reputation",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "contributor",
-            "type": "publicKey"
-          },
-          {
-            "name": "reputation",
-            "type": "u64"
-          },
-          {
-            "name": "initialized",
             "type": "bool"
           },
           {
@@ -1108,7 +1113,31 @@ export const IDL: Bmp = {
       }
     },
     {
-      "name": "minterClaim",
+      "name": "reputation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "contributor",
+            "type": "publicKey"
+          },
+          {
+            "name": "reputation",
+            "type": "u64"
+          },
+          {
+            "name": "initialized",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "timeMachineReceipt",
       "type": {
         "kind": "struct",
         "fields": [
@@ -1128,7 +1157,12 @@ export const IDL: Bmp = {
       }
     },
     {
-      "name": "minter",
+      "name": "timeMachine",
+      "docs": [
+        "An asset minter for retroactive epochs.",
+        "The machine will enable the generation of a fixed number of items",
+        "to represent previously occuring epochs."
+      ],
       "type": {
         "kind": "struct",
         "fields": [
@@ -1146,30 +1180,6 @@ export const IDL: Bmp = {
           },
           {
             "name": "active",
-            "type": "bool"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "reputation",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "contributor",
-            "type": "publicKey"
-          },
-          {
-            "name": "reputation",
-            "type": "u64"
-          },
-          {
-            "name": "initialized",
             "type": "bool"
           },
           {

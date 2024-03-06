@@ -2,8 +2,12 @@ use anchor_lang::prelude::*;
 
 use crate::EpochError;
 
+
+/// An asset minter for retroactive epochs.
+/// The machine will enable the generation of a fixed number of items
+/// to represent previously occuring epochs.
 #[account]
-pub struct Minter {
+pub struct TimeMachine {
     pub items_available: u64,
     pub items_redeemed: u64,
     pub start_time: i64,
@@ -11,7 +15,7 @@ pub struct Minter {
     pub bump: u8,
 }
 
-impl Minter {
+impl TimeMachine {
     pub fn get_size() -> usize {
         8 +     // discriminator
         8 +     // items_available

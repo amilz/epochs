@@ -3,7 +3,7 @@ use std::str::FromStr;
 use anchor_lang::prelude::*;
 
 use crate::constants::MINTER_SEED;
-use crate::state::Minter;
+use crate::state::TimeMachine;
 use crate::{EpochError, AUTHORITY};
 
 #[derive(Accounts)]
@@ -20,9 +20,9 @@ pub struct OssInitMinter<'info> {
         seeds = [MINTER_SEED.as_bytes()],
         bump, 
         payer = authority,
-        space = Minter::get_size()
+        space = TimeMachine::get_size()
     )]
-    pub minter: Account<'info, Minter>,
+    pub minter: Account<'info, TimeMachine>,
 
     pub system_program: Program<'info, System>,
 }
@@ -33,7 +33,7 @@ impl<'info> OssInitMinter<'info> {
         items_available: u64, 
         start_time: i64
     ) -> Result<()> {
-        let minter: &mut Account<'_, Minter> = &mut self.minter;
+        let minter: &mut Account<'_, TimeMachine> = &mut self.minter;
         minter.initialize(minter_bump, items_available, start_time)?;
         Ok(())
     }

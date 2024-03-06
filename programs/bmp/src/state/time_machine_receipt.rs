@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
 
 #[account]
-pub struct MinterClaim {
+pub struct TimeMachineReceipt {
     pub claimer: Pubkey,
     pub epoch: u64,
     pub bump: u8,
 }
 
-impl MinterClaim {
+impl TimeMachineReceipt {
     pub fn get_size() -> usize {
         8  +    // discriminator
         32 +    // claimer
