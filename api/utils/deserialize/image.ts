@@ -1,6 +1,6 @@
 import Jimp from "jimp";
 
-const convertBmpToPng = async (bmpBuffer: Buffer, filePath: string) => {
+const writetBmpToPng = async (bmpBuffer: Buffer, filePath: string) => {
     try {
         const image = await Jimp.read(bmpBuffer);
         image.resize( 640, 640, Jimp.RESIZE_NEAREST_NEIGHBOR ); 
@@ -11,4 +11,16 @@ const convertBmpToPng = async (bmpBuffer: Buffer, filePath: string) => {
     }
 };
 
-export { convertBmpToPng };
+const convertBmpToBase64 = async (bmpBuffer: Buffer) => {
+    try {
+        const image = await Jimp.read(bmpBuffer);
+        image.resize( 640, 640, Jimp.RESIZE_NEAREST_NEIGHBOR ); 
+        const png = await image.getBase64Async(Jimp.MIME_PNG);
+        return png;
+    } catch (error) {
+        console.error('Error converting BMP to Base64 PNG:', error);
+        throw error;
+    }
+};
+
+export { writetBmpToPng, convertBmpToBase64 };

@@ -1,28 +1,19 @@
-import { Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, Connection } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Bmp } from "../target/types/bmp";
 import { airdropToMultiple, initIdlToChain } from "./utils/utils";
 import { assert } from "chai";
-import { convertBmpToPng, getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda } from "@epochs/api/utils";
-
 import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
 import { AUTHORITY } from "./utils/consts";
-import { getMinterClaimPda, getMinterPda } from "./utils/pdas";
-import { Asset } from "./utils/deserialize";
-
-import fs from 'fs';
+import { EpochClient } from "@epochs/api";
 
 describe.only("Create a new OSS Collection, Mint, and Auction", () => {
-    const provider = anchor.AnchorProvider.env();
-    anchor.setProvider(provider);
+    const epochClient = EpochClient.local();
 
     const payer = Keypair.generate();
-    const program = anchor.workspace.Bmp as Program<Bmp>;
 
-    const groupAsset = getCollectionMintPda(program);
-    const groupAuthority = getAuthorityPda(program);
     const bidder1 = Keypair.generate();
     const bidder2 = Keypair.generate();
     const bidder3 = Keypair.generate();
@@ -38,41 +29,23 @@ describe.only("Create a new OSS Collection, Mint, and Auction", () => {
     ]);
 
     const auctionResults = new Map<number, { highBidder: Keypair; bidAmount: number }>();
-    const table = {};
 
     const TEST_EPOCH = 577; // using warp slot 18464 / 32 slots/epoch = 577 epochs
 
 
     before(async () => {
         await initIdlToChain();
-        await airdropToMultiple([AUTHORITY.publicKey, payer.publicKey, bidder1.publicKey, bidder2.publicKey, bidder3.publicKey], provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
+        await airdropToMultiple([AUTHORITY.publicKey, payer.publicKey, bidder1.publicKey, bidder2.publicKey, bidder3.publicKey], epochClient.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
     });
 
     it("Creats a group OSS NFT", async () => {
-
-        const accounts = {
-            payer: payer.publicKey,
-            asset: groupAsset,
-            authority: groupAuthority,
-            systemProgram: anchor.web3.SystemProgram.programId,
-            ossProgram: new anchor.web3.PublicKey('AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73'),
-        };
-
-
         try {
-            const ix = await program.methods.ossCreateGroup()
-                .accounts(accounts)
-                .instruction();
-
-            const tx = new anchor.web3.Transaction().add(ix);
-            const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
+            const tx = await epochClient.createGroupTransaction({ payer: payer.publicKey });
+            const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
             tx.recentBlockhash = blockhash;
             tx.lastValidBlockHeight = lastValidBlockHeight;
             tx.sign(payer);
-            const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [payer]);
-
-            table['group'] = groupAsset.toBase58();
-            table['groupTx'] = sig;
+            const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer]);
             assert.ok(sig, 'should have signature');
         } catch (err) {
             console.log(err);
@@ -81,53 +54,17 @@ describe.only("Create a new OSS Collection, Mint, and Auction", () => {
     });
 
     it("Creates an OSS NFT and initiates auction", async () => {
-        const asset = getNftMintPda(program, TEST_EPOCH);
-        const auctionPda = getAuctionPda(TEST_EPOCH, program);
-        const reputationPda = getReputationPda(payer.publicKey, program);
-
-        const accounts = {
-            payer: payer.publicKey,
-            asset,
-            group: groupAsset,
-            authority: groupAuthority,
-            systemProgram: anchor.web3.SystemProgram.programId,
-            ossProgram: new anchor.web3.PublicKey('AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73'),
-        };
-
-        const auctionAccounts = {
-            payer: payer.publicKey,
-            auction: auctionPda,
-            reputation: reputationPda,
-            asset,
-            systemProgram: anchor.web3.SystemProgram.programId,
-        };
 
         try {
-            const ixBlob = await program.methods.ossCreateBlob(new anchor.BN(TEST_EPOCH))
-                .accounts(accounts)
-                .instruction();
-
-            const ixRest = await program.methods.ossCreateRest(new anchor.BN(TEST_EPOCH))
-                .accounts(accounts)
-                .instruction();
-
-            const ixAuction = await program.methods.ossInitAuction(new anchor.BN(TEST_EPOCH))
-                .accounts(auctionAccounts)
-                .instruction();
-
-            const tx = new anchor.web3.Transaction().add(ixBlob).add(ixRest).add(ixAuction);
-            const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
+            const tx = await epochClient.createInitEpochTransaction({ payer: payer.publicKey });
+            const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
             tx.recentBlockhash = blockhash;
             tx.lastValidBlockHeight = lastValidBlockHeight;
             tx.sign(payer);
-            const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [payer]);
-
-            const { data } = await program.provider.connection.getAccountInfo(asset);
-
-            const deserializedAsset = Asset.deserialize(data);
-            const { extensions, ...assetWithoutExtensions } = deserializedAsset;
+            const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer]);
+            const { epoch } = await epochClient.connection.getEpochInfo();
+            const deserializedAsset = await epochClient.fetchDeserializedAssetByEpoch({ epoch });
             // TODO Add Tests on the assetWithoutExtensions
-
             assert.ok(sig, 'should have signature');
 
         } catch (err) {
@@ -137,14 +74,16 @@ describe.only("Create a new OSS Collection, Mint, and Auction", () => {
 
     });
 
-    it("Simulates bidding war an auction", async () => {
+
+
+/*     it.skip("Simulates bidding war an auction", async () => {
         const numberOfBids = 10 + Math.floor(Math.random() * 5); // Random number of bids
         let lastBidAmount = LAMPORTS_PER_SOL; // Starting bid amount for the auction
         let lastBidder = payer; // Initiator is the first high bidder
 
         for (let i = 0; i < numberOfBids; i++) {
             const bidResult = await performRandomBid({
-                program,
+                this.program,
                 epoch: TEST_EPOCH,
                 bidders: [bidder1, bidder2, bidder3],
                 reputationTrackers,
@@ -157,44 +96,52 @@ describe.only("Create a new OSS Collection, Mint, and Auction", () => {
         auctionResults.set(TEST_EPOCH, { highBidder: lastBidder, bidAmount: lastBidAmount });
 
     });
+ */
+    it("Creates multiple bids", async () => {
+        const bidAmount = (Math.floor(Math.random() * 10) + 1) * LAMPORTS_PER_SOL;
+        const bid1 = {
+            amount: (Math.floor(Math.random() * 10) + 1) * LAMPORTS_PER_SOL,
+            bidder: bidder1,
+        }
+        const bid2 = {
+            bidAmount: bid1.amount + 2 * LAMPORTS_PER_SOL,
+            bidder: bidder2,
+        }
+
+        const bid3 = {
+            bidAmount: bid2.bidAmount + 2 * LAMPORTS_PER_SOL,
+            bidder: bidder3,
+        }
+
+        const bids = [{ bidAmount: bid1.amount, bidder: bid1.bidder }, { bidAmount: bid2.bidAmount, bidder: bid2.bidder }, { bidAmount: bid3.bidAmount, bidder: bid3.bidder },];
+
+        for (const bid of bids) {
+            try {
+                const tx = await epochClient.createBidTransaction({ bidAmount: bid.bidAmount, bidder: bid.bidder.publicKey });
+                const { blockhash, lastValidBlockHeight } = await epochClient.connection.getLatestBlockhash();
+                tx.recentBlockhash = blockhash;
+                tx.lastValidBlockHeight = lastValidBlockHeight;
+                tx.sign(bid.bidder);
+                const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [bid.bidder]);
+                assert.ok(sig, 'should have signature');
+            } catch (err) {
+                console.log(err);
+                assert.fail('error minting', err);
+            }
+        }
+    });
 
     it("Auction winner claims rewards", async () => {
-        await waitTilEpochIs(TEST_EPOCH + 1, program);
-
-        const auctionPda = getAuctionPda(TEST_EPOCH, program);
-        const { highBidder } = await program.account.auction.fetch(auctionPda);
-        const auctionEscrow = getAuctionEscrowPda(program);
-        const reputationPda = getReputationPda(highBidder, program);
-        const asset = getNftMintPda(program, TEST_EPOCH);
-
-        const signer = auctionResults.get(TEST_EPOCH)!.highBidder;
-
-        const accounts = {
-            winner: highBidder,
-            auction: auctionPda,
-            auctionEscrow,
-            reputation: reputationPda,
-            systemProgram: anchor.web3.SystemProgram.programId,
-            daoTreasury: new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe"),
-            creatorWallet: new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa"),
-            asset,
-            authority: groupAuthority,
-            ossProgram: new anchor.web3.PublicKey('AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73'),
-        };
-
+        const { epoch } = await epochClient.connection.getEpochInfo();
+        await waitTilEpochIs(epoch + 1, epochClient.connection);
 
         try {
-            const ix = await program.methods.ossClaim(new anchor.BN(TEST_EPOCH))
-                .accounts(accounts)
-                .instruction();
-
-            const tx = new anchor.web3.Transaction().add(ix);
-            const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
+            const tx = await epochClient.createClaimInstruction({ winner: bidder3.publicKey, epoch });
+            const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
             tx.recentBlockhash = blockhash;
             tx.lastValidBlockHeight = lastValidBlockHeight;
             tx.sign(payer);
-            const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [signer]);
-            table['claimTx'] = sig;
+            const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [bidder3]);
             assert.ok(sig, 'should have signature');
         } catch (err) {
             console.log(err);
@@ -205,35 +152,23 @@ describe.only("Create a new OSS Collection, Mint, and Auction", () => {
 
 });
 
-describe("Simulates retroactive mint", () => {
-    const provider = anchor.AnchorProvider.env();
-    anchor.setProvider(provider);
-    const program = anchor.workspace.Bmp as Program<Bmp>;
+describe.only("Simulates retroactive mint", () => {
+    const epochClient = EpochClient.local();
+
 
     it("Initiates the Minter", async () => {
-
-        const accounts = {
-            authority: AUTHORITY.publicKey,
-            minter: getMinterPda(program),
-            systemProgram: anchor.web3.SystemProgram.programId,
-        };
-
         const now = new Date().getTime();
         // 5 seconds from now:
         const target = new Date(now + 5 * 1000).getTime();
-        const tomorrow = new Date(now + 24 * 60 * 60 * 1000).getTime();
+        // const tomorrow = new Date(now + 24 * 60 * 60 * 1000).getTime();
 
         try {
-            const ix = await program.methods.ossInitMinter(new anchor.BN(500), new anchor.BN(target / 1000))
-                .accounts(accounts)
-                .instruction();
-
-            const tx = new anchor.web3.Transaction().add(ix);
-            const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
+            const tx = await epochClient.createCreateMinterInstruction({ itemsAvailable: 500, startTime: target / 1000 });
+            const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
             tx.recentBlockhash = blockhash;
             tx.lastValidBlockHeight = lastValidBlockHeight;
             tx.sign(AUTHORITY);
-            const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [AUTHORITY]);
+            const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [AUTHORITY]);
             assert.ok(sig, 'should have signature');
         } catch (err) {
             console.log(err);
@@ -248,16 +183,16 @@ describe("Simulates retroactive mint", () => {
         for (let i = 0; i < numLoops; i++) {
             try {
                 const minters = Array.from({ length: numberOfMints }, (_, i) => Keypair.generate());
-                await airdropToMultiple(minters.map(m => m.publicKey), provider.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
+                await airdropToMultiple(minters.map(m => m.publicKey), epochClient.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
                 await new Promise(resolve => setTimeout(resolve, 10000));
                 const claimPromises = minters.map(async (minter, i) => {
-                    return performMinterClaim(minter, program, provider);
+                    return performMinterClaim(minter, epochClient);
                 });
                 await Promise.all(claimPromises);
-                const state = await program.account.minter.fetch(getMinterPda(program));
+                const state = await epochClient.fetchMinterDetails();
                 assert.equal(state.itemsRedeemed.toNumber(), (numberOfMints * (i + 1)), "1 Mint expected for each minter");
                 const redeemPromises = minters.map(async (minter, i) => {
-                    return performMinterRedeem(minter, program, provider);
+                    return performMinterRedeem(minter, epochClient);
                 });
                 await Promise.all(redeemPromises);
             } catch (err) {
@@ -265,7 +200,7 @@ describe("Simulates retroactive mint", () => {
                 assert.fail('error minting', err);
             }
         }
-        const state = await program.account.minter.fetch(getMinterPda(program));
+        const state = await epochClient.fetchMinterDetails();
         assert.equal(state.itemsRedeemed.toNumber(), (numberOfMints * numLoops), "1 Mint expected for each minter");
         assert.isFalse(state.active, "Minter should be inactive after all mints are redeemed");
     });
@@ -315,39 +250,28 @@ async function performRandomBid({
 
 async function waitTilEpochIs(
     targetEpoch: number,
-    program: Program<Bmp>,
+    connection: Connection,
     checkInterval: number = 1000
 ) {
-    let { epoch } = await program.provider.connection.getEpochInfo();
+    let { epoch } = await connection.getEpochInfo();
     if (targetEpoch < epoch) {
         throw new Error(`Target epoch ${targetEpoch} is already in the past`);
     }
     while (targetEpoch > epoch) {
         await new Promise(resolve => setTimeout(resolve, checkInterval));
-        ({ epoch } = await program.provider.connection.getEpochInfo());
+        ({ epoch } = await connection.getEpochInfo());
     }
     return epoch;
 }
 
-async function performMinterClaim(payer: anchor.web3.Keypair, program: Program<Bmp>, provider: anchor.Provider) {
-    const accounts = {
-        payer: payer.publicKey,
-        minter: getMinterPda(program),
-        minterClaim: getMinterClaimPda(program, payer.publicKey),
-        systemProgram: anchor.web3.SystemProgram.programId,
-    };
-
+async function performMinterClaim(payer: anchor.web3.Keypair, epochClient: EpochClient) {
     try {
-        const ix = await program.methods.ossMinterClaim()
-            .accounts(accounts)
-            .instruction();
-
-        const tx = new anchor.web3.Transaction().add(ix);
-        const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
+        const tx = await epochClient.createClaimFromMinterInstruction({ payer: payer.publicKey });
+        const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
         tx.recentBlockhash = blockhash;
         tx.lastValidBlockHeight = lastValidBlockHeight;
         tx.sign(payer);
-        const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [payer]);
+        const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer]);
         assert.ok(sig, 'should have signature');
     } catch (err) {
         console.log(err);
@@ -356,34 +280,15 @@ async function performMinterClaim(payer: anchor.web3.Keypair, program: Program<B
 }
 
 
-async function performMinterRedeem(payer: anchor.web3.Keypair, program: Program<Bmp>, provider: anchor.Provider) {
-    const minterClaim = getMinterClaimPda(program, payer.publicKey);
-    const claim = await program.account.minterClaim.fetch(minterClaim);
-
-    const accounts = {
-        asset: getNftMintPda(program, claim.epoch.toNumber()),
-        payer: payer.publicKey,
-        group: getCollectionMintPda(program),
-        authority: getAuthorityPda(program),
-        minterClaim: minterClaim,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        ossProgram: new anchor.web3.PublicKey('AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73'),
-    };
+async function performMinterRedeem(payer: anchor.web3.Keypair, epochClient: EpochClient) {
 
     try {
-        const ix1 = await program.methods.ossRedeemBlob()
-            .accounts(accounts)
-            .instruction();
-        const ix2 = await program.methods.ossRedeemRest()
-            .accounts(accounts)
-            .instruction();
-
-        const tx = new anchor.web3.Transaction().add(ix1).add(ix2);
-        const { blockhash, lastValidBlockHeight } = (await provider.connection.getLatestBlockhash());
+        const tx = await epochClient.createRedeemFromMinterInstruction({ payer: payer.publicKey });
+        const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
         tx.recentBlockhash = blockhash;
         tx.lastValidBlockHeight = lastValidBlockHeight;
         tx.sign(payer);
-        const sig = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [payer]);
+        const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer]);
         assert.ok(sig, 'should have signature');
     } catch (err) {
         console.log(err);

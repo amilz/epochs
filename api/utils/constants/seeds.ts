@@ -3,7 +3,6 @@ export const SEEDS = {
     AUCTION_ESCROW: "AuctionEscrow",
     AUTHORITY: "Authority",
     COLLECTION: "Collection",
-    EPOCH_INSCRIPTION: "EpochInscription",
     MINTER: "Minter",
     MINTER_CLAIM: "MinterClaim",
     NFT_MINT: "NftMint",

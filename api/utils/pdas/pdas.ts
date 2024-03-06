@@ -30,17 +30,6 @@ function getAuctionEscrowPda(program: Program<any>) {
     return pda;
 }
 
-function getEpochInscriptionPda(epoch: number, program: Program<any>) {
-    const [pda] = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from(SEEDS.EPOCH_INSCRIPTION),
-            numberBuffer(BigInt(epoch))
-        ],
-        program.programId
-    );
-    return pda;
-}
-
 function getReputationPda(user: PublicKey, program: Program<any>) {
     const [reputationMint] = PublicKey.findProgramAddressSync(
         [
@@ -58,41 +47,6 @@ function getAuthorityPda(program: Program<any>) {
         program.programId
     );
     return authoirtyPda;
-}
-
-function getWnsAccounts(mint: PublicKey): {
-    manager: PublicKey,
-    extraMetasAccount: PublicKey,
-    groupAccount: PublicKey
-    memberAccount: PublicKey
-} {
-    const [manager] = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from(WNS_SEEDS.MANAGER),
-        ],
-        WNS_PROGRAM_ID);
-    const [extraMetasAccount] = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from(WNS_SEEDS.EXTRA_ACCOUNT_METAS),
-            mint.toBuffer()
-        ],
-        WNS_PROGRAM_ID);
-
-    const [groupAccount] = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from(WNS_SEEDS.GROUP),
-            new PublicKey(mint).toBuffer()
-        ],
-        WNS_PROGRAM_ID);
-
-    const [memberAccount] = PublicKey.findProgramAddressSync(
-        [
-            Buffer.from(WNS_SEEDS.MEMBER),
-            new PublicKey(mint).toBuffer()
-        ],
-        WNS_PROGRAM_ID);
-
-    return { manager, extraMetasAccount, groupAccount, memberAccount };
 }
 
 function getCollectionMintPda(program: Program<any>) {
@@ -137,11 +91,9 @@ function getMinterClaimPda(program: Program<any>, payer: PublicKey) {
 
 export {
     getAuctionPda,
-    getEpochInscriptionPda,
     getReputationPda,
     getAuthorityPda,
     getAuctionEscrowPda,
-    getWnsAccounts,
     getCollectionMintPda,
     getNftMintPda,
     getMinterPda,

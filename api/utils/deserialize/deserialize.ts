@@ -1,4 +1,4 @@
-import { writetBmpToPng } from '@epochs/api/utils';
+import { convertBmpToBase64, writetBmpToPng } from './image';
 import { PublicKey } from '@solana/web3.js';
 import fs from 'fs';
 
@@ -137,7 +137,7 @@ class Asset {
                 return; // Exit the function if loading the extension fails
             }
 
-            console.log(`Extension Type: ${extensionData.type}`);
+            // console.log(`Extension Type: ${extensionData.type}`);
             // Process the extension based on its type
             // switch (extensionData.type) {
             //     case ExtensionType.Blob:
@@ -178,6 +178,13 @@ class Asset {
         }
         return extensions;
 
+    }
+
+    async fetchBase64Png() {
+        const blob = this.extensions.find(ext => ext.type === ExtensionType.Blob);
+        if (blob && blob.blobComponents) {
+            const png = await convertBmpToBase64(blob.blobComponents.bmpData);
+        }
     }
 
     async saveImgAndJson(filePaths = {

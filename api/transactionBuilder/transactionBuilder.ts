@@ -1,4 +1,4 @@
-import { PublicKey, Transaction, SystemProgram } from "@solana/web3.js";
+import { PublicKey, Transaction, SystemProgram, ComputeBudgetProgram } from "@solana/web3.js";
 import { Program, BN } from "@coral-xyz/anchor";
 import {
     AUTHORITY,
@@ -17,6 +17,7 @@ import {
 } from "../utils";
 import { Bmp } from "../utils"; // Assuming Bmp is correctly imported here
 import { ApiError, SolanaQueryType, SolanaTxType } from "../errors";
+import { COMPUTE_BUDGET } from "../utils/constants/computeBudget";
 
 interface AuctionBidParams {
     bidAmount: number;
@@ -31,7 +32,7 @@ interface CreateGroupParams {
 
 interface InitEpochAssetParams {
     epoch: number;
-    payer;
+    payer: PublicKey;
 }
 
 interface ClaimParams {
@@ -127,11 +128,11 @@ export class TransactionBuilder {
     }: InitEpochAssetParams): Promise<Transaction> {
         const asset = getNftMintPda(this.program, epoch);
         const auctionPda = getAuctionPda(epoch, this.program);
-        const reputationPda = getReputationPda(payer.publicKey, this.program);
+        const reputationPda = getReputationPda(payer, this.program);
         const groupAsset = getCollectionMintPda(this.program);
         const groupAuthority = getAuthorityPda(this.program);
         const accounts = {
-            payer: payer.publicKey,
+            payer: payer,
             asset,
             group: groupAsset,
             authority: groupAuthority,
@@ -140,12 +141,15 @@ export class TransactionBuilder {
         };
 
         const auctionAccounts = {
-            payer: payer.publicKey,
+            payer: payer,
             auction: auctionPda,
             reputation: reputationPda,
             asset,
             systemProgram: SystemProgram.programId,
         };
+
+        const computeInstruction = ComputeBudgetProgram.setComputeUnitLimit({ units: COMPUTE_BUDGET.INITIALIZE_EPOCH });
+
 
         try {
             const instructionBlob = await this.program.methods
@@ -164,6 +168,7 @@ export class TransactionBuilder {
                 .instruction();
 
             const transaction = new Transaction()
+                .add(computeInstruction)
                 .add(instructionBlob)
                 .add(instructionAsset)
                 .add(instructionAuction);
