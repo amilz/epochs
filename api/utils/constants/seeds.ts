@@ -8,10 +8,3 @@ export const SEEDS = {
     NFT_MINT: "NftMint",
     REPUTATION: "Reputation"
 }
-
-export const WNS_SEEDS = {
-    MANAGER: "manager",
-    EXTRA_ACCOUNT_METAS: "extra-account-metas",
-    GROUP: "group",
-    MEMBER: "member"
-}

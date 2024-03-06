@@ -2,6 +2,18 @@ import { convertBmpToBase64, writetBmpToPng } from './image';
 import { PublicKey } from '@solana/web3.js';
 import fs from 'fs';
 
+
+/**
+ * Deserializes an Asset from a buffer.
+ * Mimics the methodologies outlined here: 
+ * https://github.com/nifty-oss/asset/blob/main/programs/asset/types/src/state/asset.rs
+ * https://github.com/nifty-oss/asset/blob/main/programs/asset/types/src/extensions/mod.rs
+ * 
+ * 
+ * The Blob Extension in our program includes 2 elements, a serialized bmp and a serialized json.
+ * The bmp is a 3126 byte array (starting at position 0) and the json is a variable length array (starting at position 3126).
+ */
+
 enum ExtensionType {
     None,
     Attributes,

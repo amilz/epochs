@@ -139,29 +139,6 @@ export class EpochClient {
         }
     }
 
-    /**
-     * Fetches an image associated with a given epoch, processes it, and returns the image
-     * in a web-friendly PNG format encoded in Base64. This method is useful in web applications
-     * where image data needs to be dynamically fetched and displayed, such as in a React app.
-     *
-     * @param params - An object containing the epoch number.
-     * @param params.epoch - The epoch number for which to fetch the associated image.
-     * @returns A Promise that resolves to an object containing the epoch, inscription public key,
-     * raw buffer data of image and json, and the processed PNG image as a Base64-encoded string.
-     *
-     * @example
-     * ```typescript
-     *    // Assuming you have a class or service instance `yourService` where this method is defined
-     *    async function displayEpochImage(epoch: number) {
-     *        const { png } = await EpochClient.fetchInscriptionByEpoch({ epoch });
-     *        const imageSrc = `data:image/png;base64,${png}`;
-     *        // Use `imageSrc` in an <img> tag in your React component
-     *        // For example:
-     *        return <img src={imageSrc} alt={`Image for epoch ${epoch}`} />;
-     *    }
-     * ```
-     */
-
     public async fetchAssetAndImageByEpoch({ epoch }: { epoch: number }) {
         const deserializedAsset = await this.fetchDeserializedAssetByEpoch({ epoch });
         const { extensions, ...assetWithoutExtensions } = deserializedAsset;

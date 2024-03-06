@@ -9,7 +9,7 @@ import { bidOnAuction } from "./utils/instructions/bid";
 import { AUTHORITY } from "./utils/consts";
 import { EpochClient } from "@epochs/api";
 
-describe.only("Create a new OSS Collection, Mint, and Auction", () => {
+describe("Create a new OSS Collection, Mint, and Auction", () => {
     const epochClient = EpochClient.local();
 
     const payer = Keypair.generate();
@@ -152,9 +152,8 @@ describe.only("Create a new OSS Collection, Mint, and Auction", () => {
 
 });
 
-describe.only("Simulates retroactive mint", () => {
+describe("Simulates retroactive mint", () => {
     const epochClient = EpochClient.local();
-
 
     it("Initiates the Minter", async () => {
         const now = new Date().getTime();
@@ -178,8 +177,8 @@ describe.only("Simulates retroactive mint", () => {
     });
 
     it("Claim and reveal 500 mints from minter machine", async () => {
-        const numberOfMints = 100;
-        const numLoops = 5;
+        const numberOfMints = 50;
+        const numLoops = 10;
         for (let i = 0; i < numLoops; i++) {
             try {
                 const minters = Array.from({ length: numberOfMints }, (_, i) => Keypair.generate());

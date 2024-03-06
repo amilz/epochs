@@ -28,13 +28,5 @@ warp_slot = "18464"
 startup_wait = 10000
 
 [[test.genesis]]
-address = "wns1gDLt8fgLcGhWi5MqAqgXpwEP1JftKE9eZnXS1HM"
-program = "./tests/genesis/wns.so"
-
-[[test.validator.account]]
-address = "9SUrE3EPBoXVjNywEDHSJKJdxebs8H8sLgEWdueEvnKX"
-filename = "./tests/genesis/manager.json"
-
-[[test.genesis]]
 address = "AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73"
 program = "./tests/genesis/asset_program.so"
