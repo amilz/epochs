@@ -8,19 +8,19 @@ There are 2 primary groups of instructions here:
 
 ## Overview
 ### Instructions 
-- [`create_group`](/programs/bmp/src/instructions/create_group.rs) creates a collection nft using CPI to OSS program (Note: we enforce royalties/creators here, not at the NFT level)
-- [`create_asset`](/programs/bmp/src/instructions/create_asset.rs) does a few things:
-     - generates art based on assets in [`constants/traits`](/programs/bmp/src/constants/traits/) and bmp encoder in [`utils/traits`](/programs/bmp/src/utils/traits.rs) 
+- [`create_group`](/programs/epochs/src/instructions/create_group.rs) creates a collection nft using CPI to OSS program (Note: we enforce royalties/creators here, not at the NFT level)
+- [`create_asset`](/programs/epochs/src/instructions/create_asset.rs) does a few things:
+     - generates art based on assets in [`constants/traits`](/programs/epochs/src/constants/traits/) and bmp encoder in [`utils/traits`](/programs/epochs/src/utils/traits.rs) 
      - then inscribes bmp and json of the metadata to a blob
      - creates an asset (mints an NFT) using Nifty OSS standard
-- [`auction_init`]
+- [`auction_init`](/programs/epochs/src/instructions/auction_init.rs) (called with `create_asset`)
      - initiates an auction for the NFT
      - adds reputation points to user
 _(Note: note, `create_asset` includes 2 instructions. they are to be called together with `auction_init`. this is done to avoid heap/stack allocation issues. we may revisit or just add checks to make sure instructions are handled in correct order)_
 
-- [`bid`](/programs/bmp/src/instructions/auction_bid.rs) creates a user bit for an active auction. It will refund the previous bid if there is one and give them Reputation points
-- [`claim`](/programs/bmp/src/instructions/auction_claim.rs) allows anybody to settle a closed auction. this will transfer the nft to the winner and give reputation points. 
-- [`time_machine`](/programs/bmp/src/instructions/time_machine/) a few instructions that govern a process for a user to mint an NFT using a time machine. This is a way to mint epoch nfts representing the Solana Epochs that have already passed.
+- [`bid`](/programs/epochs/src/instructions/auction_bid.rs) creates a user bit for an active auction. It will refund the previous bid if there is one and give them Reputation points
+- [`claim`](/programs/epochs/src/instructions/auction_claim.rs) allows anybody to settle a closed auction. this will transfer the nft to the winner and give reputation points. 
+- [`time_machine`](/programs/epochs/src/instructions/time_machine/) a few instructions that govern a process for a user to mint an NFT using a time machine. This is a way to mint epoch nfts representing the Solana Epochs that have already passed.
 
 
 ### State/PDAs
@@ -30,7 +30,7 @@ _(Note: note, `create_asset` includes 2 instructions. they are to be called toge
 - `time_machine_receipt` - a PDA the winners of a time machine get to claim their NFT (we do this to allow custom PDAs using Seed/Bump to match the other NFTs)
 
 ### TypeScript API
-- [`bmp.ts`](api) - a TypeScript API for interacting with the program. This includes all the instructions and state types.
+- [`client.ts`](api/client.ts) - a TypeScript API for interacting with the program. This includes all the instructions and state types.
 
 
 
