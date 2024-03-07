@@ -152,7 +152,7 @@ describe("Create a new OSS Collection, Mint, and Auction", () => {
 
 });
 
-describe("Simulates retroactive mint", () => {
+describe("Simulates retroactive mint aka Time Machine", () => {
     const epochClient = EpochClient.local();
 
     it("Initiates the Minter", async () => {
@@ -162,7 +162,7 @@ describe("Simulates retroactive mint", () => {
         // const tomorrow = new Date(now + 24 * 60 * 60 * 1000).getTime();
 
         try {
-            const tx = await epochClient.createCreateMinterInstruction({ itemsAvailable: 500, startTime: target / 1000 });
+            const tx = await epochClient.createTimeMachineInitInstruction({ itemsAvailable: 500, startTime: target / 1000 });
             const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
             tx.recentBlockhash = blockhash;
             tx.lastValidBlockHeight = lastValidBlockHeight;
@@ -177,8 +177,8 @@ describe("Simulates retroactive mint", () => {
     });
 
     it("Claim and reveal 500 mints from minter machine", async () => {
-        const numberOfMints = 50; // 50
-        const numLoops = 10; // 10
+        const numberOfMints = 50;
+        const numLoops = 10;
         for (let i = 0; i < numLoops; i++) {
             try {
                 const minters = Array.from({ length: numberOfMints }, (_, i) => Keypair.generate());
@@ -265,7 +265,7 @@ async function waitTilEpochIs(
 
 async function performMinterClaim(payer: anchor.web3.Keypair, epochClient: EpochClient) {
     try {
-        const tx = await epochClient.createClaimFromMinterInstruction({ payer: payer.publicKey });
+        const tx = await epochClient.createTimeMachineAttemptInstruction({ payer: payer.publicKey });
         const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
         tx.recentBlockhash = blockhash;
         tx.lastValidBlockHeight = lastValidBlockHeight;
@@ -282,7 +282,7 @@ async function performMinterClaim(payer: anchor.web3.Keypair, epochClient: Epoch
 async function performMinterRedeem(payer: anchor.web3.Keypair, epochClient: EpochClient) {
 
     try {
-        const tx = await epochClient.createRedeemFromMinterInstruction({ payer: payer.publicKey });
+        const tx = await epochClient.createRedeemFromTimeMachineInstruction({ payer: payer.publicKey });
         const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
         tx.recentBlockhash = blockhash;
         tx.lastValidBlockHeight = lastValidBlockHeight;

@@ -47,10 +47,10 @@ pub enum EpochError {
     Underflow,
 
 
-    // WNS Errors
+    // OSS Errors
 
-    #[msg("Invalid WNS Program")]
-    InvalidWnsProgram,
+    #[msg("Invalid OSS Program")]
+    InvalidOssProgram,
 
     // Minter Errors
 

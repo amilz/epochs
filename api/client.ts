@@ -1,7 +1,7 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { Connection, Transaction, PublicKey } from "@solana/web3.js";
 import { Bmp, IDL } from "./utils/idl";
-import { EPOCH_PROGRAM_ID, getAuctionPda, getMinterPda, getNftMintPda, getReputationPda } from "./utils";
+import { EPOCH_PROGRAM_ID, getAuctionPda, getNftMintPda, getReputationPda, getTimeMachinePda } from "./utils";
 import { ApiError, SolanaQueryType } from "./errors";
 import { TransactionBuilder } from './transactionBuilder';
 import { Asset } from "./utils/deserialize/deserialize";
@@ -77,25 +77,25 @@ export class EpochClient {
         return transaction;
     }
 
-    public async createCreateMinterInstruction({ itemsAvailable, startTime }: {
+    public async createTimeMachineInitInstruction({ itemsAvailable, startTime }: {
         itemsAvailable: number,
         startTime: number
     }): Promise<Transaction> {
-        const transaction = await this.txBuilder.createMinter({ itemsAvailable, startTime });
+        const transaction = await this.txBuilder.createTimeMachine({ itemsAvailable, startTime });
         return transaction;
     }
 
-    public async createClaimFromMinterInstruction({ payer }: {
+    public async createTimeMachineAttemptInstruction({ payer }: {
         payer: PublicKey
     }): Promise<Transaction> {
-        const transaction = await this.txBuilder.claimFromMinter({ payer });
+        const transaction = await this.txBuilder.attemptTimeMachine({ payer });
         return transaction;
     }
 
-    public async createRedeemFromMinterInstruction({ payer }: {
+    public async createRedeemFromTimeMachineInstruction({ payer }: {
         payer: PublicKey
     }): Promise<Transaction> {
-        const transaction = await this.txBuilder.redeemFromMinter({ payer });
+        const transaction = await this.txBuilder.redeemFromTimeMachine({ payer });
         return transaction;
     }
 
@@ -148,7 +148,7 @@ export class EpochClient {
     }
 
     public async fetchMinterDetails() {
-        const timeMachine = getMinterPda(this.program);
+        const timeMachine = getTimeMachinePda(this.program);
         const data = await this.program.account.timeMachine.fetch(timeMachine);
         return data;
     }

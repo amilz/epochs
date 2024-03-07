@@ -1,6 +1,6 @@
 import { Program } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { SEEDS, WNS_PROGRAM_ID, WNS_SEEDS } from "../constants";
+import { SEEDS } from "../constants";
 
 function numberBuffer(value: bigint): Uint8Array {
     const bytes = new Uint8Array(8);
@@ -68,19 +68,19 @@ function getNftMintPda(program: Program<any>, epoch: number) {
     return nftMint;
 }
 
-function getMinterPda(program: Program<any>) {
+function getTimeMachinePda(program: Program<any>) {
     const [minter] = PublicKey.findProgramAddressSync(
-        [Buffer.from(SEEDS.MINTER)],
+        [Buffer.from(SEEDS.TIME_MACHINE)],
         program.programId
     );
     return minter;
 }
 
 
-function getMinterClaimPda(program: Program<any>, payer: PublicKey) {
+function getTimeMachineReceiptPda(program: Program<any>, payer: PublicKey) {
     const [minterClaim] = PublicKey.findProgramAddressSync(
         [
-            Buffer.from(SEEDS.MINTER_CLAIM),
+            Buffer.from(SEEDS.TIME_MACHINE_RECEIPT),
             payer.toBuffer()
         ],
         program.programId
@@ -96,6 +96,6 @@ export {
     getAuctionEscrowPda,
     getCollectionMintPda,
     getNftMintPda,
-    getMinterPda,
-    getMinterClaimPda
+    getTimeMachinePda,
+    getTimeMachineReceiptPda
 };

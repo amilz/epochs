@@ -10,10 +10,10 @@ import {
     getAuctionPda,
     getAuthorityPda,
     getCollectionMintPda,
-    getMinterClaimPda,
-    getMinterPda,
     getNftMintPda,
-    getReputationPda
+    getReputationPda,
+    getTimeMachinePda,
+    getTimeMachineReceiptPda
 } from "../utils";
 import { Bmp } from "../utils"; // Assuming Bmp is correctly imported here
 import { ApiError, SolanaQueryType, SolanaTxType } from "../errors";
@@ -220,13 +220,13 @@ export class TransactionBuilder {
         }
     }
 
-    public async createMinter({
+    public async createTimeMachine({
         itemsAvailable,
         startTime,
     }: CreateMinterParams): Promise<Transaction> {
         const accounts = {
             authority: AUTHORITY,
-            minter: getMinterPda(this.program),
+            timeMachine: getTimeMachinePda(this.program),
             systemProgram: SystemProgram.programId,
         };
 
@@ -243,13 +243,13 @@ export class TransactionBuilder {
         }
     }
 
-    public async claimFromMinter({
+    public async attemptTimeMachine({
         payer
     }: ClaimFromMinterParams): Promise<Transaction> {
         const accounts = {
             payer,
-            minter: getMinterPda(this.program),
-            minterClaim: getMinterClaimPda(this.program, payer),
+            timeMachine: getTimeMachinePda(this.program),
+            receipt: getTimeMachineReceiptPda(this.program, payer),
             systemProgram: SystemProgram.programId,
         };
 
@@ -265,10 +265,10 @@ export class TransactionBuilder {
         }
     }
 
-    public async redeemFromMinter({
+    public async redeemFromTimeMachine({
         payer
     }: RedeemFromMinterParams): Promise<Transaction> {
-        const timeMachineReceipt = getMinterClaimPda(this.program, payer);
+        const timeMachineReceipt = getTimeMachineReceiptPda(this.program, payer);
         const claim = await this.program.account.timeMachineReceipt.fetch(timeMachineReceipt);
 
         const accounts = {
@@ -276,7 +276,7 @@ export class TransactionBuilder {
             payer: payer,
             group: getCollectionMintPda(this.program),
             authority: getAuthorityPda(this.program),
-            minterClaim: timeMachineReceipt,
+            receipt: timeMachineReceipt,
             systemProgram: SystemProgram.programId,
             ossProgram: NIFTY_PROGRAM_ID
         };

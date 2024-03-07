@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use anchor_lang::prelude::*;
 
-use crate::constants::MINTER_SEED;
+use crate::constants::TIME_MACHINE_SEED;
 use crate::state::TimeMachine;
 use crate::{EpochError, AUTHORITY};
 
@@ -17,7 +17,7 @@ pub struct TimeMachineInit<'info> {
 
     #[account(
         init,
-        seeds = [MINTER_SEED.as_bytes()],
+        seeds = [TIME_MACHINE_SEED.as_bytes()],
         bump, 
         payer = authority,
         space = TimeMachine::get_size()

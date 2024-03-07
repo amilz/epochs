@@ -296,7 +296,7 @@ export type Bmp = {
           "isSigner": true
         },
         {
-          "name": "minter",
+          "name": "timeMachine",
           "isMut": true,
           "isSigner": false
         },
@@ -326,12 +326,12 @@ export type Bmp = {
           "isSigner": true
         },
         {
-          "name": "minter",
+          "name": "timeMachine",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "minterClaim",
+          "name": "receipt",
           "isMut": true,
           "isSigner": false
         },
@@ -367,7 +367,7 @@ export type Bmp = {
           "isSigner": false
         },
         {
-          "name": "minterClaim",
+          "name": "receipt",
           "isMut": false,
           "isSigner": false
         },
@@ -408,7 +408,7 @@ export type Bmp = {
           "isSigner": false
         },
         {
-          "name": "minterClaim",
+          "name": "receipt",
           "isMut": false,
           "isSigner": false
         },
@@ -618,8 +618,8 @@ export type Bmp = {
     },
     {
       "code": 6012,
-      "name": "InvalidWnsProgram",
-      "msg": "Invalid WNS Program"
+      "name": "InvalidOssProgram",
+      "msg": "Invalid OSS Program"
     },
     {
       "code": 6013,
@@ -947,7 +947,7 @@ export const IDL: Bmp = {
           "isSigner": true
         },
         {
-          "name": "minter",
+          "name": "timeMachine",
           "isMut": true,
           "isSigner": false
         },
@@ -977,12 +977,12 @@ export const IDL: Bmp = {
           "isSigner": true
         },
         {
-          "name": "minter",
+          "name": "timeMachine",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "minterClaim",
+          "name": "receipt",
           "isMut": true,
           "isSigner": false
         },
@@ -1018,7 +1018,7 @@ export const IDL: Bmp = {
           "isSigner": false
         },
         {
-          "name": "minterClaim",
+          "name": "receipt",
           "isMut": false,
           "isSigner": false
         },
@@ -1059,7 +1059,7 @@ export const IDL: Bmp = {
           "isSigner": false
         },
         {
-          "name": "minterClaim",
+          "name": "receipt",
           "isMut": false,
           "isSigner": false
         },
@@ -1269,8 +1269,8 @@ export const IDL: Bmp = {
     },
     {
       "code": 6012,
-      "name": "InvalidWnsProgram",
-      "msg": "Invalid WNS Program"
+      "name": "InvalidOssProgram",
+      "msg": "Invalid OSS Program"
     },
     {
       "code": 6013,

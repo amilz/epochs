@@ -49,7 +49,7 @@ pub mod bmp {
     }
 
     pub fn time_machine_attempt(ctx: Context<TimeMachineAttempt>) -> Result<()> {
-        ctx.accounts.handler(ctx.bumps.minter_claim)
+        ctx.accounts.handler(ctx.bumps.receipt)
     }
 
     pub fn time_machine_inscribe(ctx: Context<TimeMachienCreateAndClaim>) -> Result<()> {

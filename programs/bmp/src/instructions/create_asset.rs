@@ -1,8 +1,6 @@
-use std::str::FromStr;
-
 use crate::{
     generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, AUTHORITY_SEED,
-    COLLECTION_SEED, CREATOR_WALLET_1, DAO_TREASURY_WALLET, NFT_MINT_SEED,
+    COLLECTION_SEED, NFT_MINT_SEED,
 };
 use anchor_lang::{
     prelude::*,
@@ -12,7 +10,7 @@ use anchor_lang::{
     },
 };
 use nifty_asset::{
-    extensions::{CreatorsBuilder, ExtensionBuilder, LinksBuilder},
+    extensions::{ExtensionBuilder, LinksBuilder},
     instructions::{AllocateBuilder, CreateBuilder, GroupBuilder},
     types::{Extension, ExtensionType, Standard},
     ID as NiftyAssetID,
@@ -51,7 +49,7 @@ pub struct CreateAsset<'info> {
 
     /// CHECK: use address constraint
     #[account(
-        address = NiftyAssetID @ EpochError::InvalidWnsProgram
+        address = NiftyAssetID @ EpochError::InvalidOssProgram
     )]
     pub oss_program: UncheckedAccount<'info>,
 }

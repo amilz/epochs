@@ -42,7 +42,7 @@ pub struct CreateGroup<'info> {
 
     /// CHECK: use address constraint
     #[account(
-        address = NiftyAssetID @ EpochError::InvalidWnsProgram
+        address = NiftyAssetID @ EpochError::InvalidOssProgram
     )]
     pub oss_program: UncheckedAccount<'info>,
 }

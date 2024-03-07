@@ -1,7 +1,5 @@
-use std::str::FromStr;
-
 use crate::{
-    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, TimeMachineReceipt, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_WALLET_1, DAO_TREASURY_WALLET, MINTER_CLAIM_SEED, NFT_MINT_SEED
+    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, TimeMachineReceipt, AUTHORITY_SEED, COLLECTION_SEED, TIME_MACHINE_RECEIPT_SEED, NFT_MINT_SEED
 };
 use anchor_lang::{
     prelude::*,
@@ -11,7 +9,7 @@ use anchor_lang::{
     },
 };
 use nifty_asset::{
-    extensions::{CreatorsBuilder, ExtensionBuilder, LinksBuilder},
+    extensions::{ExtensionBuilder, LinksBuilder},
     instructions::{AllocateBuilder, CreateBuilder, GroupBuilder, TransferBuilder},
     types::{Extension, ExtensionType, Standard},
     ID as NiftyAssetID,
@@ -22,7 +20,7 @@ pub struct TimeMachienCreateAndClaim<'info> {
     /// CHECK: New NFT Mint (will be init by OSS Program via CPI - address is derived based on epoch #)
     #[account(
         mut,
-        seeds = [NFT_MINT_SEED.as_bytes(), &minter_claim.epoch.to_le_bytes()],
+        seeds = [NFT_MINT_SEED.as_bytes(), &receipt.epoch.to_le_bytes()],
         bump,
     )]
     pub asset: UncheckedAccount<'info>,
@@ -50,25 +48,25 @@ pub struct TimeMachienCreateAndClaim<'info> {
         // TODO NEED TO EITHER WAIT TIL MINT CONFIG IS EMPTY
         // OR GET RID OF CLOSE...b/c then they could re-init
         // close = payer,
-        seeds = [MINTER_CLAIM_SEED.as_bytes(), payer.key().as_ref()],
-        bump = minter_claim.bump,
-        constraint = minter_claim.claimer == payer.key()
+        seeds = [TIME_MACHINE_RECEIPT_SEED.as_bytes(), payer.key().as_ref()],
+        bump = receipt.bump,
+        constraint = receipt.claimer == payer.key()
     )]
-    pub minter_claim: Account<'info, TimeMachineReceipt>,
+    pub receipt: Account<'info, TimeMachineReceipt>,
 
     pub system_program: Program<'info, System>,
 
     /// CHECK: use address constraint
     #[account(
-        address = NiftyAssetID @ EpochError::InvalidWnsProgram
+        address = NiftyAssetID @ EpochError::InvalidOssProgram
     )]
     pub oss_program: UncheckedAccount<'info>,
 }
 
 impl<'info> TimeMachienCreateAndClaim<'info> {
     pub fn generate_inscription(&self, asset_bump: u8) -> Result<()> {
-        let minter_claim = &self.minter_claim;
-        let mint_epoch= minter_claim.epoch;
+        let receipt = &self.receipt;
+        let mint_epoch= receipt.epoch;
 
         let account_infos = vec![
             self.asset.to_account_info(),
@@ -102,7 +100,7 @@ impl<'info> TimeMachienCreateAndClaim<'info> {
             self.system_program.to_account_info(),
         ];
 
-        let current_epoch = self.minter_claim.epoch;
+        let current_epoch = self.receipt.epoch;
         let asset_seeds = &[
             NFT_MINT_SEED.as_bytes(),
             &current_epoch.to_le_bytes(),
@@ -121,7 +119,7 @@ impl<'info> TimeMachienCreateAndClaim<'info> {
 
     fn allocate_blob(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
 
-        let current_epoch = self.minter_claim.epoch;
+        let current_epoch = self.receipt.epoch;
         let assets = generate_asset(current_epoch, self.payer.key());
 
         let json_raw = generate_json_metadata(current_epoch, self.payer.key(), assets.1).unwrap();

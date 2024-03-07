@@ -5,5 +5,5 @@ pub const REPUTATION_SEED: &str = "Reputation";
 pub const AUTHORITY_SEED: &str = "Authority";
 pub const AUCTION_ESCROW_SEED: &str = "AuctionEscrow";
 pub const NFT_MINT_SEED: &str = "NftMint";
-pub const MINTER_SEED: &str = "Minter";
-pub const MINTER_CLAIM_SEED: &str = "MinterClaim";
+pub const TIME_MACHINE_SEED: &str = "TimeMachine";
+pub const TIME_MACHINE_RECEIPT_SEED: &str = "TimeMachineReceipt";
