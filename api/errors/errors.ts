@@ -100,6 +100,7 @@ export enum SolanaQueryType {
     UNKNOWN = 2,
     INVALID_EPOCH = 3,
     AUCTION_NOT_INITIALIZED = 4,
+    INVALID_WINNER = 5
 }
 
 

@@ -1,14 +1,10 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { Connection, TransactionInstruction, PublicKey, ComputeBudgetProgram } from "@solana/web3.js";
-import { Bmp, IDL } from "./utils/idl";
-import { EPOCH_PROGRAM_ID, getAuctionPda, getEpochInscriptionPda, getNftMintPda, getReputationPda } from "./utils";
-import { createInitCollectionIx } from "./instructions/createInitCollectionIx";
-import { createInitEpochIx } from "./instructions/createInitEpochIx";
-import { createBidIx } from "./instructions/createBidIx";
+import { Connection, Transaction, PublicKey } from "@solana/web3.js";
+import { Epochs, IDL } from "./utils/idl";
+import { EPOCH_PROGRAM_ID, getAuctionPda, getNftMintPda, getReputationPda, getTimeMachinePda } from "./utils";
 import { ApiError, SolanaQueryType } from "./errors";
-import { createClaimIx } from "./instructions/createClaimIx";
-import Jimp from "jimp";
-import { COMPUTE_BUDGET } from "./utils/constants/computeBudget";
+import { TransactionBuilder } from './transactionBuilder';
+import { Asset } from "./utils/deserialize/deserialize";
 
 interface EpochClientArgs {
     connection: Connection;
@@ -16,8 +12,9 @@ interface EpochClientArgs {
 }
 
 export class EpochClient {
-    private readonly program: Program<Bmp>;
+    private readonly program: Program<Epochs>;
     public readonly connection: Connection;
+    private txBuilder: TransactionBuilder;
 
     private constructor({ connection, wallet = {} as Wallet }: EpochClientArgs) {
         const provider: AnchorProvider = new AnchorProvider(
@@ -26,13 +23,14 @@ export class EpochClient {
             // TODO add override options
             AnchorProvider.defaultOptions()
         );
-        const program: Program<Bmp> = new Program(
-            IDL as unknown as Bmp,
+        const program: Program<Epochs> = new Program(
+            IDL as unknown as Epochs,
             EPOCH_PROGRAM_ID,
             provider
         );
         this.program = program;
         this.connection = connection;
+        this.txBuilder = new TransactionBuilder(program);
     }
 
     public static from(connection: Connection): EpochClient {
@@ -49,39 +47,56 @@ export class EpochClient {
         return epoch;
     }
 
-    public async createNewCollectionInstruction({ payer }: { payer: PublicKey }): Promise<TransactionInstruction> {
-        const intruction = await createInitCollectionIx({ program: this.program, payer });
-        return intruction;
+    public async createGroupTransaction({ payer }: { payer: PublicKey }): Promise<Transaction> {
+        const transaction = await this.txBuilder.createGroup({ payer });
+        return transaction;
     }
 
-    public async createInitEpochInstruction({ payer }: { payer: PublicKey }): Promise<{
-        computeInstruction: TransactionInstruction,
-        initInstruction: TransactionInstruction
-    }> {
-        const computeInstruction = ComputeBudgetProgram.setComputeUnitLimit({ units: COMPUTE_BUDGET.INITIALIZE_EPOCH });
-
+    public async createInitEpochTransaction({ payer }: { payer: PublicKey }): Promise<Transaction> {
         const epoch = await this.getCurrentEpoch();
-        const initInstruction = await createInitEpochIx({ epoch, program: this.program, payer });
-        return { computeInstruction, initInstruction };
+        const transaction = await this.txBuilder.initEpochAsset({ epoch, payer });
+        return transaction;
     }
 
-    public async createBidInstruction({ bidAmount, bidder }: {
+    public async createBidTransaction({ bidAmount, bidder }: {
         bidAmount: number,
         bidder: PublicKey,
-    }): Promise<TransactionInstruction> {
+    }): Promise<Transaction> {
         const epoch = await this.getCurrentEpoch();
         const { highBidder } = await this.fetchAuction({ epoch });
-        const instruction = await createBidIx({ program: this.program, bidAmount, epoch, bidder, highBidder });
-        return instruction;
+        const transaction = await this.txBuilder.createBid({ bidAmount, epoch, bidder, highBidder });
+        return transaction;
     }
 
     public async createClaimInstruction({ winner, epoch }: {
         winner: PublicKey,
         epoch: number
-    }): Promise<TransactionInstruction> {
+    }): Promise<Transaction> {
         await this.verifyEpochHasPassed(epoch);
-        const instruction = await createClaimIx({ epoch, program: this.program, winner });
-        return instruction;
+        const transaction = await this.txBuilder.createClaim({ epoch, winner });
+        return transaction;
+    }
+
+    public async createTimeMachineInitInstruction({ itemsAvailable, startTime }: {
+        itemsAvailable: number,
+        startTime: number
+    }): Promise<Transaction> {
+        const transaction = await this.txBuilder.createTimeMachine({ itemsAvailable, startTime });
+        return transaction;
+    }
+
+    public async createTimeMachineAttemptInstruction({ payer }: {
+        payer: PublicKey
+    }): Promise<Transaction> {
+        const transaction = await this.txBuilder.attemptTimeMachine({ payer });
+        return transaction;
+    }
+
+    public async createRedeemFromTimeMachineInstruction({ payer }: {
+        payer: PublicKey
+    }): Promise<Transaction> {
+        const transaction = await this.txBuilder.redeemFromTimeMachine({ payer });
+        return transaction;
     }
 
     private async verifyEpochHasPassed(epoch: number): Promise<void> {
@@ -105,10 +120,12 @@ export class EpochClient {
         return data;
     }
 
-    public async fetchNftMintByEpoch({ epoch }: { epoch: number }) {
-        await this.verifyEpochHasPassed(epoch);
-        const mint = getNftMintPda(this.program, epoch);
-        return mint;
+    public async fetchDeserializedAssetByEpoch({ epoch }: { epoch: number }) {
+        const asset = getNftMintPda(this.program, epoch);
+        const { data } = await this.program.provider.connection.getAccountInfo(asset);
+        const deserializedAsset = Asset.deserialize(data);
+
+        return deserializedAsset;
     }
 
     public async fetchCurrenAuctionDetails() {
@@ -116,43 +133,24 @@ export class EpochClient {
         try {
             const auction = await this.fetchAuction({ epoch });
             if (!auction) { throw ApiError.solanaQueryError(SolanaQueryType.AUCTION_NOT_INITIALIZED) }
-            return { auction };
+            return auction;
         } catch (error) {
             throw ApiError.solanaQueryError(SolanaQueryType.AUCTION_NOT_INITIALIZED);
         }
     }
 
-    /**
-     * Fetches an image associated with a given epoch, processes it, and returns the image
-     * in a web-friendly PNG format encoded in Base64. This method is useful in web applications
-     * where image data needs to be dynamically fetched and displayed, such as in a React app.
-     *
-     * @param params - An object containing the epoch number.
-     * @param params.epoch - The epoch number for which to fetch the associated image.
-     * @returns A Promise that resolves to an object containing the epoch, inscription public key,
-     * raw buffer data of image and json, and the processed PNG image as a Base64-encoded string.
-     *
-     * @example
-     * ```typescript
-     *    // Assuming you have a class or service instance `yourService` where this method is defined
-     *    async function displayEpochImage(epoch: number) {
-     *        const { png } = await EpochClient.fetchInscriptionByEpoch({ epoch });
-     *        const imageSrc = `data:image/png;base64,${png}`;
-     *        // Use `imageSrc` in an <img> tag in your React component
-     *        // For example:
-     *        return <img src={imageSrc} alt={`Image for epoch ${epoch}`} />;
-     *    }
-     * ```
-     */
+    public async fetchAssetAndImageByEpoch({ epoch }: { epoch: number }) {
+        const deserializedAsset = await this.fetchDeserializedAssetByEpoch({ epoch });
+        const { extensions, ...assetWithoutExtensions } = deserializedAsset;
+        // TODO Add Tests on the assetWithoutExtensions
+        const png = await deserializedAsset.fetchBase64Png();
+        return { epoch, extensions, assetWithoutExtensions, png };
+    }
 
-    public async fetchInscriptionByEpoch({ epoch }: { epoch: number }) {
-        const inscription = getEpochInscriptionPda(epoch, this.program);
-        const { buffers } = await this.program.account.epochInscription.fetch(inscription);
-        const image = await Jimp.read(buffers.imageRaw);
-        image.resize(640, 640, Jimp.RESIZE_NEAREST_NEIGHBOR);
-        // HELP HERE?
-        const png = await image.getBase64Async(Jimp.MIME_PNG);
-        return { epoch, inscription, buffers, png };
+    public async fetchMinterDetails() {
+        const timeMachine = getTimeMachinePda(this.program);
+        const data = await this.program.account.timeMachine.fetch(timeMachine);
+        return data;
     }
 
 }

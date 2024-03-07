@@ -3,14 +3,8 @@ export const SEEDS = {
     AUCTION_ESCROW: "AuctionEscrow",
     AUTHORITY: "Authority",
     COLLECTION: "Collection",
-    EPOCH_INSCRIPTION: "EpochInscription",
+    TIME_MACHINE: "TimeMachine",
+    TIME_MACHINE_RECEIPT: "TimeMachineReceipt",
     NFT_MINT: "NftMint",
     REPUTATION: "Reputation"
-}
-
-export const WNS_SEEDS = {
-    MANAGER: "manager",
-    EXTRA_ACCOUNT_METAS: "extra-account-metas",
-    GROUP: "group",
-    MEMBER: "member"
 }

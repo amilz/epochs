@@ -1,0 +1,9 @@
+pub const COLLECTION_SEED: &str = "Collection";
+pub const AUCTION_SEED: &str = "Auction";
+pub const EPOCH_INSCRIPTION_SEED: &str = "EpochInscription";
+pub const REPUTATION_SEED: &str = "Reputation";
+pub const AUTHORITY_SEED: &str = "Authority";
+pub const AUCTION_ESCROW_SEED: &str = "AuctionEscrow";
+pub const NFT_MINT_SEED: &str = "NftMint";
+pub const TIME_MACHINE_SEED: &str = "TimeMachine";
+pub const TIME_MACHINE_RECEIPT_SEED: &str = "TimeMachineReceipt";

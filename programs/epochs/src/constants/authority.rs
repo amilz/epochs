@@ -1,0 +1,1 @@
+pub const AUTHORITY: &str = "AUTHbpGeSBi6tHHxnStySJhrwQfm5tLZQRcL2pCiVweL";

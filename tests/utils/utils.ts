@@ -70,7 +70,7 @@ function runShellCommand(command: string): Promise<string> {
 async function initIdlToChain() {
     try {
         const output = await runShellCommand('anchor run init_idl');
-        console.log(`  `, output);
+        // console.log(`  `, output);
     } catch (error) {
         console.error('Command failed:', error);
     }
@@ -78,14 +78,38 @@ async function initIdlToChain() {
 
 
 
+function printTableData(accounts: Record<string, PublicKey>) {
+    const tableData = Object.entries(accounts).map(([key, publicKey]) => ({
+        account: key,
+        mint: publicKey.toBase58()
+    }));
+    console.table(tableData);
+}
 
 
 
+async function waitTilEpochIs(
+    targetEpoch: number,
+    connection: Connection,
+    checkInterval: number = 1000
+) {
+    let { epoch } = await connection.getEpochInfo();
+    if (targetEpoch < epoch) {
+        throw new Error(`Target epoch ${targetEpoch} is already in the past`);
+    }
+    while (targetEpoch > epoch) {
+        await new Promise(resolve => setTimeout(resolve, checkInterval));
+        ({ epoch } = await connection.getEpochInfo());
+    }
+    return epoch;
+}
 
 
 
 export {
     airdropToMultiple,
     openFile,
-    initIdlToChain
+    initIdlToChain,
+    printTableData,
+    waitTilEpochIs
 };
