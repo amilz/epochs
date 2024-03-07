@@ -1,6 +1,6 @@
-export type Bmp = {
+export type Epochs = {
   "version": "0.1.0",
-  "name": "bmp",
+  "name": "epochs",
   "constants": [
     {
       "name": "GREEN_SCREEN",
@@ -654,9 +654,9 @@ export type Bmp = {
   ]
 };
 
-export const IDL: Bmp = {
+export const IDL: Epochs = {
   "version": "0.1.0",
-  "name": "bmp",
+  "name": "epochs",
   "constants": [
     {
       "name": "GREEN_SCREEN",

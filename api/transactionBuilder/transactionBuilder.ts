@@ -15,7 +15,7 @@ import {
     getTimeMachinePda,
     getTimeMachineReceiptPda
 } from "../utils";
-import { Bmp } from "../utils"; // Assuming Bmp is correctly imported here
+import { Epochs } from "../utils";
 import { ApiError, SolanaQueryType, SolanaTxType } from "../errors";
 import { COMPUTE_BUDGET } from "../utils/constants/computeBudget";
 
@@ -55,9 +55,9 @@ interface RedeemFromMinterParams {
 
 
 export class TransactionBuilder {
-    private program: Program<Bmp>;
+    private program: Program<Epochs>;
 
-    constructor(program: Program<Bmp>) {
+    constructor(program: Program<Epochs>) {
         this.program = program;
     }
 

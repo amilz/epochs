@@ -478,18 +478,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d696c370c750c948ada61c69a0ee2cbbb9c50b1019ddb86d9317157a99c2cae"
 
 [[package]]
-name = "bmp"
-version = "0.1.0"
-dependencies = [
- "ahash 0.8.6",
- "anchor-lang",
- "anchor-spl",
- "nifty-asset",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "borsh"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -903,6 +891,18 @@ dependencies = [
  "log",
  "regex",
  "termcolor",
+]
+
+[[package]]
+name = "epochs"
+version = "0.1.0"
+dependencies = [
+ "ahash 0.8.6",
+ "anchor-lang",
+ "anchor-spl",
+ "nifty-asset",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

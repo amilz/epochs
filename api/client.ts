@@ -1,6 +1,6 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { Connection, Transaction, PublicKey } from "@solana/web3.js";
-import { Bmp, IDL } from "./utils/idl";
+import { Epochs, IDL } from "./utils/idl";
 import { EPOCH_PROGRAM_ID, getAuctionPda, getNftMintPda, getReputationPda, getTimeMachinePda } from "./utils";
 import { ApiError, SolanaQueryType } from "./errors";
 import { TransactionBuilder } from './transactionBuilder';
@@ -12,7 +12,7 @@ interface EpochClientArgs {
 }
 
 export class EpochClient {
-    private readonly program: Program<Bmp>;
+    private readonly program: Program<Epochs>;
     public readonly connection: Connection;
     private txBuilder: TransactionBuilder;
 
@@ -23,8 +23,8 @@ export class EpochClient {
             // TODO add override options
             AnchorProvider.defaultOptions()
         );
-        const program: Program<Bmp> = new Program(
-            IDL as unknown as Bmp,
+        const program: Program<Epochs> = new Program(
+            IDL as unknown as Epochs,
             EPOCH_PROGRAM_ID,
             provider
         );

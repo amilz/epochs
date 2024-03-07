@@ -1,5 +1,6 @@
 # The Epochs wip
 experimental solana on-chain nft generation
+_inspired by [Nouns](https://nouns.wtf/) and Solana's [Proof of History](https://solana.com/news/proof-of-history)_
 
 There are 2 primary groups of instructions here: 
 1. An "Epoch" Asset generated and auctioned every epoch in perpetuity. This includes asset generation, auction, and claim.

@@ -3,13 +3,13 @@ import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
 import { getAuctionEscrowPda, getAuctionPda, getReputationPda } from "../pdas";
 import { assert } from "chai";
-import { Bmp } from "../../../target/types/bmp";
+import { Epochs } from "../../../target/types/epochs";
 import { ReputationPoints, ReputationTracker } from "../reputation";
 
 interface AuctionBidParams {
     bidAmount: number;
     epoch: number;
-    program: Program<Bmp>;
+    program: Program<Epochs>;
     bidder: Keypair;
     highBidder: PublicKey;
     logMintInfo?: boolean;
@@ -107,7 +107,7 @@ export async function performRandomBid({
     lastBidAmount,
     lastBidder, // Add the last bidder as a parameter
 }: {
-    program: Program<Bmp>,
+    program: Program<Epochs>,
     epoch: number,
     bidders: Keypair[],
     reputationTrackers: Map<string, ReputationTracker>,

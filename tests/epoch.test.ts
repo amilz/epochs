@@ -1,11 +1,8 @@
 import { Keypair, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, Connection } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
-import { Bmp } from "../target/types/bmp";
 import { airdropToMultiple, initIdlToChain, waitTilEpochIs } from "./utils/utils";
 import { assert } from "chai";
 import { ReputationTracker } from "./utils/reputation";
-import { bidOnAuction } from "./utils/instructions/bid";
 import { AUTHORITY } from "./utils/consts";
 import { EpochClient } from "@epochs/api";
 import { performMinterClaim, performMinterRedeem } from "./utils/instructions/timeMachine";

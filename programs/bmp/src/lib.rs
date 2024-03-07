@@ -15,7 +15,7 @@ pub use error::*;
 declare_id!("epochsiFg8ornJS22urHE3jgveYuFydxPC79tdcbYc8");
 
 #[program]
-pub mod bmp {
+pub mod epochs {
 
     use super::*;
 
