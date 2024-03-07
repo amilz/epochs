@@ -1,5 +1,5 @@
 use crate::{
-    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, TimeMachineReceipt, AUTHORITY_SEED, COLLECTION_SEED, TIME_MACHINE_RECEIPT_SEED, NFT_MINT_SEED
+    generate_asset, utils::generate_json_metadata, EpochError, TimeMachineReceipt, AUTHORITY_SEED, COLLECTION_SEED, TIME_MACHINE_RECEIPT_SEED, NFT_MINT_SEED
 };
 use anchor_lang::{
     prelude::*,
@@ -171,12 +171,12 @@ impl<'info> TimeMachienCreateAndClaim<'info> {
         };
 
         invoke_signed(&allocate_blob_ix, account_infos, signer_seeds)?;
-        log_heap_usage(7);
 
         Ok(())
     }
 
     fn write_links(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
+        // TODO DYANMIC LINKS
         let mut links_builder = LinksBuilder::default();
         links_builder.add(
             "metadata",

@@ -2,12 +2,13 @@ import { Keypair, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, Connec
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Bmp } from "../target/types/bmp";
-import { airdropToMultiple, initIdlToChain } from "./utils/utils";
+import { airdropToMultiple, initIdlToChain, waitTilEpochIs } from "./utils/utils";
 import { assert } from "chai";
 import { ReputationTracker } from "./utils/reputation";
 import { bidOnAuction } from "./utils/instructions/bid";
 import { AUTHORITY } from "./utils/consts";
 import { EpochClient } from "@epochs/api";
+import { performMinterClaim, performMinterRedeem } from "./utils/instructions/timeMachine";
 
 describe("Create a new OSS Collection, Mint, and Auction", () => {
     const epochClient = EpochClient.local();
@@ -40,12 +41,12 @@ describe("Create a new OSS Collection, Mint, and Auction", () => {
 
     it("Creats a group OSS NFT", async () => {
         try {
-            const tx = await epochClient.createGroupTransaction({ payer: payer.publicKey });
+            const tx = await epochClient.createGroupTransaction({ payer: AUTHORITY.publicKey });
             const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
             tx.recentBlockhash = blockhash;
             tx.lastValidBlockHeight = lastValidBlockHeight;
-            tx.sign(payer);
-            const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer]);
+            tx.sign(AUTHORITY);
+            const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [AUTHORITY]);
             assert.ok(sig, 'should have signature');
         } catch (err) {
             console.log(err);
@@ -211,87 +212,5 @@ describe("Simulates retroactive mint aka Time Machine", () => {
 
 
 
-async function performRandomBid({
-    program,
-    epoch,
-    bidders,
-    reputationTrackers,
-    lastBidAmount,
-    lastBidder, // Add the last bidder as a parameter
-}: {
-    program: Program<Bmp>,
-    epoch: number,
-    bidders: Keypair[],
-    reputationTrackers: Map<string, ReputationTracker>,
-    lastBidAmount: number,
-    lastBidder: PublicKey, // Use PublicKey type for the last bidder
-}) {
-    const randomBidderIndex = Math.floor(Math.random() * bidders.length);
-    const bidder = bidders[randomBidderIndex];
-    // Ensure the next bid is at least 1.5 SOL greater than the last bid
-    const bidIncrement = Math.floor((1.5 + Math.random()) * LAMPORTS_PER_SOL); // Random increment, minimum 1.5 SOL
-    const bidAmount = lastBidAmount + bidIncrement;
 
-    const reputationTracker = reputationTrackers.get(bidder.publicKey.toBase58())!;
-
-    await bidOnAuction({
-        bidAmount,
-        epoch,
-        program,
-        bidder,
-        highBidder: lastBidder, // Use the last bidder as the highBidder for this bid
-        expectedReputation: reputationTracker,
-    });
-
-    return { bidAmount, highBidder: bidder }; // Return the current bid amount and bidder public key for the next bid
-}
-
-
-async function waitTilEpochIs(
-    targetEpoch: number,
-    connection: Connection,
-    checkInterval: number = 1000
-) {
-    let { epoch } = await connection.getEpochInfo();
-    if (targetEpoch < epoch) {
-        throw new Error(`Target epoch ${targetEpoch} is already in the past`);
-    }
-    while (targetEpoch > epoch) {
-        await new Promise(resolve => setTimeout(resolve, checkInterval));
-        ({ epoch } = await connection.getEpochInfo());
-    }
-    return epoch;
-}
-
-async function performMinterClaim(payer: anchor.web3.Keypair, epochClient: EpochClient) {
-    try {
-        const tx = await epochClient.createTimeMachineAttemptInstruction({ payer: payer.publicKey });
-        const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
-        tx.recentBlockhash = blockhash;
-        tx.lastValidBlockHeight = lastValidBlockHeight;
-        tx.sign(payer);
-        const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer]);
-        assert.ok(sig, 'should have signature');
-    } catch (err) {
-        console.log(err);
-        assert.fail('error minting', err);
-    }
-}
-
-
-async function performMinterRedeem(payer: anchor.web3.Keypair, epochClient: EpochClient) {
-
-    try {
-        const tx = await epochClient.createRedeemFromTimeMachineInstruction({ payer: payer.publicKey });
-        const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
-        tx.recentBlockhash = blockhash;
-        tx.lastValidBlockHeight = lastValidBlockHeight;
-        tx.sign(payer);
-        const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer]);
-        assert.ok(sig, 'should have signature');
-    } catch (err) {
-        console.log(err);
-        assert.fail('error minting', err);
-    }
-}
 

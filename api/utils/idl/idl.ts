@@ -573,76 +573,81 @@ export type Bmp = {
     },
     {
       "code": 6003,
+      "name": "AssetNotInscribed",
+      "msg": "Inscribe the Asset before creating an asset"
+    },
+    {
+      "code": 6004,
       "name": "BidTooLow",
       "msg": "Bid does not meet minimum bid threshold"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "InvalidPreviousBidder",
       "msg": "Previous bidder passed does not match the current high bidder"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "InvalidWinner",
       "msg": "Signer did not win the auction"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "AuctionAlreadyClaimed",
       "msg": "Auction has already been claimed"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "InvalidTreasury",
       "msg": "Invalid treasury account"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "InvalidCreator",
       "msg": "Invalid creator account"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "InvalidContributor",
       "msg": "Contributor does not match signer of the transaction"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "Overflow",
       "msg": "Integer overflow"
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "Underflow",
       "msg": "Integer underflow"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "InvalidOssProgram",
       "msg": "Invalid OSS Program"
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "MinterNotActive",
       "msg": "Minter is not active"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "MinterEmpty",
       "msg": "Minter is empty"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "MinterNotStarted",
       "msg": "Minter has not started"
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "MinterStartTimeInPast",
       "msg": "Cannot start minter in the past"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "MinterTooManyItems",
       "msg": "Minter cannot have more items than the current epoch"
     }
@@ -1224,76 +1229,81 @@ export const IDL: Bmp = {
     },
     {
       "code": 6003,
+      "name": "AssetNotInscribed",
+      "msg": "Inscribe the Asset before creating an asset"
+    },
+    {
+      "code": 6004,
       "name": "BidTooLow",
       "msg": "Bid does not meet minimum bid threshold"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "InvalidPreviousBidder",
       "msg": "Previous bidder passed does not match the current high bidder"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "InvalidWinner",
       "msg": "Signer did not win the auction"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "AuctionAlreadyClaimed",
       "msg": "Auction has already been claimed"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "InvalidTreasury",
       "msg": "Invalid treasury account"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "InvalidCreator",
       "msg": "Invalid creator account"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "InvalidContributor",
       "msg": "Contributor does not match signer of the transaction"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "Overflow",
       "msg": "Integer overflow"
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "Underflow",
       "msg": "Integer underflow"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "InvalidOssProgram",
       "msg": "Invalid OSS Program"
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "MinterNotActive",
       "msg": "Minter is not active"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "MinterEmpty",
       "msg": "Minter is empty"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "MinterNotStarted",
       "msg": "Minter has not started"
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "MinterStartTimeInPast",
       "msg": "Cannot start minter in the past"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "MinterTooManyItems",
       "msg": "Minter cannot have more items than the current epoch"
     }

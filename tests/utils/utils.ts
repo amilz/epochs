@@ -88,11 +88,28 @@ function printTableData(accounts: Record<string, PublicKey>) {
 
 
 
+async function waitTilEpochIs(
+    targetEpoch: number,
+    connection: Connection,
+    checkInterval: number = 1000
+) {
+    let { epoch } = await connection.getEpochInfo();
+    if (targetEpoch < epoch) {
+        throw new Error(`Target epoch ${targetEpoch} is already in the past`);
+    }
+    while (targetEpoch > epoch) {
+        await new Promise(resolve => setTimeout(resolve, checkInterval));
+        ({ epoch } = await connection.getEpochInfo());
+    }
+    return epoch;
+}
+
 
 
 export {
     airdropToMultiple,
     openFile,
     initIdlToChain,
-    printTableData
+    printTableData,
+    waitTilEpochIs
 };

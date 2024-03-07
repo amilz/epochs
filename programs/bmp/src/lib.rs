@@ -7,7 +7,6 @@ pub mod state;
 pub mod error;
 
 pub use utils::traits::*;
-pub use utils::heap::log_heap_usage;
 pub use constants::*;
 pub use instructions::{time_machine, *};
 pub use state::*;

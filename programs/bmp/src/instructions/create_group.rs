@@ -1,8 +1,7 @@
 use std::str::FromStr;
 
 use crate::{
-    EpochError, AUTHORITY_SEED,
-    COLLECTION_SEED, CREATOR_WALLET_1, CREATOR_WALLET_2, DAO_TREASURY_WALLET,
+    EpochError, AUTHORITY, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_1_SHARE, CREATOR_2_SHARE, CREATOR_WALLET_1, CREATOR_WALLET_2, DAO_TREASURY_SHARE, DAO_TREASURY_WALLET
 };
 use anchor_lang::{
     prelude::*,
@@ -20,10 +19,14 @@ use nifty_asset::{
 
 #[derive(Accounts)]
 pub struct CreateGroup<'info> {
-    #[account(mut)]
-    pub payer: Signer<'info>,
+    #[account(
+        mut, 
+        signer,
+        address = Pubkey::from_str(AUTHORITY).unwrap() @ EpochError::InvalidTreasury
+)]
+    pub payer: SystemAccount<'info>,
 
-    /// CHECK: WNS inits it as a Mint Account
+    /// CHECK: OSS inits it as an Asset
     #[account(
         mut,
         seeds = [COLLECTION_SEED.as_bytes()],
@@ -76,9 +79,9 @@ impl<'info> CreateGroup<'info> {
         signer_seeds: &[&[&[u8]]; 2]
     ) -> Result<()> {
         let mut creators = CreatorsBuilder::default();
-        creators.add(&Pubkey::from_str(DAO_TREASURY_WALLET).unwrap(), true, 80);
-        creators.add(&Pubkey::from_str(CREATOR_WALLET_1).unwrap(), true, 10);
-        creators.add(&Pubkey::from_str(CREATOR_WALLET_2).unwrap(), true, 10);
+        creators.add(&Pubkey::from_str(DAO_TREASURY_WALLET).unwrap(), true, DAO_TREASURY_SHARE);
+        creators.add(&Pubkey::from_str(CREATOR_WALLET_1).unwrap(), true, CREATOR_1_SHARE);
+        creators.add(&Pubkey::from_str(CREATOR_WALLET_2).unwrap(), true, CREATOR_2_SHARE);
         let creators_data = creators.build();
 
         let creator_ix: Instruction = AllocateBuilder::new()
@@ -117,6 +120,7 @@ impl<'info> CreateGroup<'info> {
         Ok(())
     }
 
+    // TODO UPDATE LINKS
     fn write_links(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 2]) -> Result<()> {
         let mut links_builder = LinksBuilder::default();
         links_builder.add(
@@ -158,7 +162,7 @@ impl<'info> CreateGroup<'info> {
             .group(None)
             .payer(Some(self.payer.key()))
             .system_program(Some(self.system_program.key()))
-            .name("Epoch Collection".to_string())
+            .name("The Epochs Collection".to_string())
             .standard(Standard::NonFungible)
             .mutable(false)
             .instruction();

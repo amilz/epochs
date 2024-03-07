@@ -14,6 +14,9 @@ pub enum EpochError {
     #[msg("The input epoch does not match the current epoch")]
     EpochMismatch,
 
+    // Initialization Errors
+    #[msg("Inscribe the Asset before creating an asset")]
+    AssetNotInscribed,
 
     // Auction Errors
 

@@ -1,5 +1,5 @@
 use crate::{
-    generate_asset, log_heap_usage, utils::generate_json_metadata, EpochError, AUTHORITY_SEED,
+    generate_asset, utils::{generate_json_metadata, get_and_validate_epoch}, EpochError, AUTHORITY_SEED,
     COLLECTION_SEED, NFT_MINT_SEED,
 };
 use anchor_lang::{
@@ -30,7 +30,7 @@ pub struct CreateAsset<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// CHECK: WNS inits it as a Mint Account
+    /// CHECK: Group Asset
     #[account(
         mut,
         seeds = [COLLECTION_SEED.as_bytes()],
@@ -56,6 +56,7 @@ pub struct CreateAsset<'info> {
 
 impl<'info> CreateAsset<'info> {
     pub fn generate_inscription(&self, current_epoch: u64, asset_bump: u8) -> Result<()> {
+        let epoch = get_and_validate_epoch(current_epoch)?;
         let account_infos = vec![
             self.asset.to_account_info(),
             self.payer.to_account_info(),
@@ -65,7 +66,7 @@ impl<'info> CreateAsset<'info> {
 
         let asset_seeds = &[
             NFT_MINT_SEED.as_bytes(),
-            &current_epoch.to_le_bytes(),
+            &epoch.to_le_bytes(),
             &[asset_bump],
         ];
         let asset_signer_seeds: &[&[&[u8]]; 1] = &[&asset_seeds[..]];
@@ -81,6 +82,13 @@ impl<'info> CreateAsset<'info> {
         asset_bump: u8,
         current_epoch: u64,
     ) -> Result<()> {
+        let epoch = get_and_validate_epoch(current_epoch)?;
+        let asset = self.asset.to_account_info();
+
+        // Check to make sure the inscription instruction was executed first
+        if asset.data_is_empty() {
+            return Err(EpochError::AssetNotInscribed.into());
+        }
         let account_infos = vec![
             self.asset.to_account_info(),
             self.payer.to_account_info(),
@@ -91,7 +99,7 @@ impl<'info> CreateAsset<'info> {
 
         let asset_seeds = &[
             NFT_MINT_SEED.as_bytes(),
-            &current_epoch.to_le_bytes(),
+            &epoch.to_le_bytes(),
             &[asset_bump],
         ];
         let asset_signer_seeds: &[&[&[u8]]; 1] = &[&asset_seeds[..]];
@@ -104,28 +112,22 @@ impl<'info> CreateAsset<'info> {
     }
 
     fn allocate_blob(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
-        log_heap_usage(1);
 
         let current_epoch = Clock::get()?.epoch;
         let assets = generate_asset(current_epoch, self.payer.key());
-        log_heap_usage(2);
 
         let json_raw = generate_json_metadata(current_epoch, self.payer.key(), assets.1).unwrap();
-        log_heap_usage(3);
 
         let bmp_raw = &assets.0;
 
         // Estimate total size
         let total_size: usize = bmp_raw.len() + json_raw.len();
-        log_heap_usage(4);
         // Create Vec with exact capacity
         let mut data = Vec::with_capacity(total_size);
-        log_heap_usage(5);
 
         // Write data directly into Vec
         data.extend_from_slice(&bmp_raw);
         data.extend_from_slice(&json_raw);
-        log_heap_usage(6);
 
         let extension_data = Extension {
             extension_type: ExtensionType::Blob, // Assuming ExtensionType::Blob is an enum or similar
@@ -165,12 +167,12 @@ impl<'info> CreateAsset<'info> {
         };
 
         invoke_signed(&allocate_blob_ix, account_infos, signer_seeds)?;
-        log_heap_usage(7);
 
         Ok(())
     }
 
     fn write_links(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
+        // TODO DYANMIC LINKS
         let mut links_builder = LinksBuilder::default();
         links_builder.add(
             "metadata",

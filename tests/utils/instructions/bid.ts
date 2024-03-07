@@ -1,4 +1,4 @@
-import { Keypair, PublicKey } from "@solana/web3.js";
+import { Keypair, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { AnchorError, Program } from "@coral-xyz/anchor";
 import { getAuctionEscrowPda, getAuctionPda, getReputationPda } from "../pdas";
@@ -49,7 +49,7 @@ export async function bidOnAuction({
 
 
 
-        const txRequest = program.methods.bid(new anchor.BN(epoch), new anchor.BN(bidAmount))
+        const txRequest = program.methods.auctionBid(new anchor.BN(epoch), new anchor.BN(bidAmount))
             .accounts({
                 bidder: bidder.publicKey,
                 highBidder,
@@ -97,4 +97,39 @@ export async function bidOnAuction({
         }
         throw error;
     }
+}
+
+export async function performRandomBid({
+    program,
+    epoch,
+    bidders,
+    reputationTrackers,
+    lastBidAmount,
+    lastBidder, // Add the last bidder as a parameter
+}: {
+    program: Program<Bmp>,
+    epoch: number,
+    bidders: Keypair[],
+    reputationTrackers: Map<string, ReputationTracker>,
+    lastBidAmount: number,
+    lastBidder: PublicKey, // Use PublicKey type for the last bidder
+}) {
+    const randomBidderIndex = Math.floor(Math.random() * bidders.length);
+    const bidder = bidders[randomBidderIndex];
+    // Ensure the next bid is at least 1.5 SOL greater than the last bid
+    const bidIncrement = Math.floor((1.5 + Math.random()) * LAMPORTS_PER_SOL); // Random increment, minimum 1.5 SOL
+    const bidAmount = lastBidAmount + bidIncrement;
+
+    const reputationTracker = reputationTrackers.get(bidder.publicKey.toBase58())!;
+
+    await bidOnAuction({
+        bidAmount,
+        epoch,
+        program,
+        bidder,
+        highBidder: lastBidder, // Use the last bidder as the highBidder for this bid
+        expectedReputation: reputationTracker,
+    });
+
+    return { bidAmount, highBidder: bidder }; // Return the current bid amount and bidder public key for the next bid
 }

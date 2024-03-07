@@ -3,6 +3,8 @@ use anchor_lang::prelude::*;
 use crate::utils::validate::get_and_validate_epoch;
 use crate::constants::*;
 use crate::state::*;
+use crate::EpochError;
+use nifty_asset::ID as NiftyAssetID;
 
 #[derive(Accounts)]
 #[instruction(input_epoch: u64)]
@@ -46,9 +48,13 @@ impl<'info> AuctionInit<'info> {
         let auction: &mut Account<'_, Auction> = &mut self.auction;
         let reputation: &mut Account<'_, Reputation> = &mut self.reputation;
 
-        // TODO CHECK THAT ASSET IS INITIALIZED
-        // VALIDATE EPOCH
+        if asset.data_is_empty() {
+            return Err(EpochError::AssetNotInscribed.into());
+        }
+        require_keys_eq!(*asset.owner, NiftyAssetID, EpochError::InvalidOssProgram);
 
+        // TODO CHECK THAT ASSET IS CREATED
+      
         auction.create(
             current_epoch,
             asset.key(),
