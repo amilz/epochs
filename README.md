@@ -31,3 +31,15 @@ _(Note: note, `create_asset` includes 2 instructions. they are to be called toge
 
 ### TypeScript API
 - [`bmp.ts`](api) - a TypeScript API for interacting with the program. This includes all the instructions and state types.
+
+
+
+## Local Development
+
+- Clone the repo
+- `yarn` to install dependencies
+- `anchor build` to build the program
+- you will need to update your program id in `lib.rs`, `Anchor.toml`, and `api/constants/pubkeys.ts`
+- you will need to create an `AUTH` wallet in `tests/wallet` and update the program & api constants
+- `anchor test` to run the tests (note the final test will take a couple of minutes, it's simulating 500 mints and i had to chunk the requests to avoid local ws issues)
+- in `epoch.test.ts` you can uncomment `deserializedAsset.saveImgAndJson();` to save the image and json to your root directory to see the generated art

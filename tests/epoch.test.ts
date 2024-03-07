@@ -63,6 +63,8 @@ describe("Create a new OSS Collection, Mint, and Auction", () => {
             const { epoch } = await epochClient.connection.getEpochInfo();
             const deserializedAsset = await epochClient.fetchDeserializedAssetByEpoch({ epoch });
             // TODO Add Tests on the assetWithoutExtensions
+            // deserializedAsset.saveImgAndJson();
+
             assert.ok(sig, 'should have signature');
 
         } catch (err) {
