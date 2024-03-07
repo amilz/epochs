@@ -177,8 +177,8 @@ describe("Simulates retroactive mint", () => {
     });
 
     it("Claim and reveal 500 mints from minter machine", async () => {
-        const numberOfMints = 50;
-        const numLoops = 10;
+        const numberOfMints = 50; // 50
+        const numLoops = 10; // 10
         for (let i = 0; i < numLoops; i++) {
             try {
                 const minters = Array.from({ length: numberOfMints }, (_, i) => Keypair.generate());

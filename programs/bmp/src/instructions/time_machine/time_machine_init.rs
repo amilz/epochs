@@ -7,7 +7,7 @@ use crate::state::TimeMachine;
 use crate::{EpochError, AUTHORITY};
 
 #[derive(Accounts)]
-pub struct OssInitMinter<'info> {
+pub struct TimeMachineInit<'info> {
     #[account(
         mut, 
         signer,
@@ -22,19 +22,19 @@ pub struct OssInitMinter<'info> {
         payer = authority,
         space = TimeMachine::get_size()
     )]
-    pub minter: Account<'info, TimeMachine>,
+    pub time_machine: Account<'info, TimeMachine>,
 
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> OssInitMinter<'info> {
+impl<'info> TimeMachineInit<'info> {
     pub fn handler (&mut self, 
-        minter_bump: u8,
+        time_machine_bump: u8,
         items_available: u64, 
         start_time: i64
     ) -> Result<()> {
-        let minter: &mut Account<'_, TimeMachine> = &mut self.minter;
-        minter.initialize(minter_bump, items_available, start_time)?;
+        let time_machine: &mut Account<'_, TimeMachine> = &mut self.time_machine;
+        time_machine.initialize(time_machine_bump, items_available, start_time)?;
         Ok(())
     }
 }

@@ -86,7 +86,7 @@ export class TransactionBuilder {
 
         try {
             const instruction = await this.program.methods
-                .bid(args.epoch, args.bidAmount)
+                .auctionBid(args.epoch, args.bidAmount)
                 .accountsStrict(accounts)
                 .instruction();
 
@@ -111,7 +111,7 @@ export class TransactionBuilder {
             ossProgram: NIFTY_PROGRAM_ID,
         };
         try {
-            const instruction = await this.program.methods.ossCreateGroup()
+            const instruction = await this.program.methods.createGroup()
                 .accounts(accounts)
                 .instruction();
             const transaction = new Transaction().add(instruction);
@@ -153,17 +153,17 @@ export class TransactionBuilder {
 
         try {
             const instructionBlob = await this.program.methods
-                .ossCreateBlob(new BN(epoch))
+                .inscribeEpoch(new BN(epoch))
                 .accounts(accounts)
                 .instruction();
 
             const instructionAsset = await this.program.methods
-                .ossCreateRest(new BN(epoch))
+                .createEpoch(new BN(epoch))
                 .accounts(accounts)
                 .instruction();
 
             const instructionAuction = await this.program.methods
-                .ossInitAuction(new BN(epoch))
+                .auctionInit(new BN(epoch))
                 .accounts(auctionAccounts)
                 .instruction();
 
@@ -210,7 +210,7 @@ export class TransactionBuilder {
         };
 
         try {
-            const instruction = await this.program.methods.ossClaim(new BN(epoch))
+            const instruction = await this.program.methods.auctionClaim(new BN(epoch))
                 .accounts(accounts)
                 .instruction();
             const transaction = new Transaction().add(instruction);
@@ -232,7 +232,7 @@ export class TransactionBuilder {
 
         try {
 
-            const instruction = await this.program.methods.ossInitMinter(new BN(itemsAvailable), new BN(startTime))
+            const instruction = await this.program.methods.timeMachineInit(new BN(itemsAvailable), new BN(startTime))
                 .accounts(accounts)
                 .instruction();
 
@@ -254,7 +254,7 @@ export class TransactionBuilder {
         };
 
         try {
-            const instruction = await this.program.methods.ossMinterClaim()
+            const instruction = await this.program.methods.timeMachineAttempt()
                 .accounts(accounts)
                 .instruction();
 
@@ -282,10 +282,10 @@ export class TransactionBuilder {
         };
 
         try {
-            const instructionBlob = await this.program.methods.ossRedeemBlob()
+            const instructionBlob = await this.program.methods.timeMachineInscribe()
                 .accounts(accounts)
                 .instruction();
-            const instructionAsset = await this.program.methods.ossRedeemRest()
+            const instructionAsset = await this.program.methods.timeMachineClaim()
                 .accounts(accounts)
                 .instruction();
 

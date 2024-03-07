@@ -9,7 +9,7 @@ pub mod error;
 pub use utils::traits::*;
 pub use utils::heap::log_heap_usage;
 pub use constants::*;
-pub use instructions::*;
+pub use instructions::{time_machine, *};
 pub use state::*;
 pub use error::*;
 
@@ -20,45 +20,43 @@ pub mod bmp {
 
     use super::*;
 
-
-
-    pub fn oss_create_group(ctx: Context<OssCreateGroup>) -> Result<()> {
+    pub fn create_group(ctx: Context<CreateGroup>) -> Result<()> {
         ctx.accounts.handler(ctx.bumps.authority, ctx.bumps.asset)
     }
 
-    pub fn oss_create_blob(ctx: Context<OssCreate>, input_epoch: u64) -> Result<()> {
+    pub fn inscribe_epoch(ctx: Context<CreateAsset>, input_epoch: u64) -> Result<()> {
         ctx.accounts.generate_inscription(input_epoch, ctx.bumps.asset)
     }
 
-    pub fn oss_create_rest(ctx: Context<OssCreate>, input_epoch: u64) -> Result<()> {
+    pub fn create_epoch(ctx: Context<CreateAsset>, input_epoch: u64) -> Result<()> {
         ctx.accounts.create_asset_w_metadata(ctx.bumps.authority, ctx.bumps.asset, input_epoch)
     }
 
-    pub fn oss_init_auction(ctx: Context<OssInitAuction>, input_epoch: u64) -> Result<()> {
+    pub fn auction_init(ctx: Context<AuctionInit>, input_epoch: u64) -> Result<()> {
         ctx.accounts.handler(input_epoch, ctx.bumps.auction, ctx.bumps.reputation)
     }
 
-    pub fn bid(ctx: Context<AuctionBid>, input_epoch: u64, bid_amount: u64) -> Result<()> {
+    pub fn auction_bid(ctx: Context<AuctionBid>, input_epoch: u64, bid_amount: u64) -> Result<()> {
         ctx.accounts.handler(input_epoch, bid_amount, ctx.bumps.auction_escrow, ctx.bumps.reputation)
     }
 
-    pub fn oss_claim(ctx: Context<OssClaim>, input_epoch: u64) -> Result<()> {
+    pub fn auction_claim(ctx: Context<AuctionClaim>, input_epoch: u64) -> Result<()> {
         ctx.accounts.handler(input_epoch, ctx.bumps.auction_escrow, ctx.bumps.authority)
     }
 
-    pub fn oss_init_minter(ctx: Context<OssInitMinter>, items_available: u64, start_time: i64) -> Result<()> {
-        ctx.accounts.handler(ctx.bumps.minter, items_available, start_time)
+    pub fn time_machine_init(ctx: Context<TimeMachineInit>, items_available: u64, start_time: i64) -> Result<()> {
+        ctx.accounts.handler(ctx.bumps.time_machine, items_available, start_time)
     }
 
-    pub fn oss_minter_claim(ctx: Context<ClaimMint>) -> Result<()> {
+    pub fn time_machine_attempt(ctx: Context<TimeMachineAttempt>) -> Result<()> {
         ctx.accounts.handler(ctx.bumps.minter_claim)
     }
 
-    pub fn oss_redeem_blob(ctx: Context<OssRedeem>) -> Result<()> {
+    pub fn time_machine_inscribe(ctx: Context<TimeMachienCreateAndClaim>) -> Result<()> {
         ctx.accounts.generate_inscription(ctx.bumps.asset)
     }
 
-    pub fn oss_redeem_rest(ctx: Context<OssRedeem>) -> Result<()> {
+    pub fn time_machine_claim(ctx: Context<TimeMachienCreateAndClaim>) -> Result<()> {
         ctx.accounts.create_asset_w_metadata(ctx.bumps.authority, ctx.bumps.asset)
     }
 

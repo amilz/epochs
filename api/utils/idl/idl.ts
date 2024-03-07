@@ -12,7 +12,7 @@ export type Bmp = {
   ],
   "instructions": [
     {
-      "name": "ossCreateGroup",
+      "name": "createGroup",
       "accounts": [
         {
           "name": "payer",
@@ -43,7 +43,7 @@ export type Bmp = {
       "args": []
     },
     {
-      "name": "ossCreateBlob",
+      "name": "inscribeEpoch",
       "accounts": [
         {
           "name": "asset",
@@ -84,7 +84,7 @@ export type Bmp = {
       ]
     },
     {
-      "name": "ossCreateRest",
+      "name": "createEpoch",
       "accounts": [
         {
           "name": "asset",
@@ -125,7 +125,7 @@ export type Bmp = {
       ]
     },
     {
-      "name": "ossInitAuction",
+      "name": "auctionInit",
       "accounts": [
         {
           "name": "payer",
@@ -161,7 +161,7 @@ export type Bmp = {
       ]
     },
     {
-      "name": "bid",
+      "name": "auctionBid",
       "accounts": [
         {
           "name": "bidder",
@@ -227,7 +227,7 @@ export type Bmp = {
       ]
     },
     {
-      "name": "ossClaim",
+      "name": "auctionClaim",
       "accounts": [
         {
           "name": "winner",
@@ -288,7 +288,7 @@ export type Bmp = {
       ]
     },
     {
-      "name": "ossInitMinter",
+      "name": "timeMachineInit",
       "accounts": [
         {
           "name": "authority",
@@ -318,7 +318,7 @@ export type Bmp = {
       ]
     },
     {
-      "name": "ossMinterClaim",
+      "name": "timeMachineAttempt",
       "accounts": [
         {
           "name": "payer",
@@ -344,7 +344,7 @@ export type Bmp = {
       "args": []
     },
     {
-      "name": "ossRedeemBlob",
+      "name": "timeMachineInscribe",
       "accounts": [
         {
           "name": "asset",
@@ -385,7 +385,7 @@ export type Bmp = {
       "args": []
     },
     {
-      "name": "ossRedeemRest",
+      "name": "timeMachineClaim",
       "accounts": [
         {
           "name": "asset",
@@ -663,7 +663,7 @@ export const IDL: Bmp = {
   ],
   "instructions": [
     {
-      "name": "ossCreateGroup",
+      "name": "createGroup",
       "accounts": [
         {
           "name": "payer",
@@ -694,7 +694,7 @@ export const IDL: Bmp = {
       "args": []
     },
     {
-      "name": "ossCreateBlob",
+      "name": "inscribeEpoch",
       "accounts": [
         {
           "name": "asset",
@@ -735,7 +735,7 @@ export const IDL: Bmp = {
       ]
     },
     {
-      "name": "ossCreateRest",
+      "name": "createEpoch",
       "accounts": [
         {
           "name": "asset",
@@ -776,7 +776,7 @@ export const IDL: Bmp = {
       ]
     },
     {
-      "name": "ossInitAuction",
+      "name": "auctionInit",
       "accounts": [
         {
           "name": "payer",
@@ -812,7 +812,7 @@ export const IDL: Bmp = {
       ]
     },
     {
-      "name": "bid",
+      "name": "auctionBid",
       "accounts": [
         {
           "name": "bidder",
@@ -878,7 +878,7 @@ export const IDL: Bmp = {
       ]
     },
     {
-      "name": "ossClaim",
+      "name": "auctionClaim",
       "accounts": [
         {
           "name": "winner",
@@ -939,7 +939,7 @@ export const IDL: Bmp = {
       ]
     },
     {
-      "name": "ossInitMinter",
+      "name": "timeMachineInit",
       "accounts": [
         {
           "name": "authority",
@@ -969,7 +969,7 @@ export const IDL: Bmp = {
       ]
     },
     {
-      "name": "ossMinterClaim",
+      "name": "timeMachineAttempt",
       "accounts": [
         {
           "name": "payer",
@@ -995,7 +995,7 @@ export const IDL: Bmp = {
       "args": []
     },
     {
-      "name": "ossRedeemBlob",
+      "name": "timeMachineInscribe",
       "accounts": [
         {
           "name": "asset",
@@ -1036,7 +1036,7 @@ export const IDL: Bmp = {
       "args": []
     },
     {
-      "name": "ossRedeemRest",
+      "name": "timeMachineClaim",
       "accounts": [
         {
           "name": "asset",

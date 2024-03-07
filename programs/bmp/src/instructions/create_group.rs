@@ -19,7 +19,7 @@ use nifty_asset::{
 };
 
 #[derive(Accounts)]
-pub struct OssCreateGroup<'info> {
+pub struct CreateGroup<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -47,7 +47,7 @@ pub struct OssCreateGroup<'info> {
     pub oss_program: UncheckedAccount<'info>,
 }
 
-impl<'info> OssCreateGroup<'info> {
+impl<'info> CreateGroup<'info> {
     pub fn handler(&self, authority_bump: u8, asset_bump: u8) -> Result<()> {
         let account_infos = vec![
             self.asset.to_account_info(),

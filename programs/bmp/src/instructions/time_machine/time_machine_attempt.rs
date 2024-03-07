@@ -5,7 +5,7 @@ use crate::state::{TimeMachine, TimeMachineReceipt};
 use crate::MINTER_CLAIM_SEED;
 
 #[derive(Accounts)]
-pub struct ClaimMint<'info> {
+pub struct TimeMachineAttempt<'info> {
     #[account(
         mut, 
         signer,
@@ -31,16 +31,16 @@ pub struct ClaimMint<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> ClaimMint<'info> {
+impl<'info> TimeMachineAttempt<'info> {
     pub fn handler (&mut self, 
         minter_claim_bump: u8,
     ) -> Result<()> {
-        let minter: &mut Account<'_, TimeMachine> = &mut self.minter;
-        let minter_claim: &mut Account<'_, TimeMachineReceipt> = &mut self.minter_claim;
+        let time_machine: &mut Account<'_, TimeMachine> = &mut self.minter;
+        let receipt: &mut Account<'_, TimeMachineReceipt> = &mut self.minter_claim;
         let claimer = self.payer.key();
-        minter.redeem_item()?;
-        let minter_epoch = minter.items_redeemed;
-        minter_claim.set(claimer, minter_epoch, minter_claim_bump)?;
+        time_machine.redeem_item()?;
+        let minter_epoch = time_machine.items_redeemed;
+        receipt.set(claimer, minter_epoch, minter_claim_bump)?;
         Ok(())
     }
 }

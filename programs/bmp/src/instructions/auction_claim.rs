@@ -13,7 +13,7 @@ use crate::state::*;
 
 #[derive(Accounts)]
 #[instruction(claim_epoch: u64)]
-pub struct OssClaim<'info> {
+pub struct AuctionClaim<'info> {
     #[account(mut, signer)]
     winner: SystemAccount<'info>,
 
@@ -77,7 +77,7 @@ pub struct OssClaim<'info> {
 
 }
 
-impl OssClaim<'_> {
+impl AuctionClaim<'_> {
     pub fn handler(&mut self, claim_epoch: u64, auction_escrow_bump:u8, authority_bump: u8) -> Result<()> {
         self.validate_claim(claim_epoch)?;
         self.distribute_funds(auction_escrow_bump)?;

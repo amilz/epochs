@@ -6,7 +6,7 @@ use crate::state::*;
 
 #[derive(Accounts)]
 #[instruction(input_epoch: u64)]
-pub struct OssInitAuction<'info> {
+pub struct AuctionInit<'info> {
     #[account(mut, signer)]
     pub payer: SystemAccount<'info>,
 
@@ -34,7 +34,7 @@ pub struct OssInitAuction<'info> {
     pub system_program: Program<'info, System>,
 }
 
-impl<'info> OssInitAuction<'info> {
+impl<'info> AuctionInit<'info> {
     pub fn handler (&mut self, 
         input_epoch: u64, 
         auction_bump: u8,

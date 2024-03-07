@@ -20,7 +20,7 @@ use nifty_asset::{
 
 #[derive(Accounts)]
 #[instruction(input_epoch: u64)]
-pub struct OssCreate<'info> {
+pub struct CreateAsset<'info> {
     /// CHECK: New NFT Mint (will be init by OSS Program via CPI - address is derived based on epoch #)
     #[account(
         mut,
@@ -56,7 +56,7 @@ pub struct OssCreate<'info> {
     pub oss_program: UncheckedAccount<'info>,
 }
 
-impl<'info> OssCreate<'info> {
+impl<'info> CreateAsset<'info> {
     pub fn generate_inscription(&self, current_epoch: u64, asset_bump: u8) -> Result<()> {
         let account_infos = vec![
             self.asset.to_account_info(),
@@ -98,8 +98,6 @@ impl<'info> OssCreate<'info> {
         ];
         let asset_signer_seeds: &[&[&[u8]]; 1] = &[&asset_seeds[..]];
 
-        //TBD/TODO: Might not need this (since at collection-level)
-        //self.write_creators(&account_infos, asset_signer_seeds)?;
         self.write_links(&account_infos, asset_signer_seeds)?;
         self.create_asset(&account_infos, asset_signer_seeds)?;
         self.add_to_group(authority_bump)?;
@@ -170,29 +168,6 @@ impl<'info> OssCreate<'info> {
 
         invoke_signed(&allocate_blob_ix, account_infos, signer_seeds)?;
         log_heap_usage(7);
-
-        Ok(())
-    }
-
-    fn _write_creators(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
-        let mut creators = CreatorsBuilder::default();
-        creators.add(&self.payer.key(), true, 10);
-        creators.add(&Pubkey::from_str(DAO_TREASURY_WALLET).unwrap(), true, 80);
-        creators.add(&Pubkey::from_str(CREATOR_WALLET_1).unwrap(), true, 10);
-        let creators_data = creators.build();
-
-        let creator_ix: Instruction = AllocateBuilder::new()
-            .asset(self.asset.key())
-            .payer(Some(self.payer.key()))
-            .system_program(Some(self.system_program.key()))
-            .extension(Extension {
-                extension_type: ExtensionType::Creators,
-                length: creators_data.len() as u32,
-                data: Some(creators_data),
-            })
-            .instruction();
-
-        invoke_signed(&creator_ix, account_infos, signer_seeds)?;
 
         Ok(())
     }

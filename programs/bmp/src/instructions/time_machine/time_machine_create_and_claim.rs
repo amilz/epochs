@@ -12,13 +12,13 @@ use anchor_lang::{
 };
 use nifty_asset::{
     extensions::{CreatorsBuilder, ExtensionBuilder, LinksBuilder},
-    instructions::{AllocateBuilder, CreateBuilder, GroupBuilder},
+    instructions::{AllocateBuilder, CreateBuilder, GroupBuilder, TransferBuilder},
     types::{Extension, ExtensionType, Standard},
     ID as NiftyAssetID,
 };
 
 #[derive(Accounts)]
-pub struct OssRedeem<'info> {
+pub struct TimeMachienCreateAndClaim<'info> {
     /// CHECK: New NFT Mint (will be init by OSS Program via CPI - address is derived based on epoch #)
     #[account(
         mut,
@@ -65,7 +65,7 @@ pub struct OssRedeem<'info> {
     pub oss_program: UncheckedAccount<'info>,
 }
 
-impl<'info> OssRedeem<'info> {
+impl<'info> TimeMachienCreateAndClaim<'info> {
     pub fn generate_inscription(&self, asset_bump: u8) -> Result<()> {
         let minter_claim = &self.minter_claim;
         let mint_epoch= minter_claim.epoch;
@@ -110,11 +110,11 @@ impl<'info> OssRedeem<'info> {
         ];
         let asset_signer_seeds: &[&[&[u8]]; 1] = &[&asset_seeds[..]];
 
-        //TBD/TODO: Might not need this (since at collection-level)
-        //self.write_creators(&account_infos, asset_signer_seeds)?;
         self.write_links(&account_infos, asset_signer_seeds)?;
         self.create_asset(&account_infos, asset_signer_seeds)?;
         self.add_to_group(authority_bump)?;
+        self.distribute_nft(&account_infos, authority_bump)?;
+
 
         Ok(())
     }
@@ -178,29 +178,6 @@ impl<'info> OssRedeem<'info> {
         Ok(())
     }
 
-    fn _write_creators(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
-        let mut creators = CreatorsBuilder::default();
-        creators.add(&self.payer.key(), true, 10);
-        creators.add(&Pubkey::from_str(DAO_TREASURY_WALLET).unwrap(), true, 80);
-        creators.add(&Pubkey::from_str(CREATOR_WALLET_1).unwrap(), true, 10);
-        let creators_data = creators.build();
-
-        let creator_ix: Instruction = AllocateBuilder::new()
-            .asset(self.asset.key())
-            .payer(Some(self.payer.key()))
-            .system_program(Some(self.system_program.key()))
-            .extension(Extension {
-                extension_type: ExtensionType::Creators,
-                length: creators_data.len() as u32,
-                data: Some(creators_data),
-            })
-            .instruction();
-
-        invoke_signed(&creator_ix, account_infos, signer_seeds)?;
-
-        Ok(())
-    }
-
     fn write_links(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
         let mut links_builder = LinksBuilder::default();
         links_builder.add(
@@ -255,7 +232,7 @@ impl<'info> OssRedeem<'info> {
             .instruction();
 
         let authority_seeds = &[AUTHORITY_SEED.as_bytes(), &[authority_bump]];
-        let signers_seeds = &[&authority_seeds[..]];
+        let signer_seeds = &[&authority_seeds[..]];
 
         let account_infos = vec![
             self.asset.to_account_info(),
@@ -265,10 +242,27 @@ impl<'info> OssRedeem<'info> {
             self.authority.to_account_info(),
         ];
 
-        invoke_signed(&add_to_group_ix, &account_infos, signers_seeds)?;
+        invoke_signed(&add_to_group_ix, &account_infos, signer_seeds)?;
 
         Ok(())
     }
+    
+    fn distribute_nft(&self, account_infos: &[AccountInfo], authority_bump: u8) -> Result<()> {
+        let authority_seeds = &[AUTHORITY_SEED.as_bytes(), &[authority_bump]];
+        let signer_seeds = &[&authority_seeds[..]];
+
+        let transfer_ix: Instruction = TransferBuilder::new()
+            .asset(self.asset.key())
+            .signer(self.authority.key())
+            .recipient(self.payer.key())
+            .instruction();
+
+        invoke_signed(&transfer_ix, &account_infos, signer_seeds)?;
+
+        Ok(())
+    }
+
+
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize)]
