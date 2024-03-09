@@ -901,8 +901,6 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "nifty-asset",
- "serde",
- "serde_json",
 ]
 
 [[package]]
