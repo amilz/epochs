@@ -11,7 +11,7 @@ use anchor_lang::{
     },
 };
 use nifty_asset::{
-    extensions::{CreatorsBuilder, ExtensionBuilder, GroupBuilder, LinksBuilder},
+    extensions::{CreatorsBuilder, ExtensionBuilder, GroupBuilder, LinksBuilder, MetadataBuilder},
     instructions::{AllocateBuilder, CreateBuilder},
     types::{Extension, ExtensionType, Standard},
     ID as NiftyAssetID,
@@ -64,7 +64,7 @@ impl<'info> CreateGroup<'info> {
         let asset_seeds = &[COLLECTION_SEED.as_bytes(), &[asset_bump]];
         let combined_signer_seeds = &[&asset_seeds[..], &authority_seeds[..]];
 
-
+        self.write_metadata(&account_infos, combined_signer_seeds)?;
         self.write_creators(&account_infos, combined_signer_seeds)?;
         self.write_links(&account_infos, combined_signer_seeds)?;
         self.create_group(&account_infos, combined_signer_seeds)?;
@@ -149,6 +149,27 @@ impl<'info> CreateGroup<'info> {
         Ok(())
     }
 
+    fn write_metadata(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 2]) -> Result<()> {
+        let mut metadata_builder = MetadataBuilder::default();
+        metadata_builder.set("EPOCHS", "https://epochs.wtf/");
+        
+        let metadata: Vec<u8> = metadata_builder.build();
+
+        let links_ix: Instruction = AllocateBuilder::new()
+            .asset(self.asset.key())
+            .payer(Some(self.payer.key()))
+            .system_program(Some(self.system_program.key()))
+            .extension(Extension {
+                extension_type: ExtensionType::Metadata,
+                length: metadata.len() as u32,
+                data: Some(metadata),
+            })
+            .instruction();
+
+        invoke_signed(&links_ix, account_infos, signer_seeds)?;
+
+        Ok(())
+    }
 
     fn create_asset(
         &self,
