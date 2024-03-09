@@ -1,1 +1,1 @@
-export * from './idl';
+export * from './epochs';

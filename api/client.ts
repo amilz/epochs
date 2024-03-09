@@ -1,6 +1,6 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { Connection, Transaction, PublicKey } from "@solana/web3.js";
-import { Epochs, IDL } from "./utils/idl";
+import { Epochs, IDL } from "./utils/idl/epochs";
 import { EPOCH_PROGRAM_ID, getAuctionPda, getNftMintPda, getReputationPda, getTimeMachinePda } from "./utils";
 import { ApiError, SolanaQueryType } from "./errors";
 import { TransactionBuilder } from './transactionBuilder';

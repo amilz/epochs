@@ -169,6 +169,7 @@ export class TransactionBuilder {
         const auctionEscrow = getAuctionEscrowPda(this.program);
         const reputationPda = getReputationPda(highBidder, this.program);
         const asset = getNftMintPda(this.program, epoch);
+        const group = getCollectionMintPda(this.program);
         const groupAuthority = getAuthorityPda(this.program);
 
         if (winner.toBase58() !== highBidder.toBase58()) {
@@ -185,7 +186,8 @@ export class TransactionBuilder {
             creatorWallet: CREATOR_WALLET,
             asset,
             authority: groupAuthority,
-            ossProgram: NIFTY_PROGRAM_ID
+            ossProgram: NIFTY_PROGRAM_ID,
+            group
         };
 
         try {

@@ -163,12 +163,32 @@ class Asset {
             switch (extensionData.type) {
                 case ExtensionType.Blob:
                     // Extract the BMP and JSON components
-                    const BMP_SIZE = 3126; // Fixed size for BMP data
-                    const bmpData = extensionData.raw.subarray(0, BMP_SIZE);
-                    //const jsonData = extensionData.raw.subarray(BMP_SIZE); // Remaining bytes are JSON data
+
+                    //const BMP_SIZE = 3126; // Fixed size for BMP data
+                    //const bmpData = extensionData.raw.subarray(0, BMP_SIZE);
+
+                    const contentTypeLength = extensionData.raw[0];
+
+                    // Extract the content type string based on its length
+                    const contentType = new TextDecoder().decode(extensionData.raw.subarray(1, 1 + contentTypeLength));
+
+                    // Check if the content type is what you expect, e.g., "img/bmp"
+                    if (contentType === "img/bmp") {
+                        // The BMP data starts right after the content type and its length prefix
+                        const bmpDataStartIndex = 1 + contentTypeLength;
+                        const bmpData = extensionData.raw.subarray(bmpDataStartIndex);
+
+                        // Store the BMP data in the blobComponents property
+                        extensionData.blobComponents = { bmpData };
+
+                        // Additional processing for BMP data can be done here
+                    } else {
+                        console.error("Unexpected content type:", contentType);
+                        // Handle unexpected content type appropriately
+                    }
 
                     // Store the parsed components in the blobComponents property
-                    extensionData.blobComponents = { bmpData };
+                    // extensionData.blobComponents = { bmpData };
 
                     // Additional processing for BMP and JSON data can be done here
                     break;

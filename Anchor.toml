@@ -30,3 +30,6 @@ startup_wait = 10000
 [[test.genesis]]
 address = "AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73"
 program = "./tests/genesis/asset_program.so"
+
+[workspace]
+types = "api/utils/idl/"
