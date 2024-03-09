@@ -75,6 +75,13 @@ pub struct AuctionClaim<'info> {
     )]
     pub oss_program: UncheckedAccount<'info>,
 
+    /// CHECK: Group Asset
+    #[account(
+        mut,
+        seeds = [COLLECTION_SEED.as_bytes()],
+        bump,
+    )]
+    pub group: UncheckedAccount<'info>,
 }
 
 impl AuctionClaim<'_> {
@@ -139,6 +146,7 @@ impl AuctionClaim<'_> {
             self.asset.to_account_info(),
             self.authority.to_account_info(),
             self.winner.to_account_info(),
+            self.group.to_account_info(),
             self.oss_program.to_account_info(),
         ];
 
@@ -146,6 +154,7 @@ impl AuctionClaim<'_> {
             .asset(self.asset.key())
             .signer(self.authority.key())
             .recipient(self.winner.key())
+            .group_asset(Some(self.group.key()))
             .instruction();
 
         invoke_signed(&transfer_ix, &account_infos, signer_seeds)?;

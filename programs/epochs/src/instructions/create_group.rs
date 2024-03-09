@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::{
-    EpochError, AUTHORITY, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_1_SHARE, CREATOR_2_SHARE, CREATOR_WALLET_1, CREATOR_WALLET_2, DAO_TREASURY_SHARE, DAO_TREASURY_WALLET
+    royalties, EpochError, AUTHORITY, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_1_SHARE, CREATOR_2_SHARE, CREATOR_WALLET_1, CREATOR_WALLET_2, DAO_TREASURY_SHARE, DAO_TREASURY_WALLET
 };
 use anchor_lang::{
     prelude::*,
@@ -11,11 +11,13 @@ use anchor_lang::{
     },
 };
 use nifty_asset::{
-    extensions::{CreatorsBuilder, ExtensionBuilder, GroupBuilder, LinksBuilder, MetadataBuilder},
+    extensions::{CreatorsBuilder, ExtensionBuilder, GroupBuilder, LinksBuilder, MetadataBuilder, RoyaltiesBuilder},
     instructions::{AllocateBuilder, CreateBuilder},
-    types::{Extension, ExtensionType, Standard},
+    types::{ExtensionInput, ExtensionType, Standard},
     ID as NiftyAssetID,
 };
+
+use nifty_asset_types::constraints::EmptyBuilder;
 
 #[derive(Accounts)]
 pub struct CreateGroup<'info> {
@@ -66,10 +68,10 @@ impl<'info> CreateGroup<'info> {
 
         self.write_metadata(&account_infos, combined_signer_seeds)?;
         self.write_creators(&account_infos, combined_signer_seeds)?;
+        self.add_royalties(&account_infos, combined_signer_seeds)?;
         self.write_links(&account_infos, combined_signer_seeds)?;
         self.create_group(&account_infos, combined_signer_seeds)?;
         self.create_asset(&account_infos, combined_signer_seeds)?;
-        // TODO Add Royalties Extension (after PR is merged)
 
         Ok(())
     }
@@ -88,7 +90,7 @@ impl<'info> CreateGroup<'info> {
             .asset(self.asset.key())
             .payer(Some(self.payer.key()))
             .system_program(Some(self.system_program.key()))
-            .extension(Extension {
+            .extension(ExtensionInput {
                 extension_type: ExtensionType::Creators,
                 length: creators_data.len() as u32,
                 data: Some(creators_data),
@@ -108,7 +110,7 @@ impl<'info> CreateGroup<'info> {
             .asset(self.asset.key())
             .payer(Some(self.payer.key()))
             .system_program(Some(self.system_program.key()))
-            .extension(Extension {
+            .extension(ExtensionInput {
                 extension_type: ExtensionType::Grouping,
                 length: group_data.len() as u32,
                 data: Some(group_data),
@@ -137,7 +139,7 @@ impl<'info> CreateGroup<'info> {
             .asset(self.asset.key())
             .payer(Some(self.payer.key()))
             .system_program(Some(self.system_program.key()))
-            .extension(Extension {
+            .extension(ExtensionInput {
                 extension_type: ExtensionType::Links,
                 length: links_data.len() as u32,
                 data: Some(links_data),
@@ -149,9 +151,30 @@ impl<'info> CreateGroup<'info> {
         Ok(())
     }
 
+    fn add_royalties(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 2]) -> Result<()> {
+        let mut royalties_builder = RoyaltiesBuilder::default();
+        royalties_builder.set(500, &mut EmptyBuilder::default(),);
+        let royalties_data: Vec<u8> = royalties_builder.data();
+
+        let royalties_ix: Instruction = AllocateBuilder::new()
+            .asset(self.asset.key())
+            .payer(Some(self.payer.key()))
+            .system_program(Some(self.system_program.key()))
+            .extension(ExtensionInput {
+                extension_type: ExtensionType::Royalties,
+                length: royalties_data.len() as u32,
+                data: Some(royalties_data),
+            })
+            .instruction();
+
+        invoke_signed(&royalties_ix, account_infos, signer_seeds)?;
+
+        Ok(())
+    }
+
     fn write_metadata(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 2]) -> Result<()> {
         let mut metadata_builder = MetadataBuilder::default();
-        metadata_builder.set("EPOCHS", "https://epochs.wtf/");
+        metadata_builder.set(Some("EPOCHS"), Some("One Epoch, every epoch, forever."), Some("https://epochs.wtf/"));
         
         let metadata: Vec<u8> = metadata_builder.build();
 
@@ -159,7 +182,7 @@ impl<'info> CreateGroup<'info> {
             .asset(self.asset.key())
             .payer(Some(self.payer.key()))
             .system_program(Some(self.system_program.key()))
-            .extension(Extension {
+            .extension(ExtensionInput {
                 extension_type: ExtensionType::Metadata,
                 length: metadata.len() as u32,
                 data: Some(metadata),
@@ -179,7 +202,7 @@ impl<'info> CreateGroup<'info> {
         let create_ix = CreateBuilder::new()
             .asset(self.asset.key())
             .authority(self.authority.key())
-            .holder(self.authority.key())
+            .owner(self.authority.key())
             .group(None)
             .payer(Some(self.payer.key()))
             .system_program(Some(self.system_program.key()))

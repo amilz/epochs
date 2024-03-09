@@ -5,8 +5,7 @@ use anchor_lang::{
 use nifty_asset::{
     extensions::{AttributesBuilder, ExtensionBuilder},
     instructions::{AllocateBuilder, CreateBuilder},
-    types::{Extension, ExtensionType, Standard},
-    ID as NiftyAssetID,
+    types::{ExtensionInput, ExtensionType, Standard},
 };
 
 use crate::generate_asset;
@@ -32,7 +31,7 @@ pub fn write_attributes(
         .asset(asset)
         .payer(Some(payer))
         .system_program(Some(system_program::ID))
-        .extension(Extension {
+        .extension(ExtensionInput {
             extension_type: ExtensionType::Attributes,
             length: attributes_data.len() as u32,
             data: Some(attributes_data),
@@ -49,57 +48,50 @@ pub fn write_rawimg_and_traits(
     payer: Pubkey,
     account_infos: &[AccountInfo],
     signer_seeds: &[&[&[u8]]; 1],
-    epoch: u64
+    epoch: u64,
 ) -> Result<()> {
     let assets = generate_asset(epoch, payer);
-    write_attributes(
-        asset,
-        payer,
-        &account_infos,
-        signer_seeds,
-        assets.1,
-    )?;
+    write_attributes(asset, payer, &account_infos, signer_seeds, assets.1)?;
+    let mut blob_data = Vec::new();
+    set_data(&mut blob_data, "img/bmp", &assets.0);
 
-    let extension_data = Extension {
+    // Custom Blob Builder to minimize Heap
+    let extension_data = ExtensionInput {
         extension_type: ExtensionType::Blob,
-        length: assets.0.len() as u32,
-        data: Some(assets.0),
+        length: blob_data.len() as u32,
+        data: Some(blob_data),
     };
-
-    // Serialize extension data
     let mut serialized_extension_data = extension_data.try_to_vec()?;
 
-    // Prepare `AllocateInstructionData`
     let instruction_data = AllocateInstructionData {
         discriminator: 4, // The discriminator for allocate
     };
 
     // Serialize instruction data
     let mut serialized_instruction_data = instruction_data.try_to_vec()?;
-
-    // Append extension data to instruction data
     serialized_instruction_data.append(&mut serialized_extension_data);
+
     let accounts = vec![
         AccountMeta::new(asset, true),
         AccountMeta::new(payer, true),
         AccountMeta::new_readonly(system_program::ID, false),
     ];
 
-    let allocate_blob_ix = Instruction {
-        program_id: NiftyAssetID,
+    let blob_ix = Instruction {
+        program_id: nifty_asset::ID,
         accounts,
         data: serialized_instruction_data,
     };
-    invoke_signed(&allocate_blob_ix, account_infos, signer_seeds)?;
+
+    invoke_signed(&blob_ix, account_infos, signer_seeds)?;
     Ok(())
 }
-
 
 pub fn create_asset(
     asset: Pubkey,
     payer: Pubkey,
     authority: Pubkey,
-    holder: Pubkey,
+    owner: Pubkey,
     group: Pubkey,
     account_infos: &[AccountInfo],
     signer_seeds: &[&[&[u8]]; 2],
@@ -107,7 +99,7 @@ pub fn create_asset(
     let create_ix = CreateBuilder::new()
         .asset(asset)
         .authority(authority)
-        .holder(holder)
+        .owner(owner)
         .group(Some(group))
         .payer(Some(payer))
         .system_program(Some(system_program::ID))
@@ -123,4 +115,34 @@ pub fn create_asset(
 #[derive(AnchorDeserialize, AnchorSerialize)]
 struct AllocateInstructionData {
     discriminator: u8,
+}
+
+
+// Alternative to BlobBuilder to reduce heap allocations
+
+pub struct LightweightPrefixStr;
+
+impl LightweightPrefixStr {
+    /// Prepends the length of the string to the string bytes and returns the combined Vec<u8>.
+    pub fn with_length_prefix(content_type: &str) -> Vec<u8> {
+        let length = content_type.len() as u8;
+        let mut prefixed_str = Vec::with_capacity(1 + length as usize);
+        prefixed_str.push(length);
+        prefixed_str.extend_from_slice(content_type.as_bytes());
+        prefixed_str
+    }
+}
+
+pub fn set_data(buffer: &mut Vec<u8>, content_type: &str, data: &[u8]) {
+    buffer.clear();
+
+    // Create the content-type prefix string
+    let prefixed_content_type = LightweightPrefixStr::with_length_prefix(content_type);
+
+    // Reserve space in the buffer to avoid multiple allocations
+    buffer.reserve(prefixed_content_type.len() + data.len());
+
+    // Append the prefixed content type and data to the buffer
+    buffer.extend_from_slice(&prefixed_content_type);
+    buffer.extend_from_slice(data);
 }

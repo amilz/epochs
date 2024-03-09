@@ -211,6 +211,11 @@ export type Epochs = {
           "name": "ossProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "group",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -758,6 +763,11 @@ export const IDL: Epochs = {
         {
           "name": "ossProgram",
           "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "group",
+          "isMut": true,
           "isSigner": false
         }
       ],
