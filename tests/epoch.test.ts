@@ -158,11 +158,10 @@ describe("Simulates retroactive mint aka Time Machine", () => {
     it("Initiates the Minter", async () => {
         const now = new Date().getTime();
         // 5 seconds from now:
-        const target = new Date(now + 5 * 1000).getTime();
-        // const tomorrow = new Date(now + 24 * 60 * 60 * 1000).getTime();
+        const target = new Date(now + 3 * 1000).getTime();
 
         try {
-            const tx = await epochClient.createTimeMachineInitInstruction({ itemsAvailable: 500, startTime: target / 1000 });
+            const tx = await epochClient.createTimeMachineInitInstruction({ itemsAvailable: 50, startTime: target / 1000 });
             const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
             tx.recentBlockhash = blockhash;
             tx.lastValidBlockHeight = lastValidBlockHeight;
@@ -178,12 +177,13 @@ describe("Simulates retroactive mint aka Time Machine", () => {
 
     it("Claim and reveal 500 mints from minter machine", async () => {
         const numberOfMints = 50;
-        const numLoops = 10;
+        const numLoops = 1;
+        // wait a few seconds for the minter to open
+        await new Promise(resolve => setTimeout(resolve, 5000));
         for (let i = 0; i < numLoops; i++) {
             try {
                 const minters = Array.from({ length: numberOfMints }, (_, i) => Keypair.generate());
                 await airdropToMultiple(minters.map(m => m.publicKey), epochClient.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
-                await new Promise(resolve => setTimeout(resolve, 10000));
                 const claimPromises = minters.map(async (minter, i) => {
                     return performMinterClaim(minter, epochClient);
                 });

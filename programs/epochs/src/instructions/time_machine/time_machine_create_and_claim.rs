@@ -95,6 +95,7 @@ impl<'info> TimeMachienCreateAndClaim<'info> {
         let account_infos = vec![
             self.asset.to_account_info(),
             self.payer.to_account_info(),
+            self.group.to_account_info(),
             self.authority.to_account_info(),
             self.oss_program.to_account_info(),
             self.system_program.to_account_info(),
@@ -106,11 +107,12 @@ impl<'info> TimeMachienCreateAndClaim<'info> {
             &current_epoch.to_le_bytes(),
             &[asset_bump],
         ];
-        let asset_signer_seeds: &[&[&[u8]]; 1] = &[&asset_seeds[..]];
+        let authority_seeds = &[AUTHORITY_SEED.as_bytes(), &[authority_bump]];
+        let combined_signer_seeds = &[&asset_seeds[..], &authority_seeds[..]];
 
-        self.write_links(&account_infos, asset_signer_seeds)?;
-        self.create_asset(&account_infos, asset_signer_seeds)?;
-        self.add_to_group(authority_bump)?;
+        // self.write_links(&account_infos, asset_signer_seeds)?;
+        self.create_asset(&account_infos, combined_signer_seeds)?;
+        // self.add_to_group(authority_bump)?;
         self.distribute_nft(&account_infos, authority_bump)?;
 
 
@@ -204,17 +206,18 @@ impl<'info> TimeMachienCreateAndClaim<'info> {
         Ok(())
     }
 
-    fn create_asset(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 1]) -> Result<()> {
+    fn create_asset(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 2]) -> Result<()> {
         let create_ix = CreateBuilder::new()
             .asset(self.asset.key())
             .authority(self.authority.key())
             .holder(self.authority.key())
-            .group(None)
+            .group(Some(self.group.key()))
             .payer(Some(self.payer.key()))
             .system_program(Some(self.system_program.key()))
             .name("Epoch Asset".to_string())
             .standard(Standard::NonFungible)
             .mutable(false)
+            .add_remaining_account(AccountMeta::new_readonly(self.authority.key(), true))
             .instruction();
 
         invoke_signed(&create_ix, account_infos, signer_seeds)?;
