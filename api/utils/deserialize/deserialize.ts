@@ -26,7 +26,7 @@ enum ExtensionType {
 
 interface BlobComponents {
     bmpData: Buffer;
-    jsonData: Buffer;
+    //jsonData: Buffer;
 }
 
 interface ExtensionData {
@@ -165,10 +165,10 @@ class Asset {
                     // Extract the BMP and JSON components
                     const BMP_SIZE = 3126; // Fixed size for BMP data
                     const bmpData = extensionData.raw.subarray(0, BMP_SIZE);
-                    const jsonData = extensionData.raw.subarray(BMP_SIZE); // Remaining bytes are JSON data
+                    //const jsonData = extensionData.raw.subarray(BMP_SIZE); // Remaining bytes are JSON data
 
                     // Store the parsed components in the blobComponents property
-                    extensionData.blobComponents = { bmpData, jsonData };
+                    extensionData.blobComponents = { bmpData };
 
                     // Additional processing for BMP and JSON data can be done here
                     break;
@@ -199,20 +199,13 @@ class Asset {
         }
     }
 
-    async saveImgAndJson(filePaths = {
-        json: `./test.json`,
+    async saveImg(filePaths = {
         png: `./test.png`,
     }) {
         const blob = this.extensions.find(ext => ext.type === ExtensionType.Blob);
         // TODO - dynamic file paths
         // TODO - use API to return stuff i can upload or open in the web
         if (blob && blob.blobComponents) {
-
-
-            // Assuming blob.blobComponents.jsonData is a Buffer containing JSON data
-            fs.writeFileSync(filePaths.json, blob.blobComponents.jsonData);
-
-            // Assuming convertBmpToPng is an async function that takes BMP data and a file path
             if (blob.blobComponents.bmpData) {
                 await writetBmpToPng(blob.blobComponents.bmpData, filePaths.png);
             }

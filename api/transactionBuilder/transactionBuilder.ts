@@ -138,47 +138,26 @@ export class TransactionBuilder {
             authority: groupAuthority,
             systemProgram: SystemProgram.programId,
             ossProgram: NIFTY_PROGRAM_ID,
-        };
-
-        const auctionAccounts = {
-            payer: payer,
             auction: auctionPda,
             reputation: reputationPda,
-            asset,
-            systemProgram: SystemProgram.programId,
         };
 
         const computeInstruction = ComputeBudgetProgram.setComputeUnitLimit({ units: COMPUTE_BUDGET.INITIALIZE_EPOCH });
 
-
         try {
-            const instructionBlob = await this.program.methods
-                .inscribeEpoch(new BN(epoch))
-                .accounts(accounts)
-                .instruction();
-
-            const instructionAsset = await this.program.methods
+            const instruction = await this.program.methods
                 .createEpoch(new BN(epoch))
                 .accounts(accounts)
                 .instruction();
 
-            const instructionAuction = await this.program.methods
-                .auctionInit(new BN(epoch))
-                .accounts(auctionAccounts)
-                .instruction();
-
             const transaction = new Transaction()
                 .add(computeInstruction)
-                .add(instructionBlob)
-                .add(instructionAsset)
-                .add(instructionAuction);
+                .add(instruction)
 
             return transaction;
         } catch (error) {
             throw ApiError.solanaTxError(SolanaTxType.FAILED_TO_GENERATE_IX);
         }
-
-
     }
 
     public async createClaim({
@@ -282,16 +261,12 @@ export class TransactionBuilder {
         };
 
         try {
-            const instructionBlob = await this.program.methods.timeMachineInscribe()
-                .accounts(accounts)
-                .instruction();
-            const instructionAsset = await this.program.methods.timeMachineClaim()
+            const instruction = await this.program.methods.timeMachineClaim()
                 .accounts(accounts)
                 .instruction();
 
             const transaction = new Transaction()
-                .add(instructionBlob)
-                .add(instructionAsset);
+                .add(instruction);
 
             return transaction;
         } catch (error) {

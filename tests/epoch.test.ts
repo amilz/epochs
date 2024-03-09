@@ -1,4 +1,4 @@
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, sendAndConfirmTransaction, Connection } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, sendAndConfirmTransaction } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 import { airdropToMultiple, initIdlToChain, waitTilEpochIs } from "./utils/utils";
 import { assert } from "chai";
@@ -63,7 +63,7 @@ describe("Create a new OSS Collection, Mint, and Auction", () => {
             const { epoch } = await epochClient.connection.getEpochInfo();
             const deserializedAsset = await epochClient.fetchDeserializedAssetByEpoch({ epoch });
             // TODO Add Tests on the assetWithoutExtensions
-            // deserializedAsset.saveImgAndJson();
+            deserializedAsset.saveImg();
 
             assert.ok(sig, 'should have signature');
 

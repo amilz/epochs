@@ -43,47 +43,6 @@ export type Epochs = {
       "args": []
     },
     {
-      "name": "inscribeEpoch",
-      "accounts": [
-        {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "group",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "ossProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "inputEpoch",
-          "type": "u64"
-        }
-      ]
-    },
-    {
       "name": "createEpoch",
       "accounts": [
         {
@@ -115,22 +74,6 @@ export type Epochs = {
           "name": "ossProgram",
           "isMut": false,
           "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "inputEpoch",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "auctionInit",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
         },
         {
           "name": "auction",
@@ -140,16 +83,6 @@ export type Epochs = {
         {
           "name": "reputation",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "asset",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
           "isSigner": false
         }
       ],
@@ -337,47 +270,6 @@ export type Epochs = {
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "timeMachineInscribe",
-      "accounts": [
-        {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "group",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "receipt",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "ossProgram",
           "isMut": false,
           "isSigner": false
         }
@@ -699,47 +591,6 @@ export const IDL: Epochs = {
       "args": []
     },
     {
-      "name": "inscribeEpoch",
-      "accounts": [
-        {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "group",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "ossProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "inputEpoch",
-          "type": "u64"
-        }
-      ]
-    },
-    {
       "name": "createEpoch",
       "accounts": [
         {
@@ -771,22 +622,6 @@ export const IDL: Epochs = {
           "name": "ossProgram",
           "isMut": false,
           "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "inputEpoch",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "auctionInit",
-      "accounts": [
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
         },
         {
           "name": "auction",
@@ -796,16 +631,6 @@ export const IDL: Epochs = {
         {
           "name": "reputation",
           "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "asset",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
           "isSigner": false
         }
       ],
@@ -993,47 +818,6 @@ export const IDL: Epochs = {
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "timeMachineInscribe",
-      "accounts": [
-        {
-          "name": "asset",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "payer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "group",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "authority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "receipt",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "ossProgram",
           "isMut": false,
           "isSigner": false
         }

@@ -23,16 +23,8 @@ pub mod epochs {
         ctx.accounts.handler(ctx.bumps.authority, ctx.bumps.asset)
     }
 
-    pub fn inscribe_epoch(ctx: Context<CreateAsset>, input_epoch: u64) -> Result<()> {
-        ctx.accounts.generate_inscription(input_epoch, ctx.bumps.asset)
-    }
-
     pub fn create_epoch(ctx: Context<CreateAsset>, input_epoch: u64) -> Result<()> {
-        ctx.accounts.create_asset_w_metadata(ctx.bumps.authority, ctx.bumps.asset, input_epoch)
-    }
-
-    pub fn auction_init(ctx: Context<AuctionInit>, input_epoch: u64) -> Result<()> {
-        ctx.accounts.handler(input_epoch, ctx.bumps.auction, ctx.bumps.reputation)
+        ctx.accounts.handler(ctx.bumps.authority, ctx.bumps.asset, ctx.bumps.reputation, ctx.bumps.auction, input_epoch)
     }
 
     pub fn auction_bid(ctx: Context<AuctionBid>, input_epoch: u64, bid_amount: u64) -> Result<()> {
@@ -51,12 +43,8 @@ pub mod epochs {
         ctx.accounts.handler(ctx.bumps.receipt)
     }
 
-    pub fn time_machine_inscribe(ctx: Context<TimeMachienCreateAndClaim>) -> Result<()> {
-        ctx.accounts.generate_inscription(ctx.bumps.asset)
-    }
-
     pub fn time_machine_claim(ctx: Context<TimeMachienCreateAndClaim>) -> Result<()> {
-        ctx.accounts.create_asset_w_metadata(ctx.bumps.authority, ctx.bumps.asset)
+        ctx.accounts.handler(ctx.bumps.authority, ctx.bumps.asset)
     }
 
 }
