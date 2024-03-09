@@ -13,10 +13,8 @@ There are 2 primary groups of instructions here:
      - generates art based on assets in [`constants/traits`](/programs/epochs/src/constants/traits/) and bmp encoder in [`utils/traits`](/programs/epochs/src/utils/traits.rs) 
      - then inscribes bmp and json of the metadata to a blob
      - creates an asset (mints an NFT) using Nifty OSS standard
-- [`auction_init`](/programs/epochs/src/instructions/auction_init.rs) (called with `create_asset`)
      - initiates an auction for the NFT
      - adds reputation points to user
-_(Note: note, `create_asset` includes 2 instructions. they are to be called together with `auction_init`. this is done to avoid heap/stack allocation issues. we may revisit or just add checks to make sure instructions are handled in correct order)_
 
 - [`bid`](/programs/epochs/src/instructions/auction_bid.rs) creates a user bit for an active auction. It will refund the previous bid if there is one and give them Reputation points
 - [`claim`](/programs/epochs/src/instructions/auction_claim.rs) allows anybody to settle a closed auction. this will transfer the nft to the winner and give reputation points. 
@@ -31,8 +29,6 @@ _(Note: note, `create_asset` includes 2 instructions. they are to be called toge
 
 ### TypeScript API
 - [`client.ts`](api/client.ts) - a TypeScript API for interacting with the program. This includes all the instructions and state types.
-
-
 
 ## Local Development
 
