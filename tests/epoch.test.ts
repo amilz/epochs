@@ -44,7 +44,9 @@ describe("Create a new OSS Collection, Mint, and Auction", () => {
             tx.lastValidBlockHeight = lastValidBlockHeight;
             tx.sign(AUTHORITY);
             const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [AUTHORITY]);
+            let group = await epochClient.fetchDeserializedGroupAsset();
             assert.ok(sig, 'should have signature');
+            console.log(group);
         } catch (err) {
             console.log(err);
             assert.fail('error minting', err);
@@ -64,7 +66,7 @@ describe("Create a new OSS Collection, Mint, and Auction", () => {
             const deserializedAsset = await epochClient.fetchDeserializedAssetByEpoch({ epoch });
             // TODO Add Tests on the assetWithoutExtensions
             deserializedAsset.saveImg();
-
+            console.log(deserializedAsset);
             assert.ok(sig, 'should have signature');
 
         } catch (err) {

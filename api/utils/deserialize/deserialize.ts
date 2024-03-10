@@ -27,6 +27,7 @@ enum ExtensionType {
 
 interface BlobComponents {
     bmpData: Buffer;
+    base64Png?: string;
     //jsonData: Buffer;
 }
 
@@ -37,7 +38,58 @@ interface ExtensionData {
     startOffset: number;
     raw?: Buffer;
     blobComponents?: BlobComponents;
+    attributesComponents?: AttributesComponents;
+    creators?: Creators;
+    links?: Links;
+    metadata?: Metadata;
+    grouping?: Grouping;
+    royalties?: Royalties;
 }
+
+interface Metadata {
+    symbol: string;
+    description: string;
+    uri: string;
+}
+
+interface TraitComponents {
+    name: string;
+    value: string;
+}
+
+interface AttributesComponents {
+    traits: TraitComponents[];
+}
+
+interface Creator {
+    address: string;
+    verified: boolean;
+    share: number;
+}
+
+interface Creators {
+    creators: Creator[];
+}
+
+interface Link {
+    name: string;
+    uri: string;
+}
+
+interface Links {
+    values: Link[];
+}
+
+interface Grouping {
+    size: number;
+    max_size: number;
+}
+
+interface Royalties {
+    basisPoints: number;
+    // skipping constraints for now
+}
+
 
 class Extension {
     static HEADER_LEN = 16; // Size of the Extension header
@@ -136,6 +188,94 @@ class Asset {
 
         return asset;
     }
+    private fromBytesToTrait(bytes: Buffer): TraitComponents {
+        const nameLength = bytes[0]; // Assuming U8PrefixStr is a length-prefixed string where the first byte is the length
+        const name = bytes.subarray(1, 1 + nameLength).toString('utf-8');
+
+        const valueOffset = 1 + nameLength;
+        const valueLength = bytes[valueOffset];
+        const value = bytes.subarray(valueOffset + 1, valueOffset + 1 + valueLength).toString('utf-8');
+
+        return { name, value };
+    };
+    private publicKeyFromBytes(bytes) {
+        return new PublicKey(bytes);
+    }
+
+    private byteToBool(byte) {
+        return byte !== 0;
+    }
+
+    private deserializeLink(bytes: Buffer): { link: Link, length: number } {
+        let cursor = 0;
+
+        // Read the length of the name
+        const nameLength = bytes.readUInt8(cursor++);
+        // Read the name based on its length
+        const name = bytes.toString('utf8', cursor, cursor + nameLength);
+        cursor += nameLength; // Move the cursor past the name
+
+        // Read the length of the URI
+        const uriLength = bytes.readUInt8(cursor++);
+        // Read the URI based on its length
+        const uri = bytes.toString('utf8', cursor, cursor + uriLength);
+        cursor += uriLength; // Move the cursor past the URI
+
+        // The total length is the cursor position after reading name and uri
+        const totalLength = cursor;
+
+        // Return the deserialized Link and its total length
+        return {
+            link: { name, uri },
+            length: totalLength
+        };
+    }
+    private deserializeMetadata(bytes: Buffer): Metadata {
+        let cursor = 0;
+
+        // Deserialize the symbol
+        const symbolLength = bytes.readUInt8(cursor++);
+        const symbol = bytes.toString('utf8', cursor, cursor + symbolLength);
+        cursor += symbolLength;
+
+        // Deserialize the description
+        const descriptionLength = bytes.readUInt8(cursor++);
+        const description = bytes.toString('utf8', cursor, cursor + descriptionLength);
+        cursor += descriptionLength;
+
+        // Deserialize the URI
+        const uriLength = bytes.readUInt8(cursor++);
+        const uri = bytes.toString('utf8', cursor, cursor + uriLength);
+        // cursor += uriLength; // This line is optional, as it's the last field
+
+        return { symbol, description, uri };
+    }
+
+    private deserializeGrouping(bytes: Buffer): Grouping {
+        if (bytes.length < 16) { // Ensure there's enough data for two u64 values
+            throw new Error('Grouping data is too short.');
+        }
+
+        // Read the first 8 bytes as the size, converting from BigInt to Number
+        const size = Number(bytes.readBigUInt64LE(0));
+
+        // Read the next 8 bytes as max_size, converting from BigInt to Number
+        const max_size = Number(bytes.readBigUInt64LE(8));
+
+        return { size, max_size };
+    }
+    private deserializeRoyalties(bytes: Buffer): Royalties {
+        if (bytes.length < 8) { // Ensure there's enough data for basisPoints
+            throw new Error('Royalties data is too short.');
+        }
+
+        // Read the first 8 bytes as basisPoints, and convert to a number
+        // Note: This conversion could lead to precision loss for very large values
+        const basisPoints = Number(bytes.readBigUInt64LE(0));
+
+        return { basisPoints };
+    }
+
 
     private processExtensions(buffer, initialOffset) {
         let offset = initialOffset;
@@ -146,62 +286,88 @@ class Asset {
             let extensionData: ExtensionData;
             try {
                 extensionData = Extension.load(buffer, offset);
-                // console \table extensionData without raw or blobComponents
-                let { type, length, boundary, startOffset } = extensionData;
-                console.table({ type, length, boundary, startOffset });
-                
+
             } catch (error) {
                 console.error(`Failed to load extension at offset ${offset}:`, error.message);
                 return; // Exit the function if loading the extension fails
             }
 
-            // console.log(`Extension Type: ${extensionData.type}`);
-            // Process the extension based on its type
-            // switch (extensionData.type) {
-            //     case ExtensionType.Blob:
-            //         // Process Blob extension
-            //         break;
-            //     // Handle other extension types as needed
-            // }
-
             extensionData.raw = buffer.slice(extensionData.startOffset, extensionData.startOffset + extensionData.length);
 
             switch (extensionData.type) {
                 case ExtensionType.Blob:
-                    // Extract the BMP and JSON components
-
                     //const BMP_SIZE = 3126; // Fixed size for BMP data
                     //const bmpData = extensionData.raw.subarray(0, BMP_SIZE);
 
                     const contentTypeLength = extensionData.raw[0];
-
-                    // Extract the content type string based on its length
                     const contentType = new TextDecoder().decode(extensionData.raw.subarray(1, 1 + contentTypeLength));
 
-                    // Check if the content type is what you expect, e.g., "img/bmp"
                     if (contentType === "img/bmp") {
-                        // The BMP data starts right after the content type and its length prefix
                         const bmpDataStartIndex = 1 + contentTypeLength;
                         const bmpData = extensionData.raw.subarray(bmpDataStartIndex);
-
-                        // Store the BMP data in the blobComponents property
                         extensionData.blobComponents = { bmpData };
 
-                        // Additional processing for BMP data can be done here
                     } else {
                         console.error("Unexpected content type:", contentType);
-                        // Handle unexpected content type appropriately
                     }
 
-                    // Store the parsed components in the blobComponents property
-                    // extensionData.blobComponents = { bmpData };
-
-                    // Additional processing for BMP and JSON data can be done here
                     break;
-                // Handle other extension types as needed
+
+                case ExtensionType.Attributes:
+                    const attributesComponents: AttributesComponents = { traits: [] };
+                    let cursor = 0;
+                    while (cursor < extensionData.raw.length) {
+                        const trait = this.fromBytesToTrait(extensionData.raw.subarray(cursor));
+                        cursor += 1 + trait.name.length + 1 + trait.value.length; // Adjust cursor to the next trait
+                        attributesComponents.traits.push(trait);
+                    }
+                    extensionData.attributesComponents = attributesComponents;
+                    break;
+                case ExtensionType.Creators:
+                    const creators = [];
+
+                    let creatorOffset = extensionData.startOffset;
+                    while (creatorOffset < extensionData.startOffset + extensionData.length) {
+                        const CREATOR_LENGTH = 34;
+
+                        const address = (this.publicKeyFromBytes(buffer.slice(creatorOffset, creatorOffset + 32))).toBase58();
+                        const verified = this.byteToBool(buffer[creatorOffset + 32]);
+                        const share = buffer[creatorOffset + 33];
+
+                        creators.push({ address, verified, share });
+
+                        creatorOffset += CREATOR_LENGTH; // Move to the next creator
+                    }
+
+                    // Store the creators array in the extensionData
+                    extensionData.creators = { creators };
+                    break;
+
+                case ExtensionType.Links:
+                    const links: Link[] = [];
+                    let linksCursor = 0;
+
+                    while (linksCursor < extensionData.raw.length) {
+                        const { link, length } = this.deserializeLink(extensionData.raw.subarray(linksCursor));
+                        linksCursor += length;
+                        links.push(link);
+                    }
+
+                    extensionData.links = { values: links };
+                    break;
+                case ExtensionType.Metadata:
+                    const metadata = this.deserializeMetadata(extensionData.raw);
+                    extensionData.metadata = metadata;
+                    break;
+                case ExtensionType.Grouping:
+                    const grouping = this.deserializeGrouping(extensionData.raw);
+                    extensionData.grouping = grouping;
+                    break;
+                case ExtensionType.Royalties:
+                    const royalties = this.deserializeRoyalties(extensionData.raw);
+                    extensionData.royalties = royalties; 
+                    break;
             }
-
-
 
             // Store extension data
             extensions.push(extensionData);
@@ -222,6 +388,7 @@ class Asset {
         const blob = this.extensions.find(ext => ext.type === ExtensionType.Blob);
         if (blob && blob.blobComponents) {
             const png = await convertBmpToBase64(blob.blobComponents.bmpData);
+            return png;
         }
     }
 
@@ -229,8 +396,6 @@ class Asset {
         png: `./test.png`,
     }) {
         const blob = this.extensions.find(ext => ext.type === ExtensionType.Blob);
-        // TODO - dynamic file paths
-        // TODO - use API to return stuff i can upload or open in the web
         if (blob && blob.blobComponents) {
             if (blob.blobComponents.bmpData) {
                 await writetBmpToPng(blob.blobComponents.bmpData, filePaths.png);
