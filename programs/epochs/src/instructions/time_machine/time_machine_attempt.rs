@@ -40,6 +40,10 @@ impl<'info> TimeMachineAttempt<'info> {
         let claimer = self.payer.key();
         time_machine.redeem_item()?;
         let minter_epoch = time_machine.items_redeemed;
+
+        // TODO ADD SOL PAYMENT
+
+
         receipt.set(claimer, minter_epoch, minter_claim_bump)?;
         Ok(())
     }

@@ -95,7 +95,10 @@ pub fn create_asset(
     group: Pubkey,
     account_infos: &[AccountInfo],
     signer_seeds: &[&[&[u8]]; 2],
+    epoch: u64,
 ) -> Result<()> {
+    // define var name that is Epoch #{epoch}
+    let name = format!("Epoch #{}", epoch);
     let create_ix = CreateBuilder::new()
         .asset(asset)
         .authority(authority)
@@ -103,7 +106,7 @@ pub fn create_asset(
         .group(Some(group))
         .payer(Some(payer))
         .system_program(Some(system_program::ID))
-        .name("Epoch Asset".to_string())
+        .name(name)
         .standard(Standard::NonFungible)
         .mutable(false)
         .add_remaining_account(AccountMeta::new_readonly(authority, true))

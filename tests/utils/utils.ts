@@ -1,3 +1,4 @@
+import { EpochClient } from "@epochs/api";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { exec } from "child_process";
 
@@ -105,11 +106,32 @@ async function waitTilEpochIs(
 }
 
 
+async function waitUntilTimeStamp(
+    targetTimeStamp: number,
+    checkInterval: number = 1000,
+    client: EpochClient
+) {
+    const slot = await client.connection.getSlot();
+    let currentTimeStamp = await client.connection.getBlockTime(slot);
+
+    if (targetTimeStamp < currentTimeStamp) {
+        return;
+    }
+    while (targetTimeStamp > currentTimeStamp) {
+        await new Promise(resolve => setTimeout(resolve, checkInterval));
+        const slot = await client.connection.getSlot();
+        currentTimeStamp = await client.connection.getBlockTime(slot);
+    }
+    return currentTimeStamp;
+}
+
+
 
 export {
     airdropToMultiple,
     openFile,
     initIdlToChain,
     printTableData,
-    waitTilEpochIs
+    waitTilEpochIs,
+    waitUntilTimeStamp
 };

@@ -106,6 +106,7 @@ impl<'info> CreateAsset<'info> {
             self.group.key(),
             &account_infos,
             combined_signer_seeds,
+            epoch
         )?;
 
         let payer = self.payer.key();

@@ -92,6 +92,7 @@ impl<'info> TimeMachienCreateAndClaim<'info> {
             self.group.key(),
             &account_infos,
             combined_signer_seeds,
+            mint_epoch,
         )?;
 
         Ok(())

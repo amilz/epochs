@@ -1,15 +1,14 @@
-import { Keypair, PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { Keypair, PublicKey, LAMPORTS_PER_SOL, sendAndConfirmTransaction } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
-import { AnchorError, Program } from "@coral-xyz/anchor";
-import { getAuctionEscrowPda, getAuctionPda, getReputationPda } from "../pdas";
+import { AnchorError } from "@coral-xyz/anchor";
 import { assert } from "chai";
-import { Epochs } from "../../../target/types/epochs";
 import { ReputationPoints, ReputationTracker } from "../reputation";
+import { EpochClient } from "@epochs/api";
 
 interface AuctionBidParams {
     bidAmount: number;
     epoch: number;
-    program: Program<Epochs>;
+    client: EpochClient;
     bidder: Keypair;
     highBidder: PublicKey;
     logMintInfo?: boolean;
@@ -23,23 +22,22 @@ interface AuctionBidParams {
 export async function bidOnAuction({
     epoch,
     bidAmount,
-    program,
+    client,
     bidder,
     highBidder,
     logMintInfo = false,
     expectToFail,
     expectedReputation
 }: AuctionBidParams) {
-    const auctionPda = getAuctionPda(epoch, program);
-    const reputation = getReputationPda(bidder.publicKey, program);
-    const auctionEscrow = getAuctionEscrowPda(program);
+    const auctionEscrow = client.fetchAuctionEscrowPda();
+
 
     try {
 
         const results = await Promise.allSettled([
-            program.provider.connection.getBalance(highBidder),
-            program.account.auction.fetch(auctionPda),
-            program.provider.connection.getBalance(auctionEscrow)
+            client.connection.getBalance(highBidder),
+            client.fetchAuction({ epoch }),
+            client.connection.getBalance(auctionEscrow)
         ]);
 
         // Extracting and providing fallback values
@@ -47,45 +45,41 @@ export async function bidOnAuction({
         const { highBidLamports: prevBid } = results[1].status === 'fulfilled' ? results[1].value : { highBidLamports: new anchor.BN(0) };
         const initialEscrowBalance = results[2].status === 'fulfilled' ? results[2].value : 0;
 
+        const tx = await client.createBidTransaction({ bidAmount, bidder: bidder.publicKey });
+        const { blockhash, lastValidBlockHeight } = await client.connection.getLatestBlockhash();
+        tx.recentBlockhash = blockhash;
+        tx.lastValidBlockHeight = lastValidBlockHeight;
+        tx.sign(bidder);
 
+        let sig = await sendAndConfirmTransaction(client.connection, tx, [bidder]);
 
-        const txRequest = program.methods.auctionBid(new anchor.BN(epoch), new anchor.BN(bidAmount))
-            .accounts({
-                bidder: bidder.publicKey,
-                highBidder,
-                auctionEscrow,
-                auction: auctionPda,
-                reputation,
-            }).signers([bidder])
-            .rpc();
-
-        const signature = await txRequest;
-        if (logMintInfo) console.log(`   Epoch ${epoch} - bid signature: ${signature}`);
+        if (logMintInfo) console.log(`   Epoch ${epoch} - bid signature: ${sig}`);
         expectedReputation.addReputation(ReputationPoints.BID);
 
-        const auctionData = await program.account.auction.fetch(auctionPda);
-        assert.strictEqual(auctionData.epoch.toNumber(), epoch, "Auction epoch should match the input epoch");
-        assert.strictEqual(auctionData.highBidLamports.toNumber(), bidAmount, "High bid should be user's bid");
-        assert.strictEqual(auctionData.highBidder.toBase58(), bidder.publicKey.toBase58(), "High bidder should be the bidder");
-        assert.deepStrictEqual(auctionData.state, { unClaimed: {} }, 'Auction should be unclaimed');
+        const finalAuctionData = await client.fetchAuction({ epoch });
+        assert.strictEqual(finalAuctionData.epoch.toNumber(), epoch, "Auction epoch should match the input epoch");
+        assert.strictEqual(finalAuctionData.highBidLamports.toNumber(), bidAmount, "High bid should be user's bid");
+        assert.strictEqual(finalAuctionData.highBidder.toBase58(), bidder.publicKey.toBase58(), "High bidder should be the bidder");
+        assert.deepStrictEqual(finalAuctionData.state, { unClaimed: {} }, 'Auction should be unclaimed');
+
 
         if (expectedReputation !== undefined) {
-            const reputationData = await program.account.reputation.fetch(reputation);
+            const reputationData = await client.fetchReputation({ user: bidder.publicKey });
             assert.strictEqual(reputationData.contributor.toBase58(), expectedReputation.getUser().toBase58(), "Reputation contributor should match payer");
             assert.strictEqual(reputationData.reputation.toNumber(), expectedReputation.getReputation(), "Reputation should match expected value");
         }
+
         const [finalEscrowBalance, prevBidderFinalBalance] = await Promise.all([
-            program.provider.connection.getBalance(auctionEscrow),
-            program.provider.connection.getBalance(highBidder)
+            client.connection.getBalance(auctionEscrow),
+            client.connection.getBalance(highBidder)
         ]);
 
-        assert.strictEqual(finalEscrowBalance, initialEscrowBalance + bidAmount - prevBid.toNumber(), `After tx, final escrow should have the previous balance plus the new bid amount minus the previous bid amount - ${signature}`);
-        
+        assert.strictEqual(finalEscrowBalance, initialEscrowBalance + bidAmount - prevBid.toNumber(), `After tx, final escrow should have the previous balance plus the new bid amount minus the previous bid amount - ${sig}`);
+
         if (highBidder.toBase58() === bidder.publicKey.toBase58()) return; // need to skip this if previous bidder is the same as the current bidder
-        assert.strictEqual(prevBidderFinalBalance, prevBidderInitialBalance + prevBid.toNumber(), `Previous bidder should have had their bid refunded - ${signature}`);
+        assert.strictEqual(prevBidderFinalBalance, prevBidderInitialBalance + prevBid.toNumber(), `Previous bidder should have had their bid refunded - ${sig}`);
 
     } catch (error) {
-        //console.error(`Error bidding on epoch ${epoch}:`, error);
         if (expectToFail) {
             if (expectToFail.assertError) {
                 expectToFail.assertError(error);
@@ -100,14 +94,14 @@ export async function bidOnAuction({
 }
 
 export async function performRandomBid({
-    program,
+    client,
     epoch,
     bidders,
     reputationTrackers,
     lastBidAmount,
     lastBidder, // Add the last bidder as a parameter
 }: {
-    program: Program<Epochs>,
+    client: EpochClient,
     epoch: number,
     bidders: Keypair[],
     reputationTrackers: Map<string, ReputationTracker>,
@@ -125,7 +119,7 @@ export async function performRandomBid({
     await bidOnAuction({
         bidAmount,
         epoch,
-        program,
+        client,
         bidder,
         highBidder: lastBidder, // Use the last bidder as the highBidder for this bid
         expectedReputation: reputationTracker,

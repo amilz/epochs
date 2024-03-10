@@ -13,7 +13,6 @@ async function performMinterClaim(payer: anchor.web3.Keypair, epochClient: Epoch
         const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer]);
         assert.ok(sig, 'should have signature');
     } catch (err) {
-        console.log(err);
         assert.fail('error minting', err);
     }
 }

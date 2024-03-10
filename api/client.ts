@@ -1,7 +1,7 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
 import { Connection, Transaction, PublicKey } from "@solana/web3.js";
 import { Epochs, IDL } from "./utils/idl/epochs";
-import { EPOCH_PROGRAM_ID, getAuctionPda, getCollectionMintPda, getNftMintPda, getReputationPda, getTimeMachinePda } from "./utils";
+import { EPOCH_PROGRAM_ID, getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda, getTimeMachinePda } from "./utils";
 import { ApiError, SolanaQueryType } from "./errors";
 import { TransactionBuilder } from './transactionBuilder';
 import { Asset } from "./utils/deserialize/deserialize";
@@ -155,6 +155,18 @@ export class EpochClient {
 
     public fetchGroupPda() {
         return getCollectionMintPda(this.program);
+    }
+
+    public fetchAuthorityPda() {
+        return getAuthorityPda(this.program);
+    }
+
+    public fetchAuctionEscrowPda() {
+        return getAuctionEscrowPda(this.program);
+    }
+
+    public fetchAssetAddress({ epoch }: { epoch: number }) {
+        return getNftMintPda(this.program, epoch);
     }
 
     public async fetchDeserializedGroupAsset() {
