@@ -21,7 +21,8 @@ enum ExtensionType {
     Creators,
     Links,
     Metadata,
-    Grouping
+    Grouping,
+    Royalties
 }
 
 interface BlobComponents {
@@ -65,6 +66,7 @@ class Extension {
             case 4: return ExtensionType.Links;
             case 5: return ExtensionType.Metadata;
             case 6: return ExtensionType.Grouping;
+            case 7: return ExtensionType.Royalties;
             default: throw new Error(`Invalid extension value: ${value}`);
         }
     }
@@ -144,6 +146,10 @@ class Asset {
             let extensionData: ExtensionData;
             try {
                 extensionData = Extension.load(buffer, offset);
+                // console \table extensionData without raw or blobComponents
+                let { type, length, boundary, startOffset } = extensionData;
+                console.table({ type, length, boundary, startOffset });
+                
             } catch (error) {
                 console.error(`Failed to load extension at offset ${offset}:`, error.message);
                 return; // Exit the function if loading the extension fails
