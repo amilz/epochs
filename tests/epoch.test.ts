@@ -296,12 +296,35 @@ describe("The Epochs Program", () => {
 
 
         describe("Time Machine Initiation", () => {
-            let sig;
             before(async () => {
                 const slot = await epochClient.connection.getSlot();
                 currentTime = await epochClient.connection.getBlockTime(slot);
                 startTime = currentTime + timeToWaitInSeconds;
-
+            });
+        
+            it("should prevent initiation with wrong authorization", async () => {
+                const wrongAuthority = payer; // use an existing KP w/ lamports so it will not fail b/c 0 balance
+        
+                const tx = await epochClient.createTimeMachineInitInstruction({
+                    itemsAvailable: startNumberItems,
+                    startTime: startTime
+                });
+        
+                const { blockhash, lastValidBlockHeight } = await epochClient.connection.getLatestBlockhash();
+                tx.recentBlockhash = blockhash;
+                tx.lastValidBlockHeight = lastValidBlockHeight;
+                tx.sign(wrongAuthority);
+        
+                try {
+                    await sendAndConfirmTransaction(epochClient.connection, tx, [wrongAuthority]);
+                    assert.fail('Transaction should not succeed with wrong authority');
+                } catch (err) {
+                    assert.ok(err, "Expected transaction to fail with wrong authorization");
+                }
+            });
+        
+            it("should initiate the time machine with correct authorization", async () => {
+                let sig;
                 try {
                     const tx = await epochClient.createTimeMachineInitInstruction({
                         itemsAvailable: startNumberItems,
@@ -312,24 +335,31 @@ describe("The Epochs Program", () => {
                     tx.lastValidBlockHeight = lastValidBlockHeight;
                     tx.sign(AUTHORITY);
                     sig = await sendAndConfirmTransaction(epochClient.connection, tx, [AUTHORITY]);
-                } catch (err) {
-                    console.error("Error in 'before all' hook:", err);
-                    throw err;
-                }
-            });
-
-            it("should initiate the time machine with correct state", async () => {
-                try {
+        
                     const state = await epochClient.fetchMinterDetails();
                     assert.ok(state, 'should have state');
                     assert.equal(state.itemsAvailable.toNumber(), startNumberItems, "Expected number of items to be available");
                     assert.equal(state.itemsRedeemed.toNumber(), 0, "Expected number of items redeemed to be 0");
                     assert.equal(state.startTime.toNumber(), startTime, "Expected start time to match input");
                     assert.ok(sig, 'should have signature');
-
-
                 } catch (err) {
-                    assert.fail('error minting', err);
+                    assert.fail(`Error initiating time machine with correct authorization: ${err.message}`);
+                }
+            });
+            it("cannot initiate a second time", async () => {
+                try {
+                    const tx = await epochClient.createTimeMachineInitInstruction({
+                        itemsAvailable: startNumberItems,
+                        startTime: startTime
+                    });
+                    const { blockhash, lastValidBlockHeight } = await epochClient.connection.getLatestBlockhash();
+                    tx.recentBlockhash = blockhash;
+                    tx.lastValidBlockHeight = lastValidBlockHeight;
+                    tx.sign(AUTHORITY);
+                    await sendAndConfirmTransaction(epochClient.connection, tx, [AUTHORITY]);
+                    assert.fail('Expected minting to fail');
+                } catch (err) {
+                    assert.ok(err, "Expected minting to fail");
                 }
             });
 
