@@ -3,7 +3,7 @@ use crate::{
         create_asset, get_and_validate_epoch, write_rawimg_and_traits,
     }, Auction, EpochError, Points, Reputation, AUCTION_SEED, AUTHORITY_SEED, COLLECTION_SEED, NFT_MINT_SEED, REPUTATION_SEED
 };
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, system_program::{transfer, Transfer}};
 
 #[derive(Accounts)]
 #[instruction(input_epoch: u64)]
@@ -29,6 +29,7 @@ pub struct CreateAsset<'info> {
 
     /// CHECK: Program Authority: The account that will be used to sign transactions
     #[account(
+        mut,
         seeds = [AUTHORITY_SEED.as_bytes()],
         bump,
     )]
@@ -124,6 +125,35 @@ impl<'info> CreateAsset<'info> {
         reputation.init_if_needed(payer, reputation_bump);
         reputation.increment_with_validation(Points::INITIATE, payer.key())?;
 
+        //TODO Replace anchor init with my own in lieu of refund.
+        //maybe track the amount in the auction to prevent some weird abuse where somebody sends lamports to the asset or auction pda
+        self.refund_rent(authority_bump)?;
+
         Ok(())
     }
+    fn refund_rent(&self, authority_bump: u8) -> Result<()> {
+
+        let asset_lamports = self.asset.lamports();
+        let auction_lamports = self.auction.to_account_info().lamports();
+        // Use saturating add to prevent any weird scenario where somebody is sending lamports to these accounts
+        let refund_amount: u64 = asset_lamports.saturating_add(auction_lamports).min(40000000);
+
+        let bump = &[authority_bump];
+        let seeds: &[&[u8]] = &[AUTHORITY_SEED.as_ref(), bump];
+        let signer_seeds = &[&seeds[..]];
+
+        transfer(
+            CpiContext::new(
+                self.system_program.to_account_info(),
+                Transfer {
+                    from: self.authority.to_account_info(),
+                    to: self.payer.to_account_info(),
+                },
+            ).with_signer(signer_seeds),
+            refund_amount,
+        )?;
+
+        Ok(())
+    }
+        
 }

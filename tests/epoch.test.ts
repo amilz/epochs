@@ -1,5 +1,4 @@
 import { Keypair, LAMPORTS_PER_SOL, sendAndConfirmTransaction, SystemProgram } from "@solana/web3.js";
-import * as anchor from "@coral-xyz/anchor";
 import { airdropToMultiple, initIdlToChain, waitTilEpochIs, waitUntilTimeStamp } from "./utils/utils";
 import { assert } from "chai";
 import { ReputationPoints, ReputationTracker } from "./utils/reputation";
@@ -29,10 +28,13 @@ describe("The Epochs Program", () => {
     ]);
 
     const auctionResults = new Map<number, { highBidder: Keypair; bidAmount: number }>();
+    let authorityPda = epochClient.fetchAuthorityPda();
 
     before(async () => {
         await initIdlToChain();
-        await airdropToMultiple([AUTHORITY.publicKey, payer.publicKey, bidder1.publicKey, bidder2.publicKey, bidder3.publicKey], epochClient.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
+        await airdropToMultiple([AUTHORITY.publicKey, payer.publicKey, bidder1.publicKey, bidder2.publicKey, bidder3.publicKey], epochClient.connection, 100 * LAMPORTS_PER_SOL);
+        await airdropToMultiple([authorityPda], epochClient.connection, 0.1 * LAMPORTS_PER_SOL);
+
     });
 
 
@@ -343,7 +345,7 @@ describe("The Epochs Program", () => {
                 }
                 const minter = Keypair.generate();
                 try {
-                    await airdropToMultiple([minter.publicKey], epochClient.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
+                    await airdropToMultiple([minter.publicKey], epochClient.connection, 100 * LAMPORTS_PER_SOL);
                     await performMinterClaim(minter, epochClient);
                     assert.fail('transaction should have failed');
                 } catch (err) {
@@ -352,12 +354,11 @@ describe("The Epochs Program", () => {
             });
 
 
-            // TODO NEED TO FIX PROGRAM TO ACCEPT PAYMENTS
-            it.skip("should be unable to claim with insufficient funds", async function () {
+            it("should be unable to claim with insufficient funds", async function () {
                 await waitUntilTimeStamp(startTime + 1, 1000, epochClient);
                 const minter = Keypair.generate();
                 try {
-                    await airdropToMultiple([minter.publicKey], epochClient.connection, 0.1 * anchor.web3.LAMPORTS_PER_SOL);
+                    await airdropToMultiple([minter.publicKey], epochClient.connection, 0.1 * LAMPORTS_PER_SOL);
                     await performMinterClaim(minter, epochClient);
                     assert.fail('transaction should have failed');
                 } catch (err) {
@@ -370,7 +371,7 @@ describe("The Epochs Program", () => {
                 for (let i = 0; i < numLoops; i++) {
                     try {
                         const minters = Array.from({ length: numberOfMints }, (_, i) => Keypair.generate());
-                        await airdropToMultiple(minters.map(m => m.publicKey), epochClient.connection, 100 * anchor.web3.LAMPORTS_PER_SOL);
+                        await airdropToMultiple(minters.map(m => m.publicKey), epochClient.connection, 100 * LAMPORTS_PER_SOL);
                         const claimPromises = minters.map(async (minter, i) => {
                             return performMinterClaim(minter, epochClient);
                         });
@@ -399,7 +400,7 @@ describe("The Epochs Program", () => {
             it("should not be able to mint after closed", async function () {
                 const minter = Keypair.generate();
                 try {
-                    await airdropToMultiple([minter.publicKey], epochClient.connection, 0.1 * anchor.web3.LAMPORTS_PER_SOL);
+                    await airdropToMultiple([minter.publicKey], epochClient.connection, 0.1 * LAMPORTS_PER_SOL);
                     await performMinterClaim(minter, epochClient);
                     assert.fail('transaction should have failed');
                 } catch (err) {
@@ -408,5 +409,4 @@ describe("The Epochs Program", () => {
             });
         });
     });
-
 });

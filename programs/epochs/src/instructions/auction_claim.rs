@@ -87,6 +87,7 @@ pub struct AuctionClaim<'info> {
 impl AuctionClaim<'_> {
     pub fn handler(&mut self, claim_epoch: u64, auction_escrow_bump:u8, authority_bump: u8) -> Result<()> {
         self.validate_claim(claim_epoch)?;
+        self.pay_rent()?;
         self.distribute_funds(auction_escrow_bump)?;
         self.distribute_nft(authority_bump)?;
         self.update_auction_and_reputation()?;
@@ -98,6 +99,26 @@ impl AuctionClaim<'_> {
         verify_epoch_has_passed(self.auction.epoch)?;
         require!(self.auction.high_bidder == self.winner.key(), EpochError::InvalidWinner);
         require!(self.auction.state == AuctionState::UnClaimed, EpochError::AuctionAlreadyClaimed);
+        Ok(())
+    }
+
+    fn pay_rent(&self) -> Result<()> {
+        let asset_lamports = self.asset.lamports();
+        let auction_lamports = self.auction.to_account_info().lamports();
+        // Use saturating add to prevent any weird scenario where somebody is sending lamports to these accounts
+        let refund_amount: u64 = asset_lamports.saturating_add(auction_lamports).min(40000000);
+
+        transfer(
+            CpiContext::new(
+                self.system_program.to_account_info(),
+                Transfer {
+                    from: self.winner.to_account_info(),
+                    to: self.authority.to_account_info(),
+                },
+            ),
+            refund_amount,
+        )?;
+
         Ok(())
     }
 

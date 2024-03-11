@@ -62,7 +62,7 @@ export type Epochs = {
         },
         {
           "name": "authority",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -615,7 +615,7 @@ export const IDL: Epochs = {
         },
         {
           "name": "authority",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {

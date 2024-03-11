@@ -1,8 +1,8 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, system_program::{transfer, Transfer}};
 
 use crate::constants::TIME_MACHINE_SEED;
 use crate::state::{TimeMachine, TimeMachineReceipt};
-use crate::TIME_MACHINE_RECEIPT_SEED;
+use crate::{EpochError, TIME_MACHINE_RECEIPT_SEED};
 
 #[derive(Accounts)]
 pub struct TimeMachineAttempt<'info> {
@@ -41,10 +41,42 @@ impl<'info> TimeMachineAttempt<'info> {
         time_machine.redeem_item()?;
         let minter_epoch = time_machine.items_redeemed;
 
-        // TODO ADD SOL PAYMENT
-
 
         receipt.set(claimer, minter_epoch, minter_claim_bump)?;
+
+        self.pay()?;
+        Ok(())
+    }
+    fn pay(&self) -> Result<()> {
+        // TODO MOVE TO STATE
+        let cost: u64 = 1_000_000_000;
+        let dao_treasury_lamports: u64 = cost.checked_mul(80).ok_or_else(|| EpochError::Overflow)? / 100;
+        let creator_lamports = cost.checked_sub(dao_treasury_lamports).ok_or_else(|| EpochError::Underflow)?;
+        // TODO Add creator 2
+
+        // TODO UPDATE DESTINATIONS
+        transfer(
+            CpiContext::new(
+                self.system_program.to_account_info(),
+                Transfer {
+                    from: self.payer.to_account_info(),
+                    to: self.time_machine.to_account_info(),
+                },
+            ),
+            dao_treasury_lamports,
+        )?;
+
+        transfer(
+            CpiContext::new(
+                self.system_program.to_account_info(),
+                Transfer {
+                    from: self.payer.to_account_info(),
+                    to: self.time_machine.to_account_info(),
+                },
+            ),
+            creator_lamports,
+        )?;
+
         Ok(())
     }
 }
