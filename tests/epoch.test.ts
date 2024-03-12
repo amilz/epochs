@@ -149,6 +149,7 @@ describe("The Epochs Program", () => {
             // Act
             sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer]);
             deserializedAsset = await epochClient.fetchDeserializedAssetByEpoch({ epoch: testEpoch });
+            deserializedAsset.saveImg();
         });
 
         describe("Auction Initiation", () => {
@@ -277,7 +278,6 @@ describe("The Epochs Program", () => {
                     console.log(err);
                     assert.fail('error minting', err);
                 }
-
             });
         });
     });
@@ -301,20 +301,20 @@ describe("The Epochs Program", () => {
                 currentTime = await epochClient.connection.getBlockTime(slot);
                 startTime = currentTime + timeToWaitInSeconds;
             });
-        
+
             it("should prevent initiation with wrong authorization", async () => {
                 const wrongAuthority = payer; // use an existing KP w/ lamports so it will not fail b/c 0 balance
-        
+
                 const tx = await epochClient.createTimeMachineInitInstruction({
                     itemsAvailable: startNumberItems,
                     startTime: startTime
                 });
-        
+
                 const { blockhash, lastValidBlockHeight } = await epochClient.connection.getLatestBlockhash();
                 tx.recentBlockhash = blockhash;
                 tx.lastValidBlockHeight = lastValidBlockHeight;
                 tx.sign(wrongAuthority);
-        
+
                 try {
                     await sendAndConfirmTransaction(epochClient.connection, tx, [wrongAuthority]);
                     assert.fail('Transaction should not succeed with wrong authority');
@@ -322,7 +322,7 @@ describe("The Epochs Program", () => {
                     assert.ok(err, "Expected transaction to fail with wrong authorization");
                 }
             });
-        
+
             it("should initiate the time machine with correct authorization", async () => {
                 let sig;
                 try {
@@ -335,7 +335,7 @@ describe("The Epochs Program", () => {
                     tx.lastValidBlockHeight = lastValidBlockHeight;
                     tx.sign(AUTHORITY);
                     sig = await sendAndConfirmTransaction(epochClient.connection, tx, [AUTHORITY]);
-        
+
                     const state = await epochClient.fetchMinterDetails();
                     assert.ok(state, 'should have state');
                     assert.equal(state.itemsAvailable.toNumber(), startNumberItems, "Expected number of items to be available");
@@ -418,6 +418,7 @@ describe("The Epochs Program", () => {
                     }
                 }
             });
+
             it("should be empty and disabled after all mints are claimed", async () => {
                 try {
                     const state = await epochClient.fetchMinterDetails();
@@ -427,6 +428,7 @@ describe("The Epochs Program", () => {
                     assert.fail('error fetching state', err);
                 }
             });
+
             it("should not be able to mint after closed", async function () {
                 const minter = Keypair.generate();
                 try {
@@ -436,6 +438,34 @@ describe("The Epochs Program", () => {
                 } catch (err) {
                     assert.ok(err, "Expected minting to fail");
                 }
+            });
+            it("should have correct metadata for each asset", async () => {
+                const assets = Array.from({ length: numberOfMints * numLoops }, (_, i) => i + 1);
+                const promises = assets.map(async (i) => {
+                    try {
+                        const asset = await epochClient.fetchDeserializedAssetByEpoch({ epoch: i });
+                        assert.strictEqual(asset.name, `Epoch #${i}`, `Expected asset name to be "Epoch #${i}"`);
+                        assert.strictEqual(asset.state, 0, "Expected asset state to be 0");
+                        assert.strictEqual(asset.standard, 0, "Expected asset standard to be 0");
+                        assert.strictEqual(asset.mutable, false, "Expected asset mutable to be false");
+                        assert.strictEqual(asset.group, epochClient.fetchGroupPda().toBase58(), "Expected asset group to match group PDA");
+                        assert.strictEqual(asset.authority, epochClient.fetchAuthorityPda().toBase58(), "Expected asset authority to match authority PDA");
+                        assert.strictEqual(asset.delegate, null, "Expected asset delegate to be null");
+
+                        const expectedExtensions = [
+                            { number: 1, name: "Attributes" },
+                            { number: 2, name: "Blob" },
+                        ];
+                        expectedExtensions.forEach((extension) =>
+                            assert.isTrue(asset.extensions.some((ext) => ext.type === extension.number),
+                                `Group should include extension type ${extension.name}.`)
+                        );
+
+                    } catch (err) {
+                        assert.fail(`Error fetching or asserting Asset ${i}: ${err.message}`);
+                    }
+                });
+                await Promise.all(promises);
             });
         });
     });
