@@ -218,6 +218,20 @@ describe("The Epochs Program", () => {
                 }
                 auctionResults.set(testEpoch, { highBidder: lastBidder, bidAmount: lastBidAmount });
             });
+            it("should prevent a low bid", async () => {
+                const lowBid = 0.1 * LAMPORTS_PER_SOL;
+                try {
+                    const tx = await epochClient.createBidTransaction({ bidder: bidder1.publicKey, bidAmount: lowBid });
+                    const { blockhash, lastValidBlockHeight } = (await epochClient.connection.getLatestBlockhash());
+                    tx.recentBlockhash = blockhash;
+                    tx.lastValidBlockHeight = lastValidBlockHeight;
+                    tx.sign(bidder1);
+                    const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [bidder1]);
+                    assert.fail('Expected minting to fail');
+                } catch (err) {
+                    assert.ok(err, "Expected minting to fail");
+                }
+            });
 
         });
         describe("Auction Conclusion", () => {
