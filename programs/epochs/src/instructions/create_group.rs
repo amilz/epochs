@@ -11,7 +11,7 @@ use anchor_lang::{
     },
 };
 use nifty_asset::{
-    extensions::{CreatorsBuilder, ExtensionBuilder, GroupBuilder, LinksBuilder, MetadataBuilder, RoyaltiesBuilder},
+    extensions::{CreatorsBuilder, ExtensionBuilder, GroupingBuilder, LinksBuilder, MetadataBuilder, RoyaltiesBuilder},
     instructions::{AllocateBuilder, CreateBuilder},
     types::{ExtensionInput, ExtensionType, Standard},
     ID as NiftyAssetID,
@@ -103,7 +103,7 @@ impl<'info> CreateGroup<'info> {
     }
 
     fn create_group(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 2]) -> Result<()> {
-        let mut group_builder = GroupBuilder::default();
+        let mut group_builder = GroupingBuilder::default();
         let group_data = group_builder.build();
 
         let group_ix: Instruction = AllocateBuilder::new()
@@ -201,7 +201,7 @@ impl<'info> CreateGroup<'info> {
     ) -> Result<()> {
         let create_ix = CreateBuilder::new()
             .asset(self.asset.key())
-            .authority(self.authority.key())
+            .authority(self.authority.key(), false)
             .owner(self.authority.key())
             .group(None)
             .payer(Some(self.payer.key()))

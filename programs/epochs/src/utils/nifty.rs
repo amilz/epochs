@@ -3,9 +3,7 @@ use anchor_lang::{
     solana_program::{instruction::Instruction, program::invoke_signed, system_program},
 };
 use nifty_asset::{
-    extensions::{AttributesBuilder, ExtensionBuilder},
-    instructions::{AllocateBuilder, CreateBuilder},
-    types::{ExtensionInput, ExtensionType, Standard},
+    allocate_instruction_data, extensions::{AttributesBuilder, ExtensionBuilder}, instructions::{AllocateBuilder, AllocateCpiAccounts, CreateBuilder}, types::{ExtensionInput, ExtensionType, Standard}
 };
 
 use crate::generate_asset;
@@ -43,47 +41,32 @@ pub fn write_attributes(
     Ok(())
 }
 
-pub fn write_rawimg_and_traits(
-    asset: Pubkey,
-    payer: Pubkey,
-    account_infos: &[AccountInfo],
+pub fn write_rawimg_and_traits<'a>(
+    asset: AccountInfo<'a>,
+    payer: AccountInfo<'a>,
+    system_program: AccountInfo<'a>,
+    nifty_asset_program: AccountInfo<'a>,
+    account_infos: &[AccountInfo<'a>],
     signer_seeds: &[&[&[u8]]; 1],
     epoch: u64,
 ) -> Result<()> {
-    let assets = generate_asset(epoch, payer);
-    write_attributes(asset, payer, &account_infos, signer_seeds, assets.1)?;
+    let assets = generate_asset(epoch, payer.key());
+    write_attributes(asset.key(), payer.key(), &account_infos, signer_seeds, assets.1)?;
     let mut blob_data = Vec::new();
     set_data(&mut blob_data, "img/bmp", &assets.0);
 
-    // Custom Blob Builder to minimize Heap
-    let extension_data = ExtensionInput {
-        extension_type: ExtensionType::Blob,
-        length: blob_data.len() as u32,
-        data: Some(blob_data),
-    };
-    let mut serialized_extension_data = extension_data.try_to_vec()?;
+    let borrowed_blob = &blob_data;
 
-    let instruction_data = AllocateInstructionData {
-        discriminator: 4, // The discriminator for allocate
-    };
-
-    // Serialize instruction data
-    let mut serialized_instruction_data = instruction_data.try_to_vec()?;
-    serialized_instruction_data.append(&mut serialized_extension_data);
-
-    let accounts = vec![
-        AccountMeta::new(asset, true),
-        AccountMeta::new(payer, true),
-        AccountMeta::new_readonly(system_program::ID, false),
-    ];
-
-    let blob_ix = Instruction {
-        program_id: nifty_asset::ID,
-        accounts,
-        data: serialized_instruction_data,
-    };
-
-    invoke_signed(&blob_ix, account_infos, signer_seeds)?;
+    AllocateCpiAccounts {
+        asset: &asset,
+        payer: Some(&payer),
+        system_program: Some(&system_program),
+    }
+    .invoke_signed(
+        &nifty_asset_program,
+        allocate_instruction_data!(ExtensionType::Blob, borrowed_blob.len(), borrowed_blob),
+        signer_seeds
+        )?;
     Ok(())
 }
 
@@ -101,7 +84,7 @@ pub fn create_asset(
     let name = format!("Epoch #{}", epoch);
     let create_ix = CreateBuilder::new()
         .asset(asset)
-        .authority(authority)
+        .authority(authority, true)
         .owner(owner)
         .group(Some(group))
         .payer(Some(payer))
@@ -109,7 +92,6 @@ pub fn create_asset(
         .name(name)
         .standard(Standard::NonFungible)
         .mutable(false)
-        .add_remaining_account(AccountMeta::new_readonly(authority, true))
         .instruction();
     invoke_signed(&create_ix, account_infos, signer_seeds)?;
     Ok(())

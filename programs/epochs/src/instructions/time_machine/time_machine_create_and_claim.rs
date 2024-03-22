@@ -78,8 +78,10 @@ impl<'info> TimeMachienCreateAndClaim<'info> {
         let combined_signer_seeds = &[&asset_seeds[..], &authority_seeds[..]];
 
         write_rawimg_and_traits(
-            self.asset.key(),
-            self.payer.key(),
+            self.asset.to_account_info(),
+            self.payer.to_account_info(),
+            self.system_program.to_account_info(),
+            self.oss_program.to_account_info(),
             &account_infos,
             asset_signer_seeds,
             mint_epoch,
