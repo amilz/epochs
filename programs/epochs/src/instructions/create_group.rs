@@ -84,7 +84,7 @@ impl<'info> CreateGroup<'info> {
         creators.add(&Pubkey::from_str(DAO_TREASURY_WALLET).unwrap(), true, DAO_TREASURY_SHARE);
         creators.add(&Pubkey::from_str(CREATOR_WALLET_1).unwrap(), true, CREATOR_1_SHARE);
         creators.add(&Pubkey::from_str(CREATOR_WALLET_2).unwrap(), true, CREATOR_2_SHARE);
-        let creators_data = creators.build();
+        let creators_data = creators.data();
 
         let creator_ix: Instruction = AllocateBuilder::new()
             .asset(self.asset.key())
@@ -104,7 +104,7 @@ impl<'info> CreateGroup<'info> {
 
     fn create_group(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 2]) -> Result<()> {
         let mut group_builder = GroupingBuilder::default();
-        let group_data = group_builder.build();
+        let group_data = group_builder.data();
 
         let group_ix: Instruction = AllocateBuilder::new()
             .asset(self.asset.key())
@@ -133,7 +133,7 @@ impl<'info> CreateGroup<'info> {
             "image",
             "https://arweave.net/aFnc6QVyRR-gVx6pKYSFu0MiwijQzFdU4fMSuApJqms",
         );
-        let links_data: Vec<u8> = links_builder.build();
+        let links_data: Vec<u8> = links_builder.data();
 
         let links_ix: Instruction = AllocateBuilder::new()
             .asset(self.asset.key())
@@ -176,7 +176,7 @@ impl<'info> CreateGroup<'info> {
         let mut metadata_builder = MetadataBuilder::default();
         metadata_builder.set(Some("EPOCHS"), Some("One Epoch, every epoch, forever."), Some("https://epochs.wtf/"));
         
-        let metadata: Vec<u8> = metadata_builder.build();
+        let metadata: Vec<u8> = metadata_builder.data();
 
         let links_ix: Instruction = AllocateBuilder::new()
             .asset(self.asset.key())

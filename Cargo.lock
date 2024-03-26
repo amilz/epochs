@@ -1234,9 +1234,9 @@ dependencies = [
 
 [[package]]
 name = "nifty-asset"
-version = "0.0.1-alpha.3"
+version = "0.0.1-alpha.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "99238aae879eafc74679bfa512af21b5694ebfb0c485d5f709c4e33b2dd463a9"
+checksum = "1c2ad298804a5494c181ad902dcad7d085351f8d90389519d91e1ab07f934eef"
 dependencies = [
  "borsh 0.10.3",
  "kaigan",
@@ -1249,9 +1249,9 @@ dependencies = [
 
 [[package]]
 name = "nifty-asset-types"
-version = "0.0.1-alpha.2"
+version = "0.0.1-alpha.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0b94791938a72017c1cb3a95eef3b593d8871013d108463b2478cbaef5e6818"
+checksum = "8b7980c5b4835e711e638f980fb1bd6088c608aff54b959db1b3bf2331b85c56"
 dependencies = [
  "borsh 0.10.3",
  "bytemuck",

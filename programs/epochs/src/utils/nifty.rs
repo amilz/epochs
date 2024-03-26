@@ -23,7 +23,7 @@ pub fn write_attributes(
     attributes_builder.add("Clothes", &traits.1.to_string());
     attributes_builder.add("Glasses", &traits.2.to_string());
     attributes_builder.add("Body", &traits.3.to_string());
-    let attributes_data: Vec<u8> = attributes_builder.build();
+    let attributes_data = attributes_builder.data();
 
     let attributes_ix: Instruction = AllocateBuilder::new()
         .asset(asset)
