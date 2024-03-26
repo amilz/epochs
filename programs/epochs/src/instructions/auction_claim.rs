@@ -51,7 +51,14 @@ pub struct AuctionClaim<'info> {
         mut,
         address = Pubkey::from_str(CREATOR_WALLET_1).unwrap() @EpochError::InvalidCreator
     )]
-    creator_wallet: SystemAccount<'info>,
+    creator1_wallet: SystemAccount<'info>,
+
+    #[account(
+        mut,
+        address = Pubkey::from_str(CREATOR_WALLET_2).unwrap() @EpochError::InvalidCreator
+    )]
+    creator2_wallet: SystemAccount<'info>,
+
 
     /// CHECK: use bump seeds and validate on auction
     #[account(
@@ -125,8 +132,11 @@ impl AuctionClaim<'_> {
     fn distribute_funds(&self, escrow_bump: u8) -> Result<()> {
         let escrow_balance: u64 = self.auction.high_bid_lamports;
         let dao_treasury_lamports = escrow_balance.checked_mul(80).ok_or_else(|| EpochError::Overflow)? / 100;
-        let creator_lamports = escrow_balance.checked_sub(dao_treasury_lamports).ok_or_else(|| EpochError::Underflow)?;
-        // TODO Add creator 2
+        let creator1_lamports = escrow_balance.checked_mul(5).ok_or_else(|| EpochError::Overflow)? / 100;
+        let creator2_lamports = escrow_balance.checked_sub(dao_treasury_lamports)
+            .ok_or_else(|| EpochError::Underflow)?
+            .checked_sub(creator1_lamports)
+            .ok_or_else(|| EpochError::Underflow)?;
 
         let bump = &[escrow_bump];
         let seeds: &[&[u8]] = &[AUCTION_ESCROW_SEED.as_ref(), bump];
@@ -148,10 +158,21 @@ impl AuctionClaim<'_> {
                 self.system_program.to_account_info(),
                 Transfer {
                     from: self.auction_escrow.to_account_info(),
-                    to: self.creator_wallet.to_account_info(),
+                    to: self.creator1_wallet.to_account_info(),
                 },
             ).with_signer(signer_seeds),
-            creator_lamports,
+            creator1_lamports,
+        )?;
+
+        transfer(
+            CpiContext::new(
+                self.system_program.to_account_info(),
+                Transfer {
+                    from: self.auction_escrow.to_account_info(),
+                    to: self.creator2_wallet.to_account_info(),
+                },
+            ).with_signer(signer_seeds),
+            creator2_lamports,
         )?;
 
         Ok(())

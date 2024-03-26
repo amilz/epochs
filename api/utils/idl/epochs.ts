@@ -193,7 +193,12 @@ export type Epochs = {
           "isSigner": false
         },
         {
-          "name": "creatorWallet",
+          "name": "creator1Wallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator2Wallet",
           "isMut": true,
           "isSigner": false
         },
@@ -270,6 +275,16 @@ export type Epochs = {
         },
         {
           "name": "receipt",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator1Wallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator2Wallet",
           "isMut": true,
           "isSigner": false
         },
@@ -746,7 +761,12 @@ export const IDL: Epochs = {
           "isSigner": false
         },
         {
-          "name": "creatorWallet",
+          "name": "creator1Wallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator2Wallet",
           "isMut": true,
           "isSigner": false
         },
@@ -823,6 +843,16 @@ export const IDL: Epochs = {
         },
         {
           "name": "receipt",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator1Wallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator2Wallet",
           "isMut": true,
           "isSigner": false
         },

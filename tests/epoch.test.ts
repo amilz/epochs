@@ -1,12 +1,13 @@
 import { Keypair, LAMPORTS_PER_SOL, sendAndConfirmTransaction, SystemProgram } from "@solana/web3.js";
 import { airdropToMultiple, initIdlToChain, waitTilEpochIs, waitUntilTimeStamp } from "./utils/utils";
-import { assert } from "chai";
+import { assert, expect } from "chai";
 import { ReputationPoints, ReputationTracker } from "./utils/reputation";
 import { AUTHORITY } from "./utils/consts";
 import { EpochClient } from "@epochs/api";
 import { performMinterClaim, performMinterRedeem } from "./utils/instructions/timeMachine";
 import { Asset } from "@epochs/api/utils/deserialize/deserialize";
 import { performRandomBid } from "./utils/instructions/bid";
+import { CREATOR1_WALLET, CREATOR2_WALLET, DAO_TREASURY } from "@epochs/api/utils";
 
 describe("The Epochs Program", () => {
     const epochClient = EpochClient.local();
@@ -277,8 +278,15 @@ describe("The Epochs Program", () => {
             it("should allow the auction winner to claim the reward", async () => {
                 await waitTilEpochIs(testEpoch + 1, epochClient.connection);
 
-                const { highBidder: winner } = await epochClient.fetchAuction({ epoch: testEpoch });
+                const { highBidder: winner, highBidLamports } = await epochClient.fetchAuction({ epoch: testEpoch });
                 const winnerKey = auctionResults.get(testEpoch).highBidder;
+
+                const [preBalanceCreator1, preBalanceCreator2, preBalanceTreasury, preBalanceAuctionEscrow] = await Promise.all([
+                    epochClient.connection.getBalance(CREATOR1_WALLET),
+                    epochClient.connection.getBalance(CREATOR2_WALLET),
+                    epochClient.connection.getBalance(DAO_TREASURY),
+                    epochClient.connection.getBalance(epochClient.fetchAuctionEscrowPda())
+                ]);
 
                 try {
                     const tx = await epochClient.createClaimInstruction({ winner, epoch: testEpoch });
@@ -288,6 +296,27 @@ describe("The Epochs Program", () => {
                     tx.sign(winnerKey);
                     const sig = await sendAndConfirmTransaction(epochClient.connection, tx, [winnerKey]);
                     assert.ok(sig, 'should have signature');
+
+                    const [postBalanceCreator1, postBalanceCreator2, postBalanceTreasury, postBalanceAuctionEscrow] = await Promise.all([
+                        epochClient.connection.getBalance(CREATOR1_WALLET),
+                        epochClient.connection.getBalance(CREATOR2_WALLET),
+                        epochClient.connection.getBalance(DAO_TREASURY),
+                        epochClient.connection.getBalance(epochClient.fetchAuctionEscrowPda())
+                    ]);
+
+                    const DAO_TREASURY_PERCENTAGE = 80;
+                    const CREATOR1_PERCENTAGE = 5;
+
+                    const totalDistributed = highBidLamports.toNumber(); 
+                    const expectedDaoTreasuryBalance = preBalanceTreasury + Math.floor(totalDistributed * DAO_TREASURY_PERCENTAGE / 100);
+                    const expectedCreator1Balance = preBalanceCreator1 + Math.floor(totalDistributed * CREATOR1_PERCENTAGE / 100);
+                    const expectedCreator2Balance = preBalanceCreator2 + (totalDistributed - (expectedDaoTreasuryBalance + expectedCreator1Balance));
+                    const expectedAuctionEscrowBalance = preBalanceAuctionEscrow - totalDistributed;
+                    expect(postBalanceTreasury).to.equal(expectedDaoTreasuryBalance, "DAO treasury balance did not match the expected value after distribution.");
+                    expect(postBalanceCreator1).to.equal(expectedCreator1Balance, "Creator1 balance did not match the expected value after distribution.");
+                    expect(postBalanceCreator2).to.equal(expectedCreator2Balance, "Creator2 balance did not match the expected value after distribution.");
+                    expect(postBalanceAuctionEscrow).to.equal(expectedAuctionEscrowBalance, "Auction escrow balance did not match the expected value after distribution.");
+                    expect(postBalanceAuctionEscrow).to.equal(0, "Auction escrow balance should be 0 after distribution.");
                 } catch (err) {
                     console.log(err);
                     assert.fail('error minting', err);
@@ -422,6 +451,7 @@ describe("The Epochs Program", () => {
                         await Promise.all(claimPromises);
                         const state = await epochClient.fetchMinterDetails();
                         assert.equal(state.itemsRedeemed.toNumber(), (numberOfMints * (i + 1)), "1 Mint expected for each minter");
+                        // TODO Test post balances
                         const redeemPromises = minters.map(async (minter, i) => {
                             return performMinterRedeem(minter, epochClient);
                         });

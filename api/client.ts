@@ -142,7 +142,6 @@ export class EpochClient {
     public async fetchAssetAndImageByEpoch({ epoch }: { epoch: number }) {
         const deserializedAsset = await this.fetchDeserializedAssetByEpoch({ epoch });
         const { extensions, ...assetWithoutExtensions } = deserializedAsset;
-        // TODO Add Tests on the assetWithoutExtensions
         const png = await deserializedAsset.fetchBase64Png();
         return { epoch, extensions, assetWithoutExtensions, png };
     }

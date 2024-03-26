@@ -2,7 +2,8 @@ import { PublicKey, Transaction, SystemProgram, ComputeBudgetProgram } from "@so
 import { Program, BN } from "@coral-xyz/anchor";
 import {
     AUTHORITY,
-    CREATOR_WALLET,
+    CREATOR1_WALLET,
+    CREATOR2_WALLET,
     DAO_TREASURY,
     NIFTY_PROGRAM_ID,
     SYSTEM_PROGRAM,
@@ -183,7 +184,8 @@ export class TransactionBuilder {
             reputation: reputationPda,
             systemProgram: SystemProgram.programId,
             daoTreasury: DAO_TREASURY,
-            creatorWallet: CREATOR_WALLET,
+            creator1Wallet: CREATOR1_WALLET,
+            creator2Wallet: CREATOR2_WALLET,
             asset,
             authority: groupAuthority,
             ossProgram: NIFTY_PROGRAM_ID,
@@ -231,6 +233,8 @@ export class TransactionBuilder {
             payer,
             timeMachine: getTimeMachinePda(this.program),
             receipt: getTimeMachineReceiptPda(this.program, payer),
+            creator1Wallet: CREATOR1_WALLET,
+            creator2Wallet: CREATOR2_WALLET,
             systemProgram: SystemProgram.programId,
         };
 
