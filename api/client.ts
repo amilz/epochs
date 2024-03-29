@@ -5,6 +5,7 @@ import { EPOCH_PROGRAM_ID, getAuctionEscrowPda, getAuctionPda, getAuthorityPda, 
 import { ApiError, SolanaQueryType } from "./errors";
 import { TransactionBuilder } from './transactionBuilder';
 import { Asset } from "./utils/deserialize/deserialize";
+import { Auction } from "./utils/types";
 
 interface EpochClientArgs {
     connection: Connection;
@@ -42,9 +43,20 @@ export class EpochClient {
         return new EpochClient({ connection: new Connection("http://localhost:8899", 'processed') });
     }
 
-    private async getCurrentEpoch(): Promise<number> {
+    public async getCurrentEpoch(): Promise<number> {
         const { epoch } = await this.program.provider.connection.getEpochInfo();
         return epoch;
+    }
+
+    public async isCurrentAuctionActive(): Promise<boolean> {
+        const epoch = await this.getCurrentEpoch();
+        try {
+            const auction = await this.fetchAuction({ epoch });
+            if (!auction) { return false }
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     public async createGroupTransaction({ payer }: { payer: PublicKey }): Promise<Transaction> {
@@ -133,7 +145,7 @@ export class EpochClient {
         try {
             const auction = await this.fetchAuction({ epoch });
             if (!auction) { throw ApiError.solanaQueryError(SolanaQueryType.AUCTION_NOT_INITIALIZED) }
-            return auction;
+            return auction as Auction;
         } catch (error) {
             throw ApiError.solanaQueryError(SolanaQueryType.AUCTION_NOT_INITIALIZED);
         }

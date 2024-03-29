@@ -19,5 +19,6 @@ default = []
 anchor-lang = {version="0.29.0", features = ["init-if-needed"]}
 anchor-spl = "0.29.0"
 ahash = "=0.8.6"
-nifty-asset = "0.0.1-alpha.4"
-nifty-asset-types = "0.0.1-alpha.3"
+nifty-asset = "0.1.1"
+nifty-asset-types = "0.1.0"
+solana-program = "1.18.9"

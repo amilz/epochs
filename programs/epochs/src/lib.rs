@@ -12,7 +12,7 @@ pub use instructions::{time_machine, *};
 pub use state::*;
 pub use error::*;
 
-declare_id!("epochsiFg8ornJS22urHE3jgveYuFydxPC79tdcbYc8");
+declare_id!("epoZLPTE49aXQ5WLem3W3Jr2thfVgZWFJwkRJZGBsfS");
 
 #[program]
 pub mod epochs {
