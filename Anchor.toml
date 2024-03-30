@@ -14,7 +14,7 @@ epochs = "epoZLPTE49aXQ5WLem3W3Jr2thfVgZWFJwkRJZGBsfS"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Devnet"
+cluster = "Localnet"
 wallet = "/Users/amilz/.config/solana/id.json"
 
 [scripts]
@@ -38,3 +38,4 @@ ledger = ".anchor/test-ledger"
 rpc_port = 8899
 slots_per_epoch = "32"
 warp_slot = "18464"
+deactivate_feature = "GDH5TVdbTPUpRnXaRyQqiKUa7uZAbZ28Q2N9bhbKoMLm"

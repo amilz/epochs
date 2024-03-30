@@ -935,7 +935,6 @@ dependencies = [
  "anchor-spl",
  "nifty-asset",
  "nifty-asset-types",
- "solana-program",
 ]
 
 [[package]]
@@ -1280,9 +1279,9 @@ dependencies = [
 
 [[package]]
 name = "nifty-asset"
-version = "0.1.1"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07924c2751e0a662aba6ec8d5d0c5bff486429525026ef4d26fcee6d5eaf254f"
+checksum = "bc61286914c500078d36e89d76313f6a05170f051e05c5026825a299985bb268"
 dependencies = [
  "borsh 0.10.3",
  "kaigan",

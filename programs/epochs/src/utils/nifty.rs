@@ -3,9 +3,10 @@ use anchor_lang::{
     solana_program::{instruction::Instruction, program::invoke_signed, system_program},
 };
 use nifty_asset::{
-    allocate_and_write, allocate_instruction_data, extensions::{AttributesBuilder, ExtensionBuilder}, instructions::{
-        AllocateBuilder, AllocateCpiAccounts, CreateBuilder, WriteBuilder, WriteCpi, WriteCpiAccounts, WriteCpiBuilder
-    }, types::{ExtensionInput, ExtensionType, Standard}
+    allocate_and_write, 
+    extensions::{AttributesBuilder, ExtensionBuilder}, 
+    instructions::{AllocateBuilder, CreateBuilder}, 
+    types::{ExtensionInput, ExtensionType, Standard}
 };
 
 use crate::generate_asset;
@@ -75,82 +76,6 @@ pub fn write_rawimg_and_traits<'a>(
         &blob_data,
         signer_seeds
     );
-
-    //let borrowed_blob = &blob_data;
-/*     let empty: &Vec<u8> = &Vec::new();
-    log_heap_usage(0);
-    AllocateCpiAccounts {
-        asset: &asset,
-        payer: Some(&payer),
-        system_program: Some(&system_program),
-    }
-    .invoke_signed(
-        &nifty_asset_program,
-        allocate_instruction_data!(ExtensionType::Blob, blob_data.len(), empty),
-        signer_seeds,
-    )?;
-
-    log_heap_usage(1);
-    WriteCpiBuilder::new(&nifty_asset_program)
-        .asset(&asset)
-        .payer(&payer)
-        .system_program(&system_program)
-        .overwrite(false)
-        .bytes(blob_data[..1100].to_vec())
-        .invoke_signed(signer_seeds)?;
-    log_heap_usage(2);
-    WriteCpiBuilder::new(&nifty_asset_program)
-        .asset(&asset)
-        .payer(&payer)
-        .system_program(&system_program)
-        .overwrite(false)
-        .bytes(blob_data[1100..2200].to_vec())
-        .invoke_signed(signer_seeds)?;
-    log_heap_usage(3);
-    WriteCpiBuilder::new(&nifty_asset_program)
-        .asset(&asset)
-        .payer(&payer)
-        .system_program(&system_program)
-        .overwrite(false)
-        .bytes(blob_data[2200..].to_vec())
-        .invoke_signed(signer_seeds)?;
- */
-
-/*     log_heap_usage(1);
-    let write_ix_1 = WriteBuilder::new()
-        .asset(asset.key())
-        .payer(payer.key())
-        .system_program(system_program.key())
-        .overwrite(false)
-        .bytes(blob_data[..1100].to_vec())
-        .instruction();
-
-    invoke_signed(&write_ix_1, account_infos, signer_seeds)?;
-
-    log_heap_usage(2);
-    let write_ix_2 = WriteBuilder::new()
-        .asset(asset.key())
-        .payer(payer.key())
-        .system_program(system_program.key())
-        .overwrite(false)
-        .bytes(blob_data[1100..2200].to_vec())
-        .instruction();
-
-    invoke_signed(&write_ix_2, account_infos, signer_seeds)?;
-
-    log_heap_usage(3);
-    let write_ix_3 = WriteBuilder::new()
-        .asset(asset.key())
-        .payer(payer.key())
-        .system_program(system_program.key())
-        .overwrite(false)
-        .bytes(blob_data[2200..].to_vec())
-        .instruction();
-
-    invoke_signed(&write_ix_3, account_infos, signer_seeds)?;
-
-    log_heap_usage(4); */
-
     Ok(())
 }
 

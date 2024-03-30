@@ -17,7 +17,7 @@ use nifty_asset::{
     ID as NiftyAssetID,
 };
 
-use nifty_asset_types::constraints::EmptyBuilder;
+use nifty_asset::constraints::EmptyBuilder;
 
 #[derive(Accounts)]
 pub struct CreateGroup<'info> {

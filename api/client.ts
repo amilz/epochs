@@ -48,6 +48,11 @@ export class EpochClient {
         return epoch;
     }
 
+    public async getCurrentEpochInfo() {
+        const epochInfo = await this.program.provider.connection.getEpochInfo();
+        return epochInfo;
+    }
+
     public async isCurrentAuctionActive(): Promise<boolean> {
         const epoch = await this.getCurrentEpoch();
         try {

@@ -8,7 +8,6 @@ import { performMinterClaim, performMinterRedeem } from "./utils/instructions/ti
 import { Asset } from "@epochs/api/utils/deserialize/deserialize";
 import { performRandomBid } from "./utils/instructions/bid";
 import { CREATOR1_WALLET, CREATOR2_WALLET, DAO_TREASURY } from "@epochs/api/utils";
-import { skip } from "node:test";
 
 describe("The Epochs Program", () => {
     const epochClient = EpochClient.local();
@@ -331,7 +330,7 @@ describe("The Epochs Program", () => {
             });
         });
     });
-    describe.skip("Retroactive Time Machine Mint", () => {
+    describe("Retroactive Time Machine Mint", () => {
         const timeToWaitInSeconds = 10;
         const startNumberItems = 250;
         const numberOfMints = 50;

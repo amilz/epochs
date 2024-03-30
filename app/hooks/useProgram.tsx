@@ -1,11 +1,12 @@
 import { useConnection } from "@solana/wallet-adapter-react";
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState, useRef } from "react";
 import { EpochClient } from "@epochs/api";
 import { Auction } from "@epochs/api/utils/types";
+import { EpochInfo } from "@solana/web3.js";
 
 export interface EpochsProgramContextState {
     epochClient: EpochClient;
-    epoch: number;
+    epochInfo?: EpochInfo;
     refreshAuction: () => void;
     auction?: Auction;
 }
@@ -20,42 +21,40 @@ export function useEpoch(): EpochsProgramContextState {
 
 export function EpochProgramProvider(props: { children: ReactNode }): JSX.Element {
     const [api, setApi] = useState<EpochClient>();
-    const [epoch, setEpoch] = useState<number>(0);
+    const [epochInfo, setEpochInfo] = useState<EpochInfo>();
     const [auction, setAuction] = useState<Auction>();
     const { connection } = useConnection();
+    const epochInfoRef = useRef<EpochInfo>();
 
     useEffect(() => {
         setApi(EpochClient.from(connection));
-    }, [connection, setApi]);
+    }, [connection]);
 
     const refreshAuction = useCallback(() => {
-        if (!api) return;
-        if (!epoch) return;
-        api.fetchAuction({ epoch })
-            .then((auction) => {
-                if (!auction) {
-                    setAuction(undefined);
-                    return;
-                }
-                setAuction(auction);
+        if (!api || !epochInfoRef.current) return;
+        api.fetchAuction({ epoch: epochInfoRef.current.epoch })
+            .then((fetchedAuction) => {
+                setAuction(fetchedAuction || undefined);
             })
             .catch((err) => {
                 setAuction(undefined);
             });
-    }, [api, setAuction, epoch]);
+    }, [api]);
+
 
     useEffect(() => {
         if (!api) return;
-        api.getCurrentEpoch().then((epoch) => {
-            setEpoch(epoch);
+        api.getCurrentEpochInfo().then((info) => {
+            setEpochInfo(info);
+            epochInfoRef.current = info;
             refreshAuction();
         });
-    }, [api, epoch, refreshAuction]);
+    }, [api]);
 
 
     const value: EpochsProgramContextState = {
         epochClient: api as EpochClient,
-        epoch,
+        epochInfo,
         refreshAuction,
         auction
     };
