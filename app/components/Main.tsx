@@ -1,12 +1,12 @@
 "use client"
-import { useEpoch } from '@/hooks/useProgram';
+import { useEpochProgram } from '@/hooks/useProgram';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { useEffect, useState } from 'react';
 
 const Main = () => {
     const [currentEpoch, setCurrentEpoch] = useState<number>(0);
     const { connected } = useWallet();
-    const { epochClient } = useEpoch();
+    const { epochClient } = useEpochProgram();
 
     useEffect(() => {
         const fetchData = async () => {

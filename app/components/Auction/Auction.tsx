@@ -1,5 +1,6 @@
 "use client"
-import { useEpoch } from '@/hooks/useProgram';
+import { useEpochProgram } from '@/hooks/useProgram';
+import { useEpoch } from '@/hooks/useEpoch';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { Transaction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
@@ -7,34 +8,38 @@ import { SendTransactionButton } from '../Transactions/SendTransactionButton';
 import { AuctionTable } from '@/components/Auction/AuctionTable';
 import { BidForm } from '@/components/Auction/BidForm';
 
-const Auction = () => {
+
+interface Props {
+    epochNumber?: number;
+}
+
+const Auction = ({ epochNumber }: Props) => {
     const [transaction, setTransaction] = useState<Transaction>();
     const [png, setPng] = useState<string>();
-    const { auction, epochInfo, epochClient, refreshAuction } = useEpoch();
+    const { epochInfo, api } = useEpochProgram();
+    const { auction, refreshAuction } = useEpoch({ epochNumber });
     const { publicKey: payer } = useWallet();
 
     useEffect(() => {
-        if (!epochClient) return;
+        if (!api) return;
         if (!payer) return;
         if (!auction) {
-            epochClient.createInitEpochTransaction({ payer }).then((transaction) => {
+            api.createInitEpochTransaction({ payer }).then((transaction) => {
                 setTransaction(transaction);
                 return;
             });
         }
-    }, [epochClient, payer, setTransaction, auction, epochInfo]);
+    }, [api, payer, setTransaction, auction, epochInfo]);
 
     useEffect(() => {
-        if (!epochClient) return;
+        if (!api) return;
         if (!auction) return;
         if (!epochInfo) return;
-        epochClient.fetchAssetAndImageByEpoch({ epoch: epochInfo.epoch }).then((asset) => {
+        api.fetchAssetAndImageByEpoch({ epoch: epochInfo.epoch }).then((asset) => {
             console.log(asset);
             setPng(asset.png);
         });
-    }, [epochClient, auction, epochInfo, setPng]);
-
-
+    }, [api, auction, epochInfo, setPng]);
 
     return (
         <div className="flex flex-col items-center justify-between p-24">

@@ -31,7 +31,7 @@ interface BlobComponents {
     //jsonData: Buffer;
 }
 
-interface ExtensionData {
+export interface ExtensionData {
     type: ExtensionType;
     length: number;
     boundary: number;
@@ -125,7 +125,7 @@ class Extension {
 
 }
 
-interface AssetParams {
+export interface AssetParams {
     discriminator: number;
     state: number;
     standard: number;

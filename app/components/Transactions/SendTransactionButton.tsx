@@ -6,7 +6,7 @@ import type { TransactionSignature } from '@solana/web3.js';
 import { Toaster, toast } from 'sonner';
 import { cluster } from '@/utils/constants';
 import { shortenHash, getExplorerUrl } from '@/utils/utils';
-import { useEpoch } from '@/hooks/useProgram';
+import { useEpochProgram } from '@/hooks/useProgram';
 
 type SendTransactionButtonProps = {
     transactionInstructions: TransactionInstruction[];
@@ -20,7 +20,7 @@ type SendTransactionButtonProps = {
 export const SendTransactionButton: FC<SendTransactionButtonProps> = ({ transactionInstructions, buttonLabel, width, invisible = false, onSuccess }) => {
     const { connection } = useConnection();
     const { publicKey, sendTransaction } = useWallet();
-    const { epochClient } = useEpoch();
+    const { api } = useEpochProgram();
     const [isLoading, setIsLoading] = useState(false);
 
     const onClick = useCallback(async () => {
@@ -54,7 +54,7 @@ export const SendTransactionButton: FC<SendTransactionButtonProps> = ({ transact
         } finally {
             setIsLoading(false);
         }
-    }, [publicKey, connection, sendTransaction, transactionInstructions, onSuccess, epochClient]);
+    }, [publicKey, connection, sendTransaction, transactionInstructions, onSuccess, api]);
 
     return (
         <div className={`${invisible ? 'w-full h-full' : ''} flex items-center justify-center w-full h-full`}>
