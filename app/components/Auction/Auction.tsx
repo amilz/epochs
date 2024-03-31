@@ -36,7 +36,6 @@ const Auction = ({ epochNumber }: Props) => {
         if (!auction) return;
         if (!epochInfo) return;
         api.fetchAssetAndImageByEpoch({ epoch: epochInfo.epoch }).then((asset) => {
-            console.log(asset);
             setPng(asset.png);
         });
     }, [api, auction, epochInfo, setPng]);

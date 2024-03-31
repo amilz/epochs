@@ -1,59 +1,82 @@
-import { useState, useEffect, useCallback } from "react";
-import { Auction } from "@epochs/api/utils/types";
-import { useEpochProgram } from "./useProgram";
-import { DeserializedAsset } from "@/utils/types";
+import { useState, useEffect, useCallback } from 'react';
+import { Auction } from '@epochs/api/utils/types';
+import { useEpochProgram } from './useProgram';
+import { DeserializedAsset, EpochStatus } from '@/utils/types';
 
 interface Props {
     epochNumber?: number;
 }
 
 export const useEpoch = ({ epochNumber }: Props) => {
-    const [auction, setAuction] = useState<Auction>();
-    const [asset, setAsset] = useState<DeserializedAsset>();
+    const [auction, setAuction] = useState<Auction | null>(null);
+    const [asset, setAsset] = useState<DeserializedAsset | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isCurrentEpoch, setIsCurrentEpoch] = useState(false);
+    const [epochStatus, setEpochStatus] = useState<EpochStatus>(EpochStatus.DOES_NOT_EXIST);
 
-    const { api, epochInfo } = useEpochProgram();
+    const { api, epochInfo, isLoading: isEpochProgramLoading } = useEpochProgram();
+
+    const searchEpoch = epochNumber ?? epochInfo?.epoch;
 
     const refreshAuction = useCallback(() => {
-        if (!epochInfo) return;
-        if (!api) return;
-        if (!epochInfo.epoch) return;
-        if (!activeEpoch) return;
+        if (!searchEpoch || !api) return;
         setIsLoading(true);
-        api.fetchAuction({ epoch: activeEpoch })
+        api.fetchAuction({ epoch: searchEpoch })
             .then(setAuction)
-            .catch(console.error)
+            .catch(() => setAuction(null))
             .finally(() => setIsLoading(false));
-    }, [api, epochInfo, epochNumber]);
+    }, [api, searchEpoch]);
 
     useEffect(() => {
         refreshAuction();
     }, [refreshAuction]);
 
     useEffect(() => {
-        if (!api) return;
-        if (!auction) return;
-        if (!epochInfo) return;
-        if (!activeEpoch) return;
+        if (!api || !searchEpoch) return;
         setIsLoading(true);
-        api.fetchAssetAndImageByEpoch({ epoch: activeEpoch })
-            .then((asset) => {
-                setAsset(asset);
-            })
-            .catch(console.error)
+        api.fetchAssetAndImageByEpoch({ epoch: searchEpoch })
+            .then(setAsset)
+            .catch(() => setAsset(null))
             .finally(() => setIsLoading(false));
-    }, [api, auction, epochInfo, epochNumber]);
+    }, [api, searchEpoch]);
 
-    const activeEpoch = epochNumber || epochInfo?.epoch;
+    useEffect(() => {
+        if (!searchEpoch || !epochInfo || !api) return;
 
-    return { isLoading, epochInfo, auction, asset, epochClient: api, refreshAuction, activeEpoch };
+        const calculateStatus = (): EpochStatus => {
+            const isCurrentEpoch = searchEpoch === epochInfo.epoch;
+            setIsCurrentEpoch(isCurrentEpoch);
+            const epochPassed = searchEpoch < epochInfo.epoch;            
+            if (!asset && !isCurrentEpoch) {
+                return EpochStatus.DOES_NOT_EXIST;
+            }
+            else if (!asset && isCurrentEpoch) {
+                return EpochStatus.NOT_YET_STARTED;
+            } else if (asset && isCurrentEpoch) {
+                return EpochStatus.ACTIVE;
+            } else if (asset && epochPassed && !auction) {
+                return EpochStatus.COMPLETE; // This is for Time Machine mints that have no auction
+            } else if (asset && epochPassed && auction && !api.isClaimed(auction)) {
+                return EpochStatus.UNCLAIMED;
+            } else if (asset && epochPassed && auction && api.isClaimed(auction)) {
+                return EpochStatus.COMPLETE;
+            } else {
+                return EpochStatus.DOES_NOT_EXIST;
+            }
+        };
+        setIsLoading(true);
+        setEpochStatus(calculateStatus());
+        setIsLoading(false);
+    }, [epochInfo, asset, auction, searchEpoch, api]);
+
+    return {
+        isLoading: isLoading || isEpochProgramLoading,
+        epochInfo,
+        auction,
+        asset,
+        refreshAuction,
+        searchEpoch,
+        epochStatus,
+        isCurrentEpoch
+    };
 };
-
-
-
-// const [transaction, setTransaction] = useState<Transaction>();
-
-// const { publicKey: payer } = useWallet();
-
-
-

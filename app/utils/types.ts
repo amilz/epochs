@@ -6,3 +6,11 @@ export interface DeserializedAsset {
     extensions: ExtensionData[];
     assetWithoutExtensions: AssetParams
 }
+
+export enum EpochStatus {
+    DOES_NOT_EXIST = "DOES_NOT_EXIST",
+    NOT_YET_STARTED = "NOT_YET_STARTED",
+    ACTIVE = "ACTIVE",
+    UNCLAIMED = "UNCLAIMED",
+    COMPLETE = "COMPLETE"
+}

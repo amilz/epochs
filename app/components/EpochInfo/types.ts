@@ -1,9 +1,9 @@
-export interface EpochInfo {
-    epoch: number;
+export interface ActiveEpochProps {
+    epoch?: number;
 }
 
-export interface ProgressProps {
-    progress: string;
+export interface EpochInfo {
+    epoch: number;
 }
 
 export interface TraitComponents {
@@ -21,3 +21,4 @@ export interface EpochDisplayProps {
     traits: TraitComponents[];
     asset: AssetProps;
 }
+

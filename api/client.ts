@@ -193,6 +193,10 @@ export class EpochClient {
         return deserializedAsset;
     }
 
+    public isClaimed(auction: Auction): boolean {
+        return 'claimed' in auction.state;
+    };
+
 }
 
 // TODO: Add methods for interacting with the program

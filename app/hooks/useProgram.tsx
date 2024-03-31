@@ -6,7 +6,7 @@ import { EpochInfo } from "@solana/web3.js";
 export interface EpochsProgramContextState {
     api?: EpochClient;
     epochInfo?: EpochInfo;
-
+    isLoading: boolean;
 }
 
 export const EpochProgramContext = createContext<EpochsProgramContextState>(
@@ -19,6 +19,7 @@ export function useEpochProgram(): EpochsProgramContextState {
 
 export function EpochProgramProvider(props: { children: ReactNode }): JSX.Element {
     const [api, setApi] = useState<EpochClient>();
+    const [isLoading, setIsLoading] = useState(false);
     const [epochInfo, setEpochInfo] = useState<EpochInfo>();
     const { connection } = useConnection();
 
@@ -28,17 +29,14 @@ export function EpochProgramProvider(props: { children: ReactNode }): JSX.Elemen
 
     useEffect(() => {
         if (!api) return;
+        setIsLoading(true);
         api.getCurrentEpochInfo()
             .then(setEpochInfo)
             .catch(console.error)
+            .finally(() => setIsLoading(false));
     }, [api]);
 
-    const value = useMemo(() => {
-        return {
-            api,
-            epochInfo,
-        };
-    }, [api, epochInfo]);
+    const value = useMemo(() => ({ api, epochInfo, isLoading }), [api, epochInfo, isLoading]);
 
     return (
         <EpochProgramContext.Provider value={value}>
