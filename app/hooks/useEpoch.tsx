@@ -10,21 +10,24 @@ interface Props {
 export const useEpoch = ({ epochNumber }: Props) => {
     const [auction, setAuction] = useState<Auction | null>(null);
     const [asset, setAsset] = useState<DeserializedAsset | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [loadingCount, setLoadingCount] = useState(0); // Track the number of active loading operations
     const [isCurrentEpoch, setIsCurrentEpoch] = useState(false);
     const [epochStatus, setEpochStatus] = useState<EpochStatus>(EpochStatus.DOES_NOT_EXIST);
 
     const { api, epochInfo, isLoading: isEpochProgramLoading } = useEpochProgram();
 
     const searchEpoch = epochNumber ?? epochInfo?.epoch;
+    const incrementLoading = () => setLoadingCount((count) => count + 1);
+    const decrementLoading = () => setLoadingCount((count) => count - 1);
+
 
     const refreshAuction = useCallback(() => {
         if (!searchEpoch || !api) return;
-        setIsLoading(true);
+        incrementLoading();
         api.fetchAuction({ epoch: searchEpoch })
             .then(setAuction)
             .catch(() => setAuction(null))
-            .finally(() => setIsLoading(false));
+            .finally(decrementLoading);
     }, [api, searchEpoch]);
 
     useEffect(() => {
@@ -33,20 +36,21 @@ export const useEpoch = ({ epochNumber }: Props) => {
 
     useEffect(() => {
         if (!api || !searchEpoch) return;
-        setIsLoading(true);
+        incrementLoading();
         api.fetchAssetAndImageByEpoch({ epoch: searchEpoch })
             .then(setAsset)
             .catch(() => setAsset(null))
-            .finally(() => setIsLoading(false));
+            .finally(decrementLoading);
     }, [api, searchEpoch]);
 
     useEffect(() => {
         if (!searchEpoch || !epochInfo || !api) return;
+        incrementLoading();
 
         const calculateStatus = (): EpochStatus => {
             const isCurrentEpoch = searchEpoch === epochInfo.epoch;
             setIsCurrentEpoch(isCurrentEpoch);
-            const epochPassed = searchEpoch < epochInfo.epoch;            
+            const epochPassed = searchEpoch < epochInfo.epoch;
             if (!asset && !isCurrentEpoch) {
                 return EpochStatus.DOES_NOT_EXIST;
             }
@@ -64,13 +68,15 @@ export const useEpoch = ({ epochNumber }: Props) => {
                 return EpochStatus.DOES_NOT_EXIST;
             }
         };
-        setIsLoading(true);
+
         setEpochStatus(calculateStatus());
-        setIsLoading(false);
+        decrementLoading();
     }, [epochInfo, asset, auction, searchEpoch, api]);
 
+    const isLoading = loadingCount > 0 || isEpochProgramLoading;
+
     return {
-        isLoading: isLoading || isEpochProgramLoading,
+        isLoading,
         epochInfo,
         auction,
         asset,

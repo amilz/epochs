@@ -14,10 +14,11 @@ type SendTransactionButtonProps = {
     invisible?: boolean;
     width?: number;
     onSuccess?: () => void;
+    disabled?: boolean;
 };
 
 
-export const SendTransactionButton: FC<SendTransactionButtonProps> = ({ transactionInstructions, buttonLabel, width, invisible = false, onSuccess }) => {
+export const SendTransactionButton: FC<SendTransactionButtonProps> = ({ transactionInstructions, buttonLabel, width, invisible = false, onSuccess, disabled = false }) => {
     const { connection } = useConnection();
     const { publicKey, sendTransaction } = useWallet();
     const { api } = useEpochProgram();
@@ -61,20 +62,22 @@ export const SendTransactionButton: FC<SendTransactionButtonProps> = ({ transact
             <Toaster richColors />
             <button
                 onClick={onClick}
-                disabled={!publicKey || isLoading}
+                disabled={!publicKey || isLoading || disabled}
                 className={invisible
                     ? `w-full h-full bg-transparent border-none focus:outline-none z-10 text-opacity-0 hover:text-opacity-40 text-white`
-                    : `w-${width ?? 80} inline-flex items-center justify-center bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed transition duration-150 ease-in-out transform active:scale-95 m-5 ${isLoading ? 'opacity-75' : ''}`
+                    : `p-[3px] relative min-w-60 ${isLoading ? 'opacity-75' : ''}`
                 }
-
             >
-                {isLoading ? (
-                    <div className="flex items-center justify-center">
-                        <SpinnerIcon />
-                    </div>
-                ) : (
-                    buttonLabel
-                )}
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg" />
+                <div className="px-8 py-2  bg-black rounded-[6px]  relative group transition duration-200 text-white hover:bg-transparent">
+                    {isLoading ? (
+                        <div className="flex items-center justify-center">
+                            <SpinnerIcon />
+                        </div>
+                    ) : (
+                        buttonLabel
+                    )}
+                </div>
             </button>
 
         </div>
@@ -88,3 +91,10 @@ const SpinnerIcon = () => (
         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0116 0H4z"></path>
     </svg>
 );
+
+<button className="p-[3px] relative">
+    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg" />
+    <div className="px-8 py-2  bg-black rounded-[6px]  relative group transition duration-200 text-white hover:bg-transparent">
+        Initialize Epoch Auction
+    </div>
+</button>

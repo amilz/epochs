@@ -6,6 +6,7 @@ import { EpochProgress } from "@/components/EpochInfo/EpochProgress";
 import { useEpoch } from "@/hooks/useEpoch";
 import { ActiveEpochProps } from "./types";
 import { TRAITS_TYPE_INDEX } from "@/utils/constants";
+import Auction from "../Auction/Auction";
 
 
 export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochProps) => {
@@ -16,13 +17,13 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
     if (!searchEpoch) return <div>Epoch information is not available.</div>;
 
     // Type 1 is the attributes extension
-    const additionalTrait = { name: "Epoch", value: searchEpoch.toString()};
+    const additionalTrait = { name: "Epoch", value: searchEpoch.toString() };
     const traits = asset?.extensions.find((ext) => ext.type === TRAITS_TYPE_INDEX)?.attributesComponents?.traits || [];
     const combinedTraits = asset ? [...traits, additionalTrait] : [];
 
     return (
         <div className="flex flex-col items-start my-12 ml-8 ">
-            <div className="text-4xl">{epochStatus}</div>
+            {/* <div className="text-4xl">{epochStatus}</div> */}
             <EpochNumber epoch={searchEpoch} />
             {isCurrentEpoch && <EpochProgress />}
             {/* Bottom half content */}
@@ -30,6 +31,9 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
                 <AssetTraits traits={combinedTraits} />
                 <AssetImage src={asset.png} />
             </div>}
+
+            <Auction /> 
+        
         </div>
     );
 };

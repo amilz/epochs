@@ -6,8 +6,6 @@ import { Transaction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { SendTransactionButton } from '../Transactions/SendTransactionButton';
 import { AuctionTable } from '@/components/Auction/AuctionTable';
-import { BidForm } from '@/components/Auction/BidForm';
-
 
 interface Props {
     epochNumber?: number;
@@ -18,7 +16,7 @@ const Auction = ({ epochNumber }: Props) => {
     const [png, setPng] = useState<string>();
     const { epochInfo, api } = useEpochProgram();
     const { auction, refreshAuction } = useEpoch({ epochNumber });
-    const { publicKey: payer } = useWallet();
+    const { publicKey: payer, connected } = useWallet();
 
     useEffect(() => {
         if (!api) return;
@@ -41,24 +39,23 @@ const Auction = ({ epochNumber }: Props) => {
     }, [api, auction, epochInfo, setPng]);
 
     return (
-        <div className="flex flex-col items-center justify-between p-24">
-            {epochInfo && <div>Current Epoch: {epochInfo?.epoch}</div>}
-            <div>Auction {auction ? "is" : "is not"} live.</div>
-            {!auction && transaction &&
+        <div className="flex-col min-w-[332px] sm:min-w-[632px] mt-10 items-center justify-between ">
+            {!auction && transaction && connected &&
                 <SendTransactionButton
                     transactionInstructions={transaction.instructions}
-                    buttonLabel="Create Auction"
+                    buttonLabel="Initialize Epoch Auction"
                     onSuccess={refreshAuction}
                 />
             }
             {auction && (
                 <>
                     <AuctionTable auction={auction} />
-                    <BidForm />
-                    {png && <img src={png} alt="NFT" />}
-                </>
+                   {/*  <BidForm /> */}
+{/*                     {png && <img src={png} alt="NFT" />}
+ */}                </>
             )}
         </div>
     )
 }
 export default Auction;
+
