@@ -86,12 +86,14 @@ export class TransactionBuilder {
         };
 
         try {
-            const instruction = await this.program.methods
+            const computeInstruction = ComputeBudgetProgram.setComputeUnitLimit({ units: COMPUTE_BUDGET.AUCTION_BID });
+
+            const bidInstruction = await this.program.methods
                 .auctionBid(args.epoch, args.bidAmount)
                 .accountsStrict(accounts)
                 .instruction();
 
-            const transaction = new Transaction().add(instruction);
+            const transaction = new Transaction().add(computeInstruction).add(bidInstruction);
             return transaction;
         } catch (error) {
             throw ApiError.solanaTxError(SolanaTxType.FAILED_TO_GENERATE_IX);
@@ -193,10 +195,13 @@ export class TransactionBuilder {
         };
 
         try {
-            const instruction = await this.program.methods.auctionClaim(new BN(epoch))
+
+            const computeInstruction = ComputeBudgetProgram.setComputeUnitLimit({ units: COMPUTE_BUDGET.CLAIM_AUCTION });
+
+            const claimInstruction = await this.program.methods.auctionClaim(new BN(epoch))
                 .accounts(accounts)
                 .instruction();
-            const transaction = new Transaction().add(instruction);
+            const transaction = new Transaction().add(computeInstruction).add(claimInstruction);
             return transaction;
         } catch (error) {
             throw ApiError.solanaTxError(SolanaTxType.FAILED_TO_GENERATE_IX);
