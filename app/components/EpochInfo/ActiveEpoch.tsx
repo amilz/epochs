@@ -10,6 +10,7 @@ import Auction from "../Auction/Auction";
 import { TraitComponents } from './types';
 import ClaimButton from "../Auction/ClaimButton";
 import { shortenHash } from "@/utils/utils";
+import EpochOverlay from "./EpochOverlay";
 
 
 export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochProps) => {
@@ -32,19 +33,30 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
     const combinedTraits: TraitComponents[] = asset ? [...traits, additionalTrait, ownerTrait].filter(isDefined) : [];
 
     const showAuction = epochStatus === 'ACTIVE' || epochStatus === 'NOT_YET_STARTED';
+
+    const prevEpoch = searchEpoch - 1;
+    const nextEpoch = searchEpoch + 1;
+
+    const showPrevEpoch = prevEpoch > 0;
+    const showNextEpoch = !isCurrentEpoch;
+
     return (
-        
-        <div className="flex flex-col items-start my-12 ml-8 ">
-            <EpochNumber epoch={searchEpoch} />
-            {isCurrentEpoch && <EpochProgress />}
-            {/* Bottom half content */}
-            {asset && <div className="flex mt-8 items-start text-sm text-white ">
-                <AssetTraits traits={combinedTraits} />
-                <AssetImage src={asset.png} />
-            </div>}
-            {showAuction && <Auction />}
-            {epoch && <ClaimButton epochNumber={epoch} />}
-        </div>
+        <EpochOverlay
+            prevPath={showPrevEpoch ? `/epoch/${prevEpoch.toString()}` : undefined}
+            nextPath={showNextEpoch ? `/epoch/${nextEpoch.toString()}` : undefined}
+        >
+            <div className="flex flex-col items-start my-12 ml-16 ">
+                <EpochNumber epoch={searchEpoch} />
+                {isCurrentEpoch && <EpochProgress />}
+                {/* Bottom half content */}
+                {asset && <div className="flex mt-8 items-start text-sm text-white ">
+                    <AssetTraits traits={combinedTraits} />
+                    <AssetImage src={asset.png} />
+                </div>}
+                {showAuction && <Auction />}
+                {epoch && <ClaimButton epochNumber={epoch} />}
+            </div>
+        </EpochOverlay>
     );
 };
 
