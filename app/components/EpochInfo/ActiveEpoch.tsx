@@ -7,23 +7,34 @@ import { useEpoch } from "@/hooks/useEpoch";
 import { ActiveEpochProps } from "./types";
 import { TRAITS_TYPE_INDEX } from "@/utils/constants";
 import Auction from "../Auction/Auction";
+import { TraitComponents } from './types';
+import ClaimButton from "../Auction/ClaimButton";
+import { shortenHash } from "@/utils/utils";
 
 
 export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochProps) => {
-    const { asset, epochStatus, isCurrentEpoch, isLoading, searchEpoch } = useEpoch({ epochNumber: epoch });
-
-    if (isLoading) return <div>Loading...</div>;
+    const {
+        asset,
+        epochStatus,
+        isCurrentEpoch,
+        isLoading,
+        searchEpoch,
+    } = useEpoch({ epochNumber: epoch });
     // Add error handling
-    if (!searchEpoch) return <div>Epoch information is not available.</div>;
+    if (isLoading || !searchEpoch) return <Spinner />;
 
     // Type 1 is the attributes extension
-    const additionalTrait = { name: "Epoch", value: searchEpoch.toString() };
-    const traits = asset?.extensions.find((ext) => ext.type === TRAITS_TYPE_INDEX)?.attributesComponents?.traits || [];
-    const combinedTraits = asset ? [...traits, additionalTrait] : [];
 
+    const showOwner = epochStatus === 'COMPLETE' && !!asset?.assetWithoutExtensions.holder;
+    const additionalTrait = { name: "Epoch", value: searchEpoch.toString() };
+    const ownerTrait = showOwner ? { name: "Owner", value: shortenHash(asset?.assetWithoutExtensions.holder.toString() ?? '') } : undefined;
+    const traits = asset?.extensions.find((ext) => ext.type === TRAITS_TYPE_INDEX)?.attributesComponents?.traits || [];
+    const combinedTraits: TraitComponents[] = asset ? [...traits, additionalTrait, ownerTrait].filter(isDefined) : [];
+
+    const showAuction = epochStatus === 'ACTIVE' || epochStatus === 'NOT_YET_STARTED';
     return (
+        
         <div className="flex flex-col items-start my-12 ml-8 ">
-            {/* <div className="text-4xl">{epochStatus}</div> */}
             <EpochNumber epoch={searchEpoch} />
             {isCurrentEpoch && <EpochProgress />}
             {/* Bottom half content */}
@@ -31,11 +42,22 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
                 <AssetTraits traits={combinedTraits} />
                 <AssetImage src={asset.png} />
             </div>}
-
-            <Auction /> 
-        
+            {showAuction && <Auction />}
+            {epoch && <ClaimButton epochNumber={epoch} />}
         </div>
     );
 };
 
+// Type Guards for Traits
+function isDefined<T>(value: T | undefined): value is T {
+    return value !== undefined;
+}
 
+const Spinner = () => (
+    <div className="flex justify-center items-center h-screen">
+        <svg className="animate-spin h-20 w-20 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 0116 0H4z"></path>
+        </svg>
+    </div>
+);

@@ -8,7 +8,6 @@ const WalletMultiButtonDynamic = dynamic(
     { ssr: false }
 );
 
-
 interface NavLink {
     title: string;
     href: string;

@@ -47,13 +47,7 @@ const Auction = ({ epochNumber }: Props) => {
                     onSuccess={refreshAuction}
                 />
             }
-            {auction && (
-                <>
-                    <AuctionTable auction={auction} />
-                   {/*  <BidForm /> */}
-{/*                     {png && <img src={png} alt="NFT" />}
- */}                </>
-            )}
+            {auction && <AuctionTable auction={auction} />}
         </div>
     )
 }

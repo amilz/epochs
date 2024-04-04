@@ -1,5 +1,5 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { Connection, Transaction, PublicKey } from "@solana/web3.js";
+import { Connection, Transaction, PublicKey, Commitment } from "@solana/web3.js";
 import { Epochs, IDL } from "./utils/idl/epochs";
 import { EPOCH_PROGRAM_ID, getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda, getTimeMachinePda } from "./utils";
 import { ApiError, SolanaQueryType } from "./errors";
@@ -125,9 +125,9 @@ export class EpochClient {
         }
     }
 
-    public async fetchAuction({ epoch }: { epoch: number }) {
+    public async fetchAuction({ epoch, commitment = 'confirmed' }: { epoch: number, commitment?: Commitment}) {
         const auction = getAuctionPda(epoch, this.program);
-        const data = await this.program.account.auction.fetch(auction);
+        const data = await this.program.account.auction.fetch(auction, commitment);
         return data;
     }
 

@@ -24,7 +24,7 @@ export const useEpoch = ({ epochNumber }: Props) => {
     const refreshAuction = useCallback(() => {
         if (!searchEpoch || !api) return;
         incrementLoading();
-        api.fetchAuction({ epoch: searchEpoch })
+        api.fetchAuction({ epoch: searchEpoch, commitment: 'processed' })
             .then(setAuction)
             .catch(() => setAuction(null))
             .finally(decrementLoading);

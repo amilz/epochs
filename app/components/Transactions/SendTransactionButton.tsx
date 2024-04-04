@@ -33,16 +33,14 @@ export const SendTransactionButton: FC<SendTransactionButtonProps> = ({ transact
                 context: { slot: minContextSlot },
                 value: { blockhash, lastValidBlockHeight },
             } = await connection.getLatestBlockhashAndContext();
-            console.log("Public Key: ", publicKey.toBase58());
-            // const transaction = await epochClient.createInitEpochTransaction({ payer: publicKey })
 
             const transaction = new Transaction().add(...transactionInstructions);
             transaction.recentBlockhash = blockhash;
             transaction.feePayer = publicKey;
 
-            let signature: TransactionSignature = await sendTransaction(transaction, connection, { minContextSlot, skipPreflight: true });
+            let signature: TransactionSignature = await sendTransaction(transaction, connection, { minContextSlot });
             const url = getExplorerUrl(signature, cluster);
-            const confirmation = await connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature });
+            const confirmation = await connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature }, 'confirmed');
             if (!confirmation) throw new Error('Transaction failed');
             if (confirmation.value.err) throw new Error(`Transaction failed: ${confirmation.value.err}`);
             toast.success(<div><a href={url} target='_blank' rel='noreferrer'>Success! {shortenHash(signature)}</a></div>);
