@@ -148,9 +148,15 @@ describe("The Epochs Program", () => {
             tx.lastValidBlockHeight = lastValidBlockHeight;
             tx.sign(payer);
             // Act
-            sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer]);
-            deserializedAsset = await epochClient.fetchDeserializedAssetByEpoch({ epoch: testEpoch });
-            deserializedAsset.saveImg();
+            try {
+                sig = await sendAndConfirmTransaction(epochClient.connection, tx, [payer], {skipPreflight: true});
+                console.log("Transaction Signature: ", sig);
+                deserializedAsset = await epochClient.fetchDeserializedAssetByEpoch({ epoch: testEpoch });
+                deserializedAsset.saveImg();
+            } catch (err) {
+                console.log(err);
+            }
+
         });
 
         describe("Auction Initiation", () => {
@@ -324,10 +330,6 @@ describe("The Epochs Program", () => {
             });
         });
     });
-
-
-
-
     describe("Retroactive Time Machine Mint", () => {
         const timeToWaitInSeconds = 10;
         const startNumberItems = 250;

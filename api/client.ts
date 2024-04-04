@@ -1,10 +1,11 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { Connection, Transaction, PublicKey } from "@solana/web3.js";
+import { Connection, Transaction, PublicKey, Commitment } from "@solana/web3.js";
 import { Epochs, IDL } from "./utils/idl/epochs";
 import { EPOCH_PROGRAM_ID, getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda, getTimeMachinePda } from "./utils";
 import { ApiError, SolanaQueryType } from "./errors";
 import { TransactionBuilder } from './transactionBuilder';
 import { Asset } from "./utils/deserialize/deserialize";
+import { Auction } from "./utils/types";
 
 interface EpochClientArgs {
     connection: Connection;
@@ -42,9 +43,25 @@ export class EpochClient {
         return new EpochClient({ connection: new Connection("http://localhost:8899", 'processed') });
     }
 
-    private async getCurrentEpoch(): Promise<number> {
+    public async getCurrentEpoch(): Promise<number> {
         const { epoch } = await this.program.provider.connection.getEpochInfo();
         return epoch;
+    }
+
+    public async getCurrentEpochInfo() {
+        const epochInfo = await this.program.provider.connection.getEpochInfo();
+        return epochInfo;
+    }
+
+    public async isCurrentAuctionActive(): Promise<boolean> {
+        const epoch = await this.getCurrentEpoch();
+        try {
+            const auction = await this.fetchAuction({ epoch });
+            if (!auction) { return false }
+            return true;
+        } catch (error) {
+            return false;
+        }
     }
 
     public async createGroupTransaction({ payer }: { payer: PublicKey }): Promise<Transaction> {
@@ -108,9 +125,9 @@ export class EpochClient {
         }
     }
 
-    public async fetchAuction({ epoch }: { epoch: number }) {
+    public async fetchAuction({ epoch, commitment = 'confirmed' }: { epoch: number, commitment?: Commitment}) {
         const auction = getAuctionPda(epoch, this.program);
-        const data = await this.program.account.auction.fetch(auction);
+        const data = await this.program.account.auction.fetch(auction, commitment);
         return data;
     }
 
@@ -133,7 +150,7 @@ export class EpochClient {
         try {
             const auction = await this.fetchAuction({ epoch });
             if (!auction) { throw ApiError.solanaQueryError(SolanaQueryType.AUCTION_NOT_INITIALIZED) }
-            return auction;
+            return auction as Auction;
         } catch (error) {
             throw ApiError.solanaQueryError(SolanaQueryType.AUCTION_NOT_INITIALIZED);
         }
@@ -175,6 +192,10 @@ export class EpochClient {
 
         return deserializedAsset;
     }
+
+    public isClaimed(auction: Auction): boolean {
+        return 'claimed' in auction.state;
+    };
 
 }
 

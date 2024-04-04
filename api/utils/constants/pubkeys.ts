@@ -11,4 +11,4 @@ export const CREATOR1_WALLET = new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMu
 export const CREATOR2_WALLET = new PublicKey("MiLZAcWZgMYvFnZqzJ6XRj4h5r47bgX64Vt5gRnBvqv");
 export const AUTHORITY = new PublicKey("AUTHbpGeSBi6tHHxnStySJhrwQfm5tLZQRcL2pCiVweL");
 
-export const EPOCH_PROGRAM_ID = new PublicKey("epochsiFg8ornJS22urHE3jgveYuFydxPC79tdcbYc8");
+export const EPOCH_PROGRAM_ID = new PublicKey("epoZLPTE49aXQ5WLem3W3Jr2thfVgZWFJwkRJZGBsfS");

@@ -3,10 +3,15 @@ use anchor_lang::{
     solana_program::{instruction::Instruction, program::invoke_signed, system_program},
 };
 use nifty_asset::{
-    allocate_instruction_data, extensions::{AttributesBuilder, ExtensionBuilder}, instructions::{AllocateBuilder, AllocateCpiAccounts, CreateBuilder}, types::{ExtensionInput, ExtensionType, Standard}
+    allocate_and_write, 
+    extensions::{AttributesBuilder, ExtensionBuilder}, 
+    instructions::{AllocateBuilder, CreateBuilder}, 
+    types::{ExtensionInput, ExtensionType, Standard}
 };
 
 use crate::generate_asset;
+
+use super::log_heap_usage;
 
 type Pixel = (u8, u8, u8);
 type SelectTraitsResults = (usize, usize, usize, usize, Pixel);
@@ -50,23 +55,27 @@ pub fn write_rawimg_and_traits<'a>(
     signer_seeds: &[&[&[u8]]; 1],
     epoch: u64,
 ) -> Result<()> {
+    log_heap_usage(0);
     let assets = generate_asset(epoch, payer.key());
-    write_attributes(asset.key(), payer.key(), &account_infos, signer_seeds, assets.1)?;
+    write_attributes(
+        asset.key(),
+        payer.key(),
+        &account_infos,
+        signer_seeds,
+        assets.1,
+    )?;
     let mut blob_data = Vec::new();
     set_data(&mut blob_data, "img/bmp", &assets.0);
 
-    let borrowed_blob = &blob_data;
-
-    AllocateCpiAccounts {
-        asset: &asset,
-        payer: Some(&payer),
-        system_program: Some(&system_program),
-    }
-    .invoke_signed(
-        &nifty_asset_program,
-        allocate_instruction_data!(ExtensionType::Blob, borrowed_blob.len(), borrowed_blob),
+    allocate_and_write!(
+        nifty_asset_program,
+        asset,
+        payer,
+        system_program,
+        ExtensionType::Blob,
+        &blob_data,
         signer_seeds
-        )?;
+    );
     Ok(())
 }
 
@@ -101,7 +110,6 @@ pub fn create_asset(
 struct AllocateInstructionData {
     discriminator: u8,
 }
-
 
 // Alternative to BlobBuilder to reduce heap allocations
 

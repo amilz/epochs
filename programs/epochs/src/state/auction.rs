@@ -59,6 +59,7 @@ impl Auction {
             LAMPORTS_PER_SOL
         } else {
             // Calculate 5% more than the current highest bid, ensuring at least a 1 SOL increment
+            // TODO EVALUATE IF THIS IS THE RIGHT STRATEGY
             std::cmp::max(
                 self.high_bid_lamports + (self.high_bid_lamports / 20),
                 self.high_bid_lamports + LAMPORTS_PER_SOL,

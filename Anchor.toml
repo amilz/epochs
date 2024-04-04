@@ -4,8 +4,11 @@
 seeds = false
 skip-lint = false
 
+[programs.devnet]
+epochs = "epoZLPTE49aXQ5WLem3W3Jr2thfVgZWFJwkRJZGBsfS"
+
 [programs.localnet]
-epochs = "epochsiFg8ornJS22urHE3jgveYuFydxPC79tdcbYc8"
+epochs = "epoZLPTE49aXQ5WLem3W3Jr2thfVgZWFJwkRJZGBsfS"
 
 [registry]
 url = "https://api.apr.dev"
@@ -15,21 +18,24 @@ cluster = "Localnet"
 wallet = "/Users/amilz/.config/solana/id.json"
 
 [scripts]
+init_idl = "anchor idl init epoZLPTE49aXQ5WLem3W3Jr2thfVgZWFJwkRJZGBsfS --filepath target/idl/epochs.json"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-init_idl = "anchor idl init epochsiFg8ornJS22urHE3jgveYuFydxPC79tdcbYc8 --filepath target/idl/epochs.json"
 
-[test.validator]
-url = "https://api.mainnet-beta.solana.com"
-slots_per_epoch = "32"
-warp_slot = "18464"
-# MAKE SURE TO UPDATE TESTS WHEN UPDATING THIS
 
 [test]
 startup_wait = 10000
+shutdown_wait = 2000
+upgradeable = false
 
 [[test.genesis]]
 address = "AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73"
-program = "./tests/genesis/asset_program.so"
+program = "./tests/genesis/asset_0.1.0.so"
 
-[workspace]
-types = "api/utils/idl/"
+[test.validator]
+bind_address = "0.0.0.0"
+url = "https://api.mainnet-beta.solana.com"
+ledger = ".anchor/test-ledger"
+rpc_port = 8899
+slots_per_epoch = "32"
+warp_slot = "18464"
+deactivate_feature = "GDH5TVdbTPUpRnXaRyQqiKUa7uZAbZ28Q2N9bhbKoMLm"
