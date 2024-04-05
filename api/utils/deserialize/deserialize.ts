@@ -163,7 +163,7 @@ class Asset {
         this.extensions = [];
     }
 
-    static deserialize(buffer) {
+    static deserialize(buffer: Buffer) {
         let offset = 0;
 
         // Deserialize asset-specific fields
