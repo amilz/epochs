@@ -11,7 +11,8 @@
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
         "decodePng": "ts-node ./scripts/decodePng/app.ts",
-        "checkRandomness": "ts-node ./scripts/checkRandomness/app.ts"
+        "checkRandomness": "ts-node ./scripts/checkRandomness/app.ts",
+        "build:api": "cd api && npm run build"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",

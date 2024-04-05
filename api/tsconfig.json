@@ -6,5 +6,13 @@
     "exclude": [
         "node_modules",
         "**/*.spec.ts"
-    ]
+    ],
+    "compilerOptions": {
+        "outDir": "./dist", // Output directory for all the compiled files
+    },
+    "baseUrl": ".",
+    "paths": {
+      "@epochs/api": ["."]
+    }
+
 }
