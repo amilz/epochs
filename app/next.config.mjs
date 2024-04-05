@@ -1,28 +1,28 @@
 // next.config.mjs
+import webpack from 'webpack';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, context, { isServer }) => {
-    if (config.plugins) {
-      config.plugins.push(
-        new context.webpack.IgnorePlugin({
-          resourceRegExp: /^(lokijs|pino-pretty|encoding)$/,
-        }),
-      )
-    }
-    // This condition ensures that the following code block will only be executed on the client side.
+  webpack: (config, { isServer }) => {
     if (!isServer) {
-      // Provide empty implementations for Node.js modules that might cause issues when bundled for the client-side.
+      // Ignore certain packages by making them resolve to empty mocks on the client side
+      if (!config.resolve) config.resolve = {};
+      if (!config.resolve.alias) config.resolve.alias = {};
+
+      // Aliasing the packages to false will tell Webpack to replace them with an empty module when bundled for the client-side.
+      config.resolve.alias['lokijs'] = false;
+      config.resolve.alias['pino-pretty'] = false;
+      config.resolve.alias['encoding'] = false;
+
+      // Providing fallbacks for Node.js core modules that might be used by some dependencies. Adjust according to your needs.
       config.resolve.fallback = {
-        fs: false, // Prevent webpack from trying to bundle 'fs' module for the client-side.
-        // Add other Node.js modules here if necessary, for example:
-        // path: false,
-        // os: false,
-        // etc.
+        fs: false, // Replace 'fs' module with an empty module
+        path: false, // Replace 'path' module with an empty module
+        os: false, // Replace 'os' module with an empty module
+        // Include other Node.js modules here if needed.
       };
     }
 
-    // Always return the modified config.
     return config;
   },
 };
