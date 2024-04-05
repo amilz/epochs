@@ -2,7 +2,7 @@
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack: (config, { isServer }) => {
+  webpack: (config, context, { isServer }) => {
     if (config.plugins) {
       config.plugins.push(
         new context.webpack.IgnorePlugin({
