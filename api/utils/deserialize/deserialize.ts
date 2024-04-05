@@ -151,7 +151,15 @@ class Asset {
     extensions: ExtensionData[];
 
     constructor(params: AssetParams) {
-        Object.assign(this, params);
+        this.discriminator = params.discriminator;
+        this.state = params.state;
+        this.standard = params.standard;
+        this.mutable = params.mutable;
+        this.holder = params.holder;
+        this.group = params.group;
+        this.authority = params.authority;
+        this.delegate = params.delegate;
+        this.name = params.name;
         this.extensions = [];
     }
 

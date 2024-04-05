@@ -1,6 +1,6 @@
 {
   "name": "@epochs/api",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Reusable API for Epochs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
