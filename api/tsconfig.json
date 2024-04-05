@@ -8,13 +8,15 @@
         "**/*.spec.ts"
     ],
     "compilerOptions": {
-        "outDir": "./dist", 
+        "outDir": "./dist",
+        "rootDir": "./",
         "declaration": true,
         "emitDeclarationOnly": false
     },
     "baseUrl": ".",
     "paths": {
-      "@epochs/api": ["."]
+        "@epochs/api": [
+            "."
+        ]
     }
-
 }

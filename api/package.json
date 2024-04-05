@@ -1,6 +1,6 @@
 {
   "name": "@epochs/api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Reusable API for Epochs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,10 +8,21 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc"
   },
-  "keywords": ["solana", "api", "epochs"],
+  "keywords": [
+    "solana",
+    "api",
+    "epochs"
+  ],
   "author": "amilz",
   "license": "MIT License",
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.29.0",
+    "@solana/spl-token": "^0.4.0",
+    "@types/node": "^20.11.10",
+    "jimp": "^0.22.10",
+    "pngjs": "^7.0.0"
   }
 }
