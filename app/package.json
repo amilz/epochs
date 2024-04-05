@@ -16,7 +16,7 @@
     "react": "^18",
     "react-dom": "^18",
     "sonner": "^1.4.41",
-    "@epochs/api": "1.0.0"
+    "@epochs/api": "1.0.1"
   },
   "devDependencies": {
     "@types/node": "^20",

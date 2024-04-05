@@ -8,7 +8,9 @@
         "**/*.spec.ts"
     ],
     "compilerOptions": {
-        "outDir": "./dist", // Output directory for all the compiled files
+        "outDir": "./dist", 
+        "declaration": true,
+        "emitDeclarationOnly": false
     },
     "baseUrl": ".",
     "paths": {
