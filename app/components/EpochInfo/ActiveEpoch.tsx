@@ -45,18 +45,28 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
             prevPath={showPrevEpoch ? `/epoch/${prevEpoch.toString()}` : undefined}
             nextPath={showNextEpoch ? `/epoch/${nextEpoch.toString()}` : undefined}
         >
-            <div className="flex flex-col items-start my-12 ml-16 ">
+            <div className="flex flex-col items-start my-12 mx-12">
                 <EpochNumber epoch={searchEpoch} />
                 {isCurrentEpoch && <EpochProgress />}
                 {/* Bottom half content */}
-                {asset && <div className="flex mt-8 items-start text-sm text-white ">
-                    <AssetTraits traits={combinedTraits} />
-                    <AssetImage src={asset.png} />
-                </div>}
+                {asset && (
+                    <div className="block md:flex md:items-start text-sm text-white mt-8">
+                        <div className="md:hidden">
+                            <AssetImage src={asset.png} />
+                            <br/>
+                        </div>
+                        <AssetTraits traits={combinedTraits} />
+                        <div className="hidden md:block">
+                            <AssetImage src={asset.png} />
+                        </div>
+                    </div>
+                )}
                 {showAuction && <Auction />}
                 {epoch && <ClaimButton epochNumber={epoch} />}
             </div>
         </EpochOverlay>
+
+
     );
 };
 

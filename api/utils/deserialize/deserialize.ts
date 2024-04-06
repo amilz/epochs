@@ -151,11 +151,19 @@ class Asset {
     extensions: ExtensionData[];
 
     constructor(params: AssetParams) {
-        Object.assign(this, params);
+        this.discriminator = params.discriminator;
+        this.state = params.state;
+        this.standard = params.standard;
+        this.mutable = params.mutable;
+        this.holder = params.holder;
+        this.group = params.group;
+        this.authority = params.authority;
+        this.delegate = params.delegate;
+        this.name = params.name;
         this.extensions = [];
     }
 
-    static deserialize(buffer) {
+    static deserialize(buffer: Buffer) {
         let offset = 0;
 
         // Deserialize asset-specific fields
@@ -198,11 +206,11 @@ class Asset {
 
         return { name, value };
     };
-    private publicKeyFromBytes(bytes) {
+    private publicKeyFromBytes(bytes: Buffer) {
         return new PublicKey(bytes);
     }
 
-    private byteToBool(byte) {
+    private byteToBool(byte: number) {
         return byte !== 0;
     }
 
@@ -277,7 +285,7 @@ class Asset {
     }
 
 
-    private processExtensions(buffer, initialOffset) {
+    private processExtensions(buffer: Buffer, initialOffset: number) {
         let offset = initialOffset;
         const extensions: ExtensionData[] = [];
 
@@ -288,8 +296,12 @@ class Asset {
                 extensionData = Extension.load(buffer, offset);
 
             } catch (error) {
-                console.error(`Failed to load extension at offset ${offset}:`, error.message);
-                return; // Exit the function if loading the extension fails
+                if (error instanceof Error) {
+                    console.error(`Failed to load extension at offset ${offset}:`, error.message);
+                } else {
+                    console.error(`Failed to load extension at offset ${offset}:`, error);
+                }
+                return extensions;
             }
 
             extensionData.raw = buffer.slice(extensionData.startOffset, extensionData.startOffset + extensionData.length);
@@ -365,7 +377,7 @@ class Asset {
                     break;
                 case ExtensionType.Royalties:
                     const royalties = this.deserializeRoyalties(extensionData.raw);
-                    extensionData.royalties = royalties; 
+                    extensionData.royalties = royalties;
                     break;
             }
 
@@ -377,7 +389,7 @@ class Asset {
             // Ensure the offset is within the buffer's bounds before the next iteration
             if (offset > buffer.length) {
                 console.error(`Offset (${offset}) exceeds buffer length (${buffer.length}) after processing extension`);
-                return; // Exit the function if the new offset is out of bounds
+                break; // Exit the function if the new offset is out of bounds
             }
         }
         return extensions;
