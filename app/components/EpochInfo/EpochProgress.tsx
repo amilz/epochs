@@ -16,7 +16,7 @@ export const EpochProgress: React.FC = () => {
                     <div className="h-2 bg-white" style={{ width: `${progress}%` }}></div>
                 </div>
             </div>
-            <p className="text-sm text-gray-300">solana mainnet beta v1.18</p>
+            <p className="text-sm text-gray-300">solana devnet v1.18</p>
         </>
     );
 };
