@@ -1,6 +1,6 @@
 {
   "name": "@epochs/api",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Reusable API for Epochs",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -24,5 +24,8 @@
     "@types/node": "^20.11.10",
     "jimp": "^0.22.10",
     "pngjs": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.5"
   }
 }
