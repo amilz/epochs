@@ -11,16 +11,19 @@ import { TraitComponents } from './types';
 import ClaimButton from "../Auction/ClaimButton";
 import { shortenHash } from "@/utils/utils";
 import EpochOverlay from "./EpochOverlay";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 
 export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochProps) => {
     const {
         asset,
+        auction,
         epochStatus,
         isCurrentEpoch,
         isLoading,
         searchEpoch,
     } = useEpoch({ epochNumber: epoch });
+    const { publicKey: pubkey } = useWallet();
     // Add error handling
     if (isLoading || !searchEpoch) return <Spinner />;
 
@@ -33,6 +36,8 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
     const combinedTraits: TraitComponents[] = asset ? [...traits, additionalTrait, ownerTrait].filter(isDefined) : [];
 
     const showAuction = epochStatus === 'ACTIVE' || epochStatus === 'NOT_YET_STARTED';
+    const canClaim = epochStatus === "UNCLAIMED" && pubkey?.toBase58() === auction?.highBidder.toBase58();
+
 
     const prevEpoch = searchEpoch - 1;
     const nextEpoch = searchEpoch + 1;
@@ -53,7 +58,7 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
                     <div className="block md:flex md:items-start text-sm text-white mt-8">
                         <div className="md:hidden">
                             <AssetImage src={asset.png} />
-                            <br/>
+                            <br />
                         </div>
                         <AssetTraits traits={combinedTraits} />
                         <div className="hidden md:block">
@@ -62,7 +67,7 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
                     </div>
                 )}
                 {showAuction && <Auction />}
-                {epoch && <ClaimButton epochNumber={epoch} />}
+                {epoch && canClaim && <ClaimButton epochNumber={epoch} />}
             </div>
         </EpochOverlay>
 

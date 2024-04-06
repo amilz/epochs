@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import SolanaProviders from "@/providers/SolanaProviders";
 import Navbar from "@/components/Navbar";
+import DevnetWarning from "@/components/DevnetWarning";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         <body className={inter.className}>
           <Navbar />
           {children}
+          <DevnetWarning />
         </body>
       </html>
     </SolanaProviders>
