@@ -5,7 +5,6 @@ import React, { useMemo } from 'react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 import { endpoint } from '@/utils/constants';
 import { EpochProgramProvider } from '@/hooks/useProgram';
-import { UnsafeBurnerWalletAdapter } from '@solana/wallet-adapter-wallets';
 
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -14,14 +13,10 @@ type SolanaProvidersProps = {
 }
 const SolanaProviders = ({ children }: SolanaProvidersProps) => {
     const walletEndpoint = useMemo(() => endpoint, []);
-    const wallets = useMemo(() => [
-        new UnsafeBurnerWalletAdapter(),
-
-    ], [])
 
     return (
         <ConnectionProvider endpoint={walletEndpoint}>
-            <WalletProvider wallets={wallets} autoConnect>
+            <WalletProvider wallets={[]} autoConnect>
                 <WalletModalProvider>
                     <EpochProgramProvider>
                         {children}
