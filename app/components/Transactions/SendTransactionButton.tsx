@@ -38,7 +38,7 @@ export const SendTransactionButton: FC<SendTransactionButtonProps> = ({ transact
             transaction.recentBlockhash = blockhash;
             transaction.feePayer = publicKey;
 
-            let signature: TransactionSignature = await sendTransaction(transaction, connection, { minContextSlot });
+            let signature: TransactionSignature = await sendTransaction(transaction, connection, { minContextSlot, skipPreflight: true });
             const url = getExplorerUrl(signature, cluster);
             const confirmation = await connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature }, 'confirmed');
             if (!confirmation) throw new Error('Transaction failed');
