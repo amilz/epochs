@@ -39,7 +39,7 @@ const Auction = ({ epochNumber }: Props) => {
     }, [api, auction, epochInfo, setPng]);
 
     return (
-        <div className="flex-col min-w-[332px] sm:min-w-[632px] mt-10 items-center justify-between ">
+        <div className="flex-col min-w-full sm:min-w-[632px] mt-5 sm:mt-10 items-center justify-between ">
             {!auction && transaction && connected &&
                 <SendTransactionButton
                     transactionInstructions={transaction.instructions}
