@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@epochs/api": "1.0.4",
+    "@epochs/api": "1.0.5",
     "@solana/wallet-adapter-react": "^0.15.35",
     "@solana/wallet-adapter-react-ui": "^0.9.35",
     "@solana/wallet-adapter-wallets": "^0.19.32",
@@ -20,6 +20,7 @@
     "sonner": "^1.4.41"
   },
   "devDependencies": {
+    "@types/jimp": "^0.2.28",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

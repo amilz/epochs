@@ -1,6 +1,7 @@
 //import Jimp from "jimp";
 // for nextjs 
-import Jimp from "jimp/es";
+//import Jimp from "jimp/es";
+const Jimp = require('jimp/es');
 
 const writetBmpToPng = async (bmpBuffer: Buffer, filePath: string) => {
     try {

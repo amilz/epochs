@@ -53,7 +53,7 @@ export const SendTransactionButton: FC<SendTransactionButtonProps> = ({ transact
         } finally {
             setIsLoading(false);
         }
-    }, [publicKey, connection, sendTransaction, transactionInstructions, onSuccess, api]);
+    }, [publicKey, connection, sendTransaction, transactionInstructions, onSuccess]);
 
     return (
         <div className={`${invisible ? 'w-full h-full' : ''} flex items-center justify-center w-full h-full`}>
