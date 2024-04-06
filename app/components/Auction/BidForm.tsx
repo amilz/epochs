@@ -58,7 +58,9 @@ export const BidForm = ({highBidLamports}: Props) => {
 
     if (!bidder) { return <></> }
     const placeholder = new TransactionInstruction({ keys: [], programId: bidder });
-    const disabled = !transaction || !bidder || bidAmount === '';
+    const bidTooLow = calculateMinimumBid(highBidLamports) > parseFloat(bidAmount);
+    const disabled = !transaction || !bidder || bidAmount === '' || bidTooLow;
+    const buttonText = bidTooLow ? 'Bid too low' : disabled ? `Enter bid` : `Bid ${bidAmount} SOL`;
     return (
         <>
             <form className="flex flex-col space-y-4 mb-4">
@@ -82,7 +84,7 @@ export const BidForm = ({highBidLamports}: Props) => {
 
                 <SendTransactionButton
                     transactionInstructions={transaction?.instructions ?? [placeholder]}
-                    buttonLabel={disabled ? `Enter bid` : `Bid ${bidAmount} SOL`}
+                    buttonLabel={buttonText}
                     /* TODO make sure auction is complete before refresh */
                     onSuccess={refreshAuction}
                     disabled={disabled}
