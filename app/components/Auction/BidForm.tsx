@@ -7,7 +7,25 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useEpoch } from "@/hooks/useEpoch";
 import { } from "@solana/wallet-adapter-react-ui";
 
-export const BidForm = () => {
+
+function calculateMinimumBid(highBidLamports: number): number {
+    if (highBidLamports === 0) {
+        // If there are no previous bids, the minimum bid is 1 SOL.
+        return 1;
+    } else {
+        // If there is a previous bid, calculate 5% more than the current highest bid.
+        // Ensure the increment is at least 1 SOL.
+        const fivePercentMore = highBidLamports + Math.floor(highBidLamports / 20);
+        const max = Math.max(fivePercentMore, highBidLamports + LAMPORTS_PER_SOL);
+        return max / LAMPORTS_PER_SOL;
+    }
+}
+
+interface Props {
+    highBidLamports: number;
+}
+
+export const BidForm = ({highBidLamports}: Props) => {
     const [bidAmount, setBidAmount] = useState<string>(''); // State to track bid amount
     const [transaction, setTransaction] = useState<Transaction>();
     const { api } = useEpochProgram();
@@ -45,7 +63,7 @@ export const BidForm = () => {
         <>
             <form className="flex flex-col space-y-4 mb-4">
                 <div className="mt-4">
-                    <label htmlFor="bid" className="block text-sm font-medium text-gray-300">Minimum bid is 1 SOL. Good Luck!</label>
+                    <label htmlFor="bid" className="block text-sm font-medium text-gray-300">Minimum bid is {calculateMinimumBid(highBidLamports)} SOL. Good Luck!</label>
                     <div className="mt-1 relative rounded-md shadow-sm">
                         <input
                             type="number"
@@ -69,7 +87,7 @@ export const BidForm = () => {
                     onSuccess={refreshAuction}
                     disabled={disabled}
                 />
-            <div className="mt-2 block text-xs font-medium text-gray-300 text-center">Bids must be at least 10% higher. Bid ends immediately after Epoch.
+            <div className="mt-2 block text-xs font-medium text-gray-300 text-center">Bids must be at least 1 SOL higher. Bid ends immediately after Epoch.
             </div>
 
         </>

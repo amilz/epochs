@@ -41,7 +41,7 @@ export const AuctionTable = ({ auction }: AuctionTableProps) => {
                         </div>
                     </button>}
                 </div>
-                <BidForm />
+                <BidForm highBidLamports={auction.highBidLamports.toNumber()} />
             </div>
         </div>
     );
