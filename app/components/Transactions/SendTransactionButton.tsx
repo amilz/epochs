@@ -1,6 +1,6 @@
 "use client"
 import React, { FC, useCallback, useState } from 'react';
-import { Transaction, TransactionInstruction } from '@solana/web3.js';
+import { Transaction, TransactionInstruction, ComputeBudgetProgram, VersionedTransaction, TransactionMessage, PublicKey } from '@solana/web3.js';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import type { TransactionSignature } from '@solana/web3.js';
 import { Toaster, toast } from 'sonner';
@@ -29,22 +29,48 @@ export const SendTransactionButton: FC<SendTransactionButtonProps> = ({ transact
             if (!publicKey) throw new Error('Wallet not connected!');
             setIsLoading(true);
 
+
+
+            const transaction = new Transaction().add(...transactionInstructions);
+
+            const testInstructions = [
+                ComputeBudgetProgram.setComputeUnitLimit({ units: 1_400_000 }),
+                transactionInstructions[1] ? transactionInstructions[1] : transactionInstructions[0],
+            ];
+
+            const testVersionedTxn = new VersionedTransaction(
+                new TransactionMessage({
+                    instructions: testInstructions,
+                    payerKey: publicKey,
+                    recentBlockhash: PublicKey.default.toString(),
+                }).compileToV0Message()
+            );
+
+
+            const simulation = await connection.simulateTransaction(testVersionedTxn, {
+                replaceRecentBlockhash: true,
+                sigVerify: false,
+            });
+
+            const newUnits = simulation.value.unitsConsumed ? simulation.value.unitsConsumed * 1.05 : 200_000;
+            const newComputeBudget = ComputeBudgetProgram.setComputeUnitLimit({ units: newUnits });
+
+            // TODO update API to return instructions.
+            const newTransaction = new Transaction().add(newComputeBudget).add(transactionInstructions[1] ? transactionInstructions[1] : transactionInstructions[0]);
             const {
                 context: { slot: minContextSlot },
                 value: { blockhash, lastValidBlockHeight },
             } = await connection.getLatestBlockhashAndContext();
+            newTransaction.recentBlockhash = blockhash;
+            newTransaction.feePayer = publicKey;
 
-            const transaction = new Transaction().add(...transactionInstructions);
-            transaction.recentBlockhash = blockhash;
-            transaction.feePayer = publicKey;
-
-            let signature: TransactionSignature = await sendTransaction(transaction, connection, { minContextSlot, skipPreflight: true });
+            let signature: TransactionSignature = await sendTransaction(newTransaction, connection, { minContextSlot, skipPreflight: true });
             const url = getExplorerUrl(signature, cluster);
             const confirmation = await connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature }, 'confirmed');
             if (!confirmation) throw new Error('Transaction failed');
             if (confirmation.value.err) throw new Error(`Transaction failed: ${confirmation.value.err}`);
             toast.success(<div><a href={url} target='_blank' rel='noreferrer'>Success! {shortenHash(signature)}</a></div>);
-            if (onSuccess) { onSuccess() }
+            if (onSuccess) { await onSuccess() }
 
 
         } catch (error: any) {
