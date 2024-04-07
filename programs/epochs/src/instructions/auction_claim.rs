@@ -196,7 +196,7 @@ impl AuctionClaim<'_> {
             .asset(self.asset.key())
             .signer(self.authority.key())
             .recipient(self.winner.key())
-            .group_asset(Some(self.group.key()))
+            .group(Some(self.group.key()))
             .instruction();
 
         invoke_signed(&transfer_ix, &account_infos, signer_seeds)?;
