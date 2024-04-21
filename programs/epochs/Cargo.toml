@@ -19,5 +19,5 @@ default = []
 anchor-lang = {version="0.29.0", features = ["init-if-needed"]}
 anchor-spl = "0.29.0"
 ahash = "=0.8.6"
-nifty-asset = "0.2.0"
-nifty-asset-types = "0.2.0"
+nifty-asset = "0.4.0"
+nifty-asset-types = "0.4.0"
