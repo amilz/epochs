@@ -26,10 +26,7 @@ fn select_traits(args: SelectTraitsArgs) -> SelectTraitsResults {
         u32::from_le_bytes(hash_bytes[8..12].try_into().unwrap()) % num_items_glasses;
     let body_index: u32 =
         u32::from_le_bytes(hash_bytes[12..16].try_into().unwrap()) % num_items_body;
-    let r_index: u32 = u32::from_le_bytes(hash_bytes[16..20].try_into().unwrap()) % 256;
-    let g_index = u32::from_le_bytes(hash_bytes[20..24].try_into().unwrap()) % 256;
-    let b_index = u32::from_le_bytes(hash_bytes[24..28].try_into().unwrap()) % 256;
-    let background: Pixel = (r_index as u8, g_index as u8, b_index as u8);
+    let background: Pixel = (34 as u8, 34 as u8, 34 as u8);
     (
         hat_index as usize,
         clothes_index as usize,
@@ -171,5 +168,14 @@ pub fn generate_asset(current_epoch: u64, user: Pubkey) -> (Vec<u8>, SelectTrait
     );
     replace_pixels(&mut epoch, GREEN_SCREEN, background);
     let bmp_buffer = create_color_bmp_buffer(&epoch);
-    (bmp_buffer, (hat_index, clothes_index, glasses_index, body_index, background))
+    (
+        bmp_buffer,
+        (
+            hat_index,
+            clothes_index,
+            glasses_index,
+            body_index,
+            background,
+        ),
+    )
 }
