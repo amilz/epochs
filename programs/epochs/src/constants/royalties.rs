@@ -1,5 +1,5 @@
 // TODO Replace with actual wallet addresses
-pub const CREATOR_WALLET_1 : &str = "zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa";
+pub const CREATOR_WALLET_1 : &str = "MiLZAcWZgMYvFnZqzJ6XRj4h5r47bgX64Vt5gRnBvqv";
 pub const CREATOR_1_SHARE : u8 = 10;
 pub const CREATOR_WALLET_2 : &str = "MiLZAcWZgMYvFnZqzJ6XRj4h5r47bgX64Vt5gRnBvqv";
 pub const CREATOR_2_SHARE : u8 = 10;

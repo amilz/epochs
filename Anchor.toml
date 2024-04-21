@@ -14,13 +14,13 @@ epochs = "epoZLPTE49aXQ5WLem3W3Jr2thfVgZWFJwkRJZGBsfS"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "/Users/amilz/.config/solana/id.json"
 
 [scripts]
 init_idl = "anchor idl init epoZLPTE49aXQ5WLem3W3Jr2thfVgZWFJwkRJZGBsfS --filepath target/idl/epochs.json"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-
+create_collection = "ts-node scripts/initCollection.ts"
 
 [test]
 startup_wait = 10000

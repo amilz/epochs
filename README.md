@@ -39,3 +39,9 @@ There are 2 primary groups of instructions here:
 - you will need to create an `AUTH` wallet in `tests/wallet` and update the program & api constants
 - `anchor test` to run the tests (note the final test will take a couple of minutes, it's simulating 500 mints and i had to chunk the requests to avoid local ws issues)
 - in `epoch.test.ts` you can uncomment `deserializedAsset.saveImgAndJson();` to save the image and json to your root directory to see the generated art
+
+
+## Initiating Program
+
+- Create Collection
+- Seed the program escrow/authority `BiNb74Q3L2jjyceHTYQFFGXtY69fc2MKCScBbDmorGWR`
