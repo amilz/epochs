@@ -43,5 +43,5 @@ There are 2 primary groups of instructions here:
 
 ## Initiating Program
 
-- Create Collection
+- Create Collection `anchor run create_collection`
 - Seed the program escrow/authority `BiNb74Q3L2jjyceHTYQFFGXtY69fc2MKCScBbDmorGWR`
