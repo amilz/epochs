@@ -42,7 +42,7 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
     const prevEpoch = searchEpoch - 1;
     const nextEpoch = searchEpoch + 1;
 
-    const showPrevEpoch = prevEpoch > 20; // TODO UPDATE FOR PROD
+    const showPrevEpoch = prevEpoch > 19; // TODO UPDATE FOR PROD
     const showNextEpoch = !isCurrentEpoch;
     // using static image here due to having wrong color on initial testnet deploy
     const imgSrc = searchEpoch == 20 ? '/epoch20.png' : asset?.png; // TODO UPDATE FOR PROD
