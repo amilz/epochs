@@ -45,7 +45,7 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
     const showPrevEpoch = prevEpoch > 20; // TODO UPDATE FOR PROD
     const showNextEpoch = !isCurrentEpoch;
     // using static image here due to having wrong color on initial testnet deploy
-    const imgSrc = searchEpoch == 20 ? '/epoch20.png' : asset!.png; // TODO UPDATE FOR PROD
+    const imgSrc = searchEpoch == 20 ? '/epoch20.png' : asset?.png; // TODO UPDATE FOR PROD
     return (
         <EpochOverlay
             prevPath={showPrevEpoch ? `/epoch/${prevEpoch.toString()}` : undefined}
@@ -55,7 +55,7 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
                 <EpochNumber epoch={searchEpoch} />
                 {isCurrentEpoch && <EpochProgress />}
                 {/* Bottom half content */}
-                {asset && (
+                {asset && imgSrc && (
                     <div className="block md:flex md:items-start text-sm text-white mt-8">
                         <div className="md:hidden">
                             <AssetImage src={imgSrc} />
