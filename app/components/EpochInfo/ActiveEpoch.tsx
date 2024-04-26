@@ -12,6 +12,8 @@ import ClaimButton from "../Auction/ClaimButton";
 import { shortenHash } from "@/utils/utils";
 import EpochOverlay from "./EpochOverlay";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/UI/Arrows"
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 
 export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochProps) => {
@@ -30,10 +32,11 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
     // Type 1 is the attributes extension
 
     const showOwner = epochStatus === 'COMPLETE' && !!asset?.assetWithoutExtensions.holder;
-    const additionalTrait = { name: "Epoch", value: searchEpoch.toString() };
-    const ownerTrait = showOwner ? { name: "Owner", value: shortenHash(asset?.assetWithoutExtensions.holder.toString() ?? '') } : undefined;
+    //const additionalTrait = { name: "Epoch", value: searchEpoch.toString() };
+    const winningBid = (!isCurrentEpoch && auction) ? { name: "Winning Bid", value: "Ξ " + (auction.highBidLamports.toNumber() / LAMPORTS_PER_SOL).toLocaleString(undefined, { maximumFractionDigits: 2 }) } : undefined;
+    const ownerTrait = (showOwner && asset) ? { name: "Owner", value: shortenHash(asset.assetWithoutExtensions.holder.toString()) } : undefined;
     const traits = asset?.extensions.find((ext) => ext.type === TRAITS_TYPE_INDEX)?.attributesComponents?.traits || [];
-    const combinedTraits: TraitComponents[] = asset ? [...traits, additionalTrait, ownerTrait].filter(isDefined) : [];
+    const combinedTraits: TraitComponents[] = asset ? [...traits, winningBid, ownerTrait].filter(isDefined) : [];
 
     const showAuction = epochStatus === 'ACTIVE' || epochStatus === 'NOT_YET_STARTED';
     const canClaim = epochStatus === "UNCLAIMED" && pubkey?.toBase58() === auction?.highBidder.toBase58();
@@ -42,37 +45,48 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
     const prevEpoch = searchEpoch - 1;
     const nextEpoch = searchEpoch + 1;
 
-    const showPrevEpoch = prevEpoch > 0;
+    const showPrevEpoch = prevEpoch > 19; // TODO UPDATE FOR PROD
     const showNextEpoch = !isCurrentEpoch;
-
+    // using static image here due to having wrong color on initial testnet deploy
+    const imgSrc = searchEpoch == 20 ? '/epoch20.png' : asset?.png; // TODO UPDATE FOR PROD
     return (
         <EpochOverlay
             prevPath={showPrevEpoch ? `/epoch/${prevEpoch.toString()}` : undefined}
             nextPath={showNextEpoch ? `/epoch/${nextEpoch.toString()}` : undefined}
         >
-            <div className="flex flex-col items-start my-12 mx-12">
+
+            <div className="flex flex-col items-start my-12 mx-6">
                 <EpochNumber epoch={searchEpoch} />
-                {isCurrentEpoch && <EpochProgress />}
+                <EpochProgress isCurrentEpoch={isCurrentEpoch} />
+
                 {/* Bottom half content */}
-                {asset && (
-                    <div className="block md:flex md:items-start text-sm text-white mt-8">
-                        <div className="md:hidden">
-                            <AssetImage src={asset.png} />
-                            <br />
+
+                {asset && imgSrc && (
+                    <div className="flex flex-col lg:flex-row w-full text-sm text-white mt-8">
+                        {/* AssetImage will show up on top on mobile and on the left on desktop */}
+                        <div className="mb-4 lg:mb-0 flex-shrink-0">
+                            <AssetImage src={imgSrc} />
                         </div>
-                        <AssetTraits traits={combinedTraits} />
-                        <div className="hidden md:block">
-                            <AssetImage src={asset.png} />
+                        {/* AssetTraits will be in the middle on desktop */}
+                        <div className="flex-grow">
+                            <AssetTraits traits={combinedTraits} />
                         </div>
+                        {/* Auction will be on the bottom on mobile and on the right on desktop */}
+
+                        <div className="w-full lg:w-auto lg:flex-shrink-0 ">
+
+                            {showAuction && <Auction />}
+                            {epoch && canClaim && <ClaimButton epochNumber={epoch} />}
+                        </div>
+
                     </div>
                 )}
-                {showAuction && <Auction />}
-                {epoch && canClaim && <ClaimButton epochNumber={epoch} />}
+
             </div>
         </EpochOverlay>
-
-
     );
+
+
 };
 
 // Type Guards for Traits

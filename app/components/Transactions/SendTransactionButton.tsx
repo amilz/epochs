@@ -5,7 +5,7 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import type { TransactionSignature } from '@solana/web3.js';
 import { Toaster, toast } from 'sonner';
 import { cluster } from '@/utils/constants';
-import { shortenHash, getExplorerUrl } from '@/utils/utils';
+import { shortenHash, getExplorerUrl, getEclipseUrl } from '@/utils/utils';
 import { useEpochProgram } from '@/hooks/useProgram';
 
 type SendTransactionButtonProps = {
@@ -65,7 +65,7 @@ export const SendTransactionButton: FC<SendTransactionButtonProps> = ({ transact
             newTransaction.feePayer = publicKey;
 
             let signature: TransactionSignature = await sendTransaction(newTransaction, connection, { minContextSlot, skipPreflight: true });
-            const url = getExplorerUrl(signature, cluster);
+            const url = getEclipseUrl(signature);
             const confirmation = await connection.confirmTransaction({ blockhash, lastValidBlockHeight, signature }, 'confirmed');
             if (!confirmation) throw new Error('Transaction failed');
             if (confirmation.value.err) throw new Error(`Transaction failed: ${confirmation.value.err}`);

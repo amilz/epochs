@@ -10,13 +10,13 @@ import { } from "@solana/wallet-adapter-react-ui";
 
 function calculateMinimumBid(highBidLamports: number): number {
     if (highBidLamports === 0) {
-        // If there are no previous bids, the minimum bid is 1 SOL.
-        return 1;
+        // If there are no previous bids, the minimum bid is 0.01 ETH.
+        return 0.01;
     } else {
         // If there is a previous bid, calculate 5% more than the current highest bid.
-        // Ensure the increment is at least 1 SOL.
+        // Ensure the increment is at least 0.01 ETH.
         const fivePercentMore = highBidLamports + Math.floor(highBidLamports / 20);
-        const max = Math.max(fivePercentMore, highBidLamports + LAMPORTS_PER_SOL);
+        const max = Math.max(fivePercentMore, highBidLamports + (0.01 * LAMPORTS_PER_SOL));
         return max / LAMPORTS_PER_SOL;
     }
 }
@@ -25,7 +25,7 @@ interface Props {
     highBidLamports: number;
 }
 
-export const BidForm = ({highBidLamports}: Props) => {
+export const BidForm = ({ highBidLamports }: Props) => {
     const [bidAmount, setBidAmount] = useState<string>(''); // State to track bid amount
     const [transaction, setTransaction] = useState<Transaction>();
     const { api } = useEpochProgram();
@@ -60,12 +60,12 @@ export const BidForm = ({highBidLamports}: Props) => {
     const placeholder = new TransactionInstruction({ keys: [], programId: bidder });
     const bidTooLow = calculateMinimumBid(highBidLamports) > parseFloat(bidAmount);
     const disabled = !transaction || !bidder || bidAmount === '' || bidTooLow;
-    const buttonText = bidTooLow ? 'Bid too low' : disabled ? `Enter bid` : `Bid ${bidAmount} SOL`;
+    const buttonText = bidTooLow ? 'Bid too low' : disabled ? `Enter bid` : `Bid ${bidAmount} ETH`;
     return (
         <>
             <form className="flex flex-col space-y-4 mb-4">
                 <div className="mt-4">
-                    <label htmlFor="bid" className="block text-sm font-medium text-gray-300">Minimum bid is {calculateMinimumBid(highBidLamports)} SOL. Good Luck!</label>
+                    <label htmlFor="bid" className="block text-sm font-medium text-gray-300">Minimum bid is {calculateMinimumBid(highBidLamports)} ETH. Good Luck!</label>
                     <div className="mt-1 relative rounded-md shadow-sm">
                         <input
                             type="number"
@@ -76,20 +76,20 @@ export const BidForm = ({highBidLamports}: Props) => {
                             placeholder="0.00"
                         />
                         <div className="absolute inset-y-0 right-0 flex items-center">
-                            <label className="pr-3 text-sm font-medium text-gray-500">SOL</label>
+                            <label className="pr-3 text-sm font-medium text-gray-500">ETH</label>
                         </div>
                     </div>
                 </div>
             </form>
 
-                <SendTransactionButton
-                    transactionInstructions={transaction?.instructions ?? [placeholder]}
-                    buttonLabel={buttonText}
-                    /* TODO make sure auction is complete before refresh */
-                    onSuccess={refreshAuction}
-                    disabled={disabled}
-                />
-            <div className="mt-2 block text-xs font-medium text-gray-300 text-center">Bids must be at least 1 SOL higher. Bid ends immediately after Epoch.
+            <SendTransactionButton
+                transactionInstructions={transaction?.instructions ?? [placeholder]}
+                buttonLabel={buttonText}
+                /* TODO make sure auction is complete before refresh */
+                onSuccess={refreshAuction}
+                disabled={disabled}
+            />
+            <div className="mt-2 block text-xs font-medium text-gray-300 text-center">Bids must be at least 0.01 ETH higher. Bid ends immediately after Epoch.
             </div>
 
         </>

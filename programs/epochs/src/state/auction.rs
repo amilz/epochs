@@ -1,6 +1,6 @@
 use anchor_lang::{
     prelude::*,
-    solana_program::{native_token::LAMPORTS_PER_SOL, stake_history::Epoch},
+    solana_program:: stake_history::Epoch
 };
 
 use crate::EpochError;
@@ -56,13 +56,13 @@ impl Auction {
     fn validate_bid(&self, bid_amount_lamports: u64) -> Result<()> {
         // Ensure the bid is at least 1 SOL if there are no previous bids
         let min_bid = if self.high_bid_lamports == 0 {
-            LAMPORTS_PER_SOL
+            10_000_000
         } else {
             // Calculate 5% more than the current highest bid, ensuring at least a 1 SOL increment
             // TODO EVALUATE IF THIS IS THE RIGHT STRATEGY
             std::cmp::max(
                 self.high_bid_lamports + (self.high_bid_lamports / 20),
-                self.high_bid_lamports + LAMPORTS_PER_SOL,
+                self.high_bid_lamports + 10_000_000,
             )
         };
 
