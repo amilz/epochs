@@ -3,7 +3,7 @@ export interface ActiveEpochProps {
 }
 
 export interface EpochInfo {
-    epoch: number;
+    epoch?: number;
 }
 
 export interface TraitComponents {

@@ -2,17 +2,17 @@ import React from 'react';
 import { useEpochProgram } from '@/hooks/useProgram';
 
 interface Props {
-    isCurrentEpoch: boolean;
+    epoch?: number;
 }
 
-export const EpochProgress: React.FC<Props> = ({ isCurrentEpoch }: Props) => {
+export const EpochProgress: React.FC<Props> = ({ epoch }: Props) => {
     const { epochInfo } = useEpochProgram();
 
-    if (!epochInfo) return null;
+    // Leveraging here instead of the hook b/c there's a instant where we incorrectly flash "epoch complete" before while loading
+    const isCurrentEpoch = epoch && epochInfo && (epoch === epochInfo?.epoch);
 
-
-    const progress = isCurrentEpoch ? ((epochInfo.slotIndex / epochInfo.slotsInEpoch) * 100).toFixed(0) : '100';
-    const displayText = isCurrentEpoch ? `progress to next epoch: ${progress}%` : 'epoch complete';
+    const progress = !epochInfo ? '0' : isCurrentEpoch ? ((epochInfo.slotIndex / epochInfo.slotsInEpoch) * 100).toFixed(0) : '100';
+    const displayText = !epochInfo ? 'fetching epoch' : isCurrentEpoch ? `progress to next epoch: ${progress}%` : 'epoch complete';
     const displayNetwork = 'eclipse testnet';
 
     return (

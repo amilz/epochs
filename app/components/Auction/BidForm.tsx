@@ -9,6 +9,7 @@ import { } from "@solana/wallet-adapter-react-ui";
 
 
 function calculateMinimumBid(highBidLamports: number): number {
+    return 0.01;
     if (highBidLamports === 0) {
         // If there are no previous bids, the minimum bid is 0.01 ETH.
         return 0.01;

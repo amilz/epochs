@@ -54,17 +54,7 @@ impl Auction {
     }
 
     fn validate_bid(&self, bid_amount_lamports: u64) -> Result<()> {
-        // Ensure the bid is at least 1 SOL if there are no previous bids
-        let min_bid = if self.high_bid_lamports == 0 {
-            10_000_000
-        } else {
-            // Calculate 5% more than the current highest bid, ensuring at least a 1 SOL increment
-            // TODO EVALUATE IF THIS IS THE RIGHT STRATEGY
-            std::cmp::max(
-                self.high_bid_lamports + (self.high_bid_lamports / 20),
-                self.high_bid_lamports + 10_000_000,
-            )
-        };
+        let min_bid = self.high_bid_lamports + 10_000_000;
 
         require!(bid_amount_lamports >= min_bid, EpochError::BidTooLow);
         Ok(())
