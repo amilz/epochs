@@ -53,8 +53,7 @@ export const useEpoch = ({ epochNumber }: Props) => {
             const epochPassed = searchEpoch < epochInfo.epoch;
             if (!asset && !isCurrentEpoch) {
                 return EpochStatus.DOES_NOT_EXIST;
-            }
-            else if (!asset && isCurrentEpoch) {
+            } else if (!asset && isCurrentEpoch) {
                 return EpochStatus.NOT_YET_STARTED;
             } else if (asset && isCurrentEpoch) {
                 return EpochStatus.ACTIVE;

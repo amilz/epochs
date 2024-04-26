@@ -3,11 +3,27 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@/components/UI/Arrows"
 
 interface EpochOverlayProps {
   children: React.ReactNode;
-  prevPath?: string;
-  nextPath?: string;
+  isCurrentEpoch: boolean;
+  searchEpoch?: number;
+
 }
 
-export default function EpochOverlay({ children, prevPath, nextPath }: EpochOverlayProps) {
+export default function EpochOverlay({ children, searchEpoch, isCurrentEpoch }: EpochOverlayProps) {
+
+  if (!searchEpoch) {
+    return (
+      <></>
+    );
+  }
+
+  const prevEpoch = searchEpoch - 1;
+  const nextEpoch = searchEpoch + 1;
+
+  const showPrevEpoch = prevEpoch > 19; // TODO UPDATE FOR PROD
+  const showNextEpoch = !isCurrentEpoch;
+  const prevPath=showPrevEpoch ? `/epoch/${prevEpoch.toString()}` : undefined;
+  const nextPath=showNextEpoch ? `/epoch/${nextEpoch.toString()}` : undefined;
+
   return (
     <>
       <div className="fixed inset-0 z-50 grid h-screen min-h-screen pointer-events-none">
