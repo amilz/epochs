@@ -1,6 +1,7 @@
 'use client'
 import React from 'react';
 import { EpochInfo } from './types';
+import { ChevronLeftIcon, ChevronRightIcon } from "@/components/UI/Arrows"
 
 export const EpochNumber: React.FC<EpochInfo> = ({ epoch }) => {
   const text = epoch ? 'epoch #' : 'epoch';
