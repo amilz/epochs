@@ -7,7 +7,7 @@ export const SYSTEM_PROGRAM = SystemProgram.programId;
 
 // TODO: Update with actual wallets
 export const DAO_TREASURY = new PublicKey("zuVfy5iuJNZKf5Z3piw5Ho4EpMxkg19i82oixjk1axe");
-export const CREATOR1_WALLET = new PublicKey("zoMw7rFTJ24Y89ADmffcvyBqxew8F9AcMuz1gBd61Fa");
+export const CREATOR1_WALLET = new PublicKey("MiLZAcWZgMYvFnZqzJ6XRj4h5r47bgX64Vt5gRnBvqv");
 export const CREATOR2_WALLET = new PublicKey("MiLZAcWZgMYvFnZqzJ6XRj4h5r47bgX64Vt5gRnBvqv");
 export const AUTHORITY = new PublicKey("AUTHbpGeSBi6tHHxnStySJhrwQfm5tLZQRcL2pCiVweL");
 

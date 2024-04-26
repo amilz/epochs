@@ -24,7 +24,7 @@ export const AuctionTable = ({ auction }: AuctionTableProps) => {
                     </div>
                     <div className="flex justify-between space-x-1">
                         <span className="text-sm font-semibold">{shortenHash(auction.highBidder.toBase58())}</span>
-                        <span className="text-sm font-semibold">{formatNumber(auction.highBidLamports.toNumber() / LAMPORTS_PER_SOL)} SOL</span>
+                        <span className="text-sm font-semibold">{formatNumber(auction.highBidLamports.toNumber() / LAMPORTS_PER_SOL)} ETH</span>
                     </div>
                 </div>
                 <div className={`flex items-center justify-center w-full h-full`}>

@@ -39,8 +39,8 @@ const Auction = ({ epochNumber }: Props) => {
     }, [api, auction, epochInfo, setPng]);
 
     return (
-        <div className="flex-col min-w-full sm:min-w-[632px] mt-5 sm:mt-10 items-center justify-between ">
-            {!auction && transaction && connected &&
+        <div className="flex-col w-full mt-5 lg:min-w-[500px] xl:min-w-[632px] lg:mt-10 items-center justify-between ">
+        {!auction && transaction && connected &&
                 <SendTransactionButton
                     transactionInstructions={transaction.instructions}
                     buttonLabel="Initialize Epoch Auction"

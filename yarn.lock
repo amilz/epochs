@@ -37,6 +37,16 @@
     bn.js "^5.1.2"
     buffer-layout "^1.2.0"
 
+"@epochs/api@file:api":
+  version "1.1.2"
+  resolved "file:api"
+  dependencies:
+    "@coral-xyz/anchor" "^0.29.0"
+    "@solana/spl-token" "^0.4.0"
+    "@types/node" "^20.11.10"
+    jimp "^0.22.10"
+    pngjs "^7.0.0"
+
 "@jimp/bmp@^0.22.10":
   version "0.22.10"
   resolved "https://registry.npmjs.org/@jimp/bmp/-/bmp-0.22.10.tgz"
@@ -414,7 +424,7 @@
   resolved "https://registry.npmjs.org/@tokenizer/token/-/token-0.3.0.tgz"
   integrity sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==
 
-"@types/bn.js@^5.1.0":
+"@types/bn.js@^5.1.0", "@types/bn.js@^5.1.5":
   version "5.1.5"
   resolved "https://registry.npmjs.org/@types/bn.js/-/bn.js-5.1.5.tgz"
   integrity sha512-V46N0zwKRF5Q00AZ6hWtN0T8gGmDUaUzLWQvHFo5yThtVwK/VCenFY3wXVbOvNfajEpsTfQM4IN9k/d6gUVX3A==

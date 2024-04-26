@@ -1255,10 +1255,10 @@
   resolved "https://registry.npmjs.org/@emurgo/cardano-serialization-lib-nodejs/-/cardano-serialization-lib-nodejs-11.5.0.tgz"
   integrity sha512-IlVABlRgo9XaTR1NunwZpWcxnfEv04ba2l1vkUz4S1W7Jt36F4CtffP+jPeqBZGnAe+fnUwo0XjIJC3ZTNToNQ==
 
-"@epochs/api@^1.0.9":
-  version "1.0.9"
-  resolved "https://registry.npmjs.org/@epochs/api/-/api-1.0.9.tgz"
-  integrity sha512-HWJFuxzxiR1OWmTxnTU3GjQ2/O98fKXvEDvpB+zL9+oskXVsqW4SLlbH6+MWHeuyFR86vUS0uVag8BdfLwMKgw==
+"@epochs/api@^1.1.3":
+  version "1.1.3"
+  resolved "https://registry.npmjs.org/@epochs/api/-/api-1.1.3.tgz"
+  integrity sha512-PY0cgtz8HK51WC27Q0ElCLGkYrwZBnY5KhsJdX63+45z2fa6pID2oEj/G+lTKzWii0SnwmKjRptwFwHHC3i11Q==
   dependencies:
     "@coral-xyz/anchor" "^0.29.0"
     "@solana/spl-token" "^0.4.0"
@@ -2285,7 +2285,7 @@
     jsbi "^3.1.5"
     sha.js "^2.4.11"
 
-"@noble/curves@^1.1.0", "@noble/curves@^1.2.0":
+"@noble/curves@^1.1.0", "@noble/curves@^1.4.0":
   version "1.4.0"
   resolved "https://registry.npmjs.org/@noble/curves/-/curves-1.4.0.tgz"
   integrity sha512-p+4cb332SFCrReJkCYe8Xzm0OWi4Jji5jVdIZRL/PmacmDkFNw6MrrV+gGpiPxLHbV+zKFRywUWbaseT+tZRXg==
@@ -3049,25 +3049,12 @@
   dependencies:
     buffer "~6.0.3"
 
-"@solana/codecs-core@2.0.0-experimental.8618508":
-  version "2.0.0-experimental.8618508"
-  resolved "https://registry.npmjs.org/@solana/codecs-core/-/codecs-core-2.0.0-experimental.8618508.tgz"
-  integrity sha512-JCz7mKjVKtfZxkuDtwMAUgA7YvJcA2BwpZaA1NOLcted4OMC4Prwa3DUe3f3181ixPYaRyptbF0Ikq2MbDkYEA==
-
 "@solana/codecs-core@2.0.0-preview.2":
   version "2.0.0-preview.2"
   resolved "https://registry.npmjs.org/@solana/codecs-core/-/codecs-core-2.0.0-preview.2.tgz"
   integrity sha512-gLhCJXieSCrAU7acUJjbXl+IbGnqovvxQLlimztPoGgfLQ1wFYu+XJswrEVQqknZYK1pgxpxH3rZ+OKFs0ndQg==
   dependencies:
     "@solana/errors" "2.0.0-preview.2"
-
-"@solana/codecs-data-structures@2.0.0-experimental.8618508":
-  version "2.0.0-experimental.8618508"
-  resolved "https://registry.npmjs.org/@solana/codecs-data-structures/-/codecs-data-structures-2.0.0-experimental.8618508.tgz"
-  integrity sha512-sLpjL9sqzaDdkloBPV61Rht1tgaKq98BCtIKRuyscIrmVPu3wu0Bavk2n/QekmUzaTsj7K1pVSniM0YqCdnEBw==
-  dependencies:
-    "@solana/codecs-core" "2.0.0-experimental.8618508"
-    "@solana/codecs-numbers" "2.0.0-experimental.8618508"
 
 "@solana/codecs-data-structures@2.0.0-preview.2":
   version "2.0.0-preview.2"
@@ -3078,13 +3065,6 @@
     "@solana/codecs-numbers" "2.0.0-preview.2"
     "@solana/errors" "2.0.0-preview.2"
 
-"@solana/codecs-numbers@2.0.0-experimental.8618508":
-  version "2.0.0-experimental.8618508"
-  resolved "https://registry.npmjs.org/@solana/codecs-numbers/-/codecs-numbers-2.0.0-experimental.8618508.tgz"
-  integrity sha512-EXQKfzFr3CkKKNzKSZPOOOzchXsFe90TVONWsSnVkonO9z+nGKALE0/L9uBmIFGgdzhhU9QQVFvxBMclIDJo2Q==
-  dependencies:
-    "@solana/codecs-core" "2.0.0-experimental.8618508"
-
 "@solana/codecs-numbers@2.0.0-preview.2":
   version "2.0.0-preview.2"
   resolved "https://registry.npmjs.org/@solana/codecs-numbers/-/codecs-numbers-2.0.0-preview.2.tgz"
@@ -3092,14 +3072,6 @@
   dependencies:
     "@solana/codecs-core" "2.0.0-preview.2"
     "@solana/errors" "2.0.0-preview.2"
-
-"@solana/codecs-strings@2.0.0-experimental.8618508":
-  version "2.0.0-experimental.8618508"
-  resolved "https://registry.npmjs.org/@solana/codecs-strings/-/codecs-strings-2.0.0-experimental.8618508.tgz"
-  integrity sha512-b2yhinr1+oe+JDmnnsV0641KQqqDG8AQ16Z/x7GVWO+AWHMpRlHWVXOq8U1yhPMA4VXxl7i+D+C6ql0VGFp0GA==
-  dependencies:
-    "@solana/codecs-core" "2.0.0-experimental.8618508"
-    "@solana/codecs-numbers" "2.0.0-experimental.8618508"
 
 "@solana/codecs-strings@2.0.0-preview.2":
   version "2.0.0-preview.2"
@@ -3129,14 +3101,6 @@
     chalk "^5.3.0"
     commander "^12.0.0"
 
-"@solana/options@2.0.0-experimental.8618508":
-  version "2.0.0-experimental.8618508"
-  resolved "https://registry.npmjs.org/@solana/options/-/options-2.0.0-experimental.8618508.tgz"
-  integrity sha512-fy/nIRAMC3QHvnKi63KEd86Xr/zFBVxNW4nEpVEU2OT0gCEKwHY4Z55YHf7XujhyuM3PNpiBKg/YYw5QlRU4vg==
-  dependencies:
-    "@solana/codecs-core" "2.0.0-experimental.8618508"
-    "@solana/codecs-numbers" "2.0.0-experimental.8618508"
-
 "@solana/options@2.0.0-preview.2":
   version "2.0.0-preview.2"
   resolved "https://registry.npmjs.org/@solana/options/-/options-2.0.0-preview.2.tgz"
@@ -3145,35 +3109,31 @@
     "@solana/codecs-core" "2.0.0-preview.2"
     "@solana/codecs-numbers" "2.0.0-preview.2"
 
-"@solana/spl-token-group@^0.0.2":
-  version "0.0.2"
-  resolved "https://registry.npmjs.org/@solana/spl-token-group/-/spl-token-group-0.0.2.tgz"
-  integrity sha512-vLePrFvT9+PfK2KZaddPebTWtRykXUR+060gqomFUcBk/2UPpZtsJGW+xshI9z9Ryrx7FieprZEUCApw34BwrQ==
+"@solana/spl-token-group@^0.0.4":
+  version "0.0.4"
+  resolved "https://registry.npmjs.org/@solana/spl-token-group/-/spl-token-group-0.0.4.tgz"
+  integrity sha512-7+80nrEMdUKlK37V6kOe024+T7J4nNss0F8LQ9OOPYdWCCfJmsGUzVx2W3oeizZR4IHM6N4yC9v1Xqwc3BTPWw==
   dependencies:
     "@solana/codecs" "2.0.0-preview.2"
     "@solana/spl-type-length-value" "0.1.0"
 
-"@solana/spl-token-metadata@^0.1.2":
-  version "0.1.2"
-  resolved "https://registry.npmjs.org/@solana/spl-token-metadata/-/spl-token-metadata-0.1.2.tgz"
-  integrity sha512-hJYnAJNkDrtkE2Q41YZhCpeOGU/0JgRFXbtrtOuGGeKc3pkEUHB9DDoxZAxx+XRno13GozUleyBi0qypz4c3bw==
+"@solana/spl-token-metadata@^0.1.4":
+  version "0.1.4"
+  resolved "https://registry.npmjs.org/@solana/spl-token-metadata/-/spl-token-metadata-0.1.4.tgz"
+  integrity sha512-N3gZ8DlW6NWDV28+vCCDJoTqaCZiF/jDUnk3o8GRkAFzHObiR60Bs1gXHBa8zCPdvOwiG6Z3dg5pg7+RW6XNsQ==
   dependencies:
-    "@solana/codecs-core" "2.0.0-experimental.8618508"
-    "@solana/codecs-data-structures" "2.0.0-experimental.8618508"
-    "@solana/codecs-numbers" "2.0.0-experimental.8618508"
-    "@solana/codecs-strings" "2.0.0-experimental.8618508"
-    "@solana/options" "2.0.0-experimental.8618508"
+    "@solana/codecs" "2.0.0-preview.2"
     "@solana/spl-type-length-value" "0.1.0"
 
 "@solana/spl-token@^0.4.0":
-  version "0.4.3"
-  resolved "https://registry.npmjs.org/@solana/spl-token/-/spl-token-0.4.3.tgz"
-  integrity sha512-mRjJJE9CIBejsg9WAmDp369pWeObm42K2fwsZ4dkJAMCt1KBPb5Eb1vzM5+AYfV/BUTy3QP2oFx8kV+8Doa1xQ==
+  version "0.4.6"
+  resolved "https://registry.npmjs.org/@solana/spl-token/-/spl-token-0.4.6.tgz"
+  integrity sha512-1nCnUqfHVtdguFciVWaY/RKcQz1IF4b31jnKgAmjU9QVN1q7dRUkTEWJZgTYIEtsULjVnC9jRqlhgGN39WbKKA==
   dependencies:
     "@solana/buffer-layout" "^4.0.0"
     "@solana/buffer-layout-utils" "^0.2.0"
-    "@solana/spl-token-group" "^0.0.2"
-    "@solana/spl-token-metadata" "^0.1.2"
+    "@solana/spl-token-group" "^0.0.4"
+    "@solana/spl-token-metadata" "^0.1.4"
     buffer "^6.0.3"
 
 "@solana/spl-type-length-value@0.1.0":
@@ -3608,13 +3568,13 @@
     "@solana/wallet-standard-core" "^1.1.1"
     "@solana/wallet-standard-wallet-adapter" "^1.1.2"
 
-"@solana/web3.js@*", "@solana/web3.js@^1.32.0", "@solana/web3.js@^1.36.0", "@solana/web3.js@^1.44.3", "@solana/web3.js@^1.5.0", "@solana/web3.js@^1.50.1", "@solana/web3.js@^1.58.0", "@solana/web3.js@^1.63.0", "@solana/web3.js@^1.63.1", "@solana/web3.js@^1.68.0", "@solana/web3.js@^1.77.3", "@solana/web3.js@^1.87.6", "@solana/web3.js@^1.90.0", "@solana/web3.js@^1.91.1":
-  version "1.91.4"
-  resolved "https://registry.npmjs.org/@solana/web3.js/-/web3.js-1.91.4.tgz"
-  integrity sha512-zconqecIcBqEF6JiM4xYF865Xc4aas+iWK5qnu7nwKPq9ilRYcn+2GiwpYXqUqqBUe0XCO17w18KO0F8h+QATg==
+"@solana/web3.js@*", "@solana/web3.js@^1.32.0", "@solana/web3.js@^1.36.0", "@solana/web3.js@^1.44.3", "@solana/web3.js@^1.5.0", "@solana/web3.js@^1.50.1", "@solana/web3.js@^1.58.0", "@solana/web3.js@^1.63.0", "@solana/web3.js@^1.63.1", "@solana/web3.js@^1.68.0", "@solana/web3.js@^1.77.3", "@solana/web3.js@^1.90.0", "@solana/web3.js@^1.91.6":
+  version "1.91.7"
+  resolved "https://registry.npmjs.org/@solana/web3.js/-/web3.js-1.91.7.tgz"
+  integrity sha512-HqljZKDwk6Z4TajKRGhGLlRsbGK4S8EY27DA7v1z6yakewiUY3J7ZKDZRxcqz2MYV/ZXRrJ6wnnpiHFkPdv0WA==
   dependencies:
     "@babel/runtime" "^7.23.4"
-    "@noble/curves" "^1.2.0"
+    "@noble/curves" "^1.4.0"
     "@noble/hashes" "^1.3.3"
     "@solana/buffer-layout" "^4.0.1"
     agentkeepalive "^4.5.0"

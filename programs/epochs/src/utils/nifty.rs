@@ -96,6 +96,7 @@ pub fn create_asset(
         .authority(authority, true)
         .owner(owner)
         .group(Some(group))
+        //.group_authority(Some(authority))
         .payer(Some(payer))
         .system_program(Some(system_program::ID))
         .name(name)
