@@ -6,16 +6,18 @@ import { Transaction } from '@solana/web3.js';
 import { useEffect, useState } from 'react';
 import { SendTransactionButton } from '../Transactions/SendTransactionButton';
 import { AuctionTable } from '@/components/Auction/AuctionTable';
+import ClaimButton from '@/components/Auction/ClaimButton';
 
 interface Props {
     epochNumber?: number;
+    showClaim?: boolean;
 }
 
-const Auction = ({ epochNumber }: Props) => {
+const Auction = ({ epochNumber, showClaim }: Props) => {
     const [transaction, setTransaction] = useState<Transaction>();
     const [png, setPng] = useState<string>();
     const { epochInfo, api } = useEpochProgram();
-    const { auction, refreshAuction } = useEpoch({ epochNumber });
+    const { auction, refreshAuction, epochStatus } = useEpoch({ epochNumber });
     const { publicKey: payer, connected } = useWallet();
 
     useEffect(() => {
@@ -39,15 +41,16 @@ const Auction = ({ epochNumber }: Props) => {
     }, [api, auction, epochInfo, setPng]);
 
     return (
-        <div className="flex-col w-full mt-5 lg:min-w-[500px] xl:min-w-[632px] lg:mt-10 items-center justify-between ">
-        {!auction && transaction && connected &&
+        <div className="flex-col w-full mt-5 lg:mt-0 lg:min-w-[500px] items-center justify-between ">
+            {!auction && transaction && connected &&
                 <SendTransactionButton
                     transactionInstructions={transaction.instructions}
                     buttonLabel="Initialize Epoch Auction"
                     onSuccess={refreshAuction}
                 />
             }
-            {auction && <AuctionTable auction={auction} />}
+            {!(epochNumber && showClaim) && auction && <AuctionTable auction={auction} epochStatus={epochStatus} />}
+            {epochNumber && showClaim && <ClaimButton epochNumber={epochNumber} />}
         </div>
     )
 }

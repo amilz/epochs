@@ -23,8 +23,7 @@ export default function RootLayout({
     <SolanaProviders>
       <html lang="en">
       <link rel="icon" href="/favicon.ico" sizes="any" />
-
-        <body className={`${inter.className} flex flex-col mx-auto px-4 py-2 max-w-7xl text-white`}>
+        <body className={`${inter.className} flex flex-col mx-auto px-4 py-2 max-w-5xl text-white`}>
           <Navbar />
           {children}
           <DevnetWarning />
