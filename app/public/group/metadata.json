@@ -1,0 +1,28 @@
+{
+    "name": "The Epochs Collection",
+    "symbol": "EPOCHS",
+    "description": "One Epoch, every epoch, forever.",
+    "seller_fee_basis_points": 500,
+    "image": "https://epochs.wtf/group/logo.png",
+    "external_url": "https://epochs.wtf",
+    "collection": {
+        "name": "Epochs",
+        "family": "EPOCHS"
+    },
+    "attributes": [],
+    "properties": {
+        "files": [
+            {
+                "uri": "https://epochs.wtf/group/logo.png",
+                "type": "image/png"
+            }
+        ],
+        "category": "image",
+        "creators": [
+            {
+                "address": "MiLZAcWZgMYvFnZqzJ6XRj4h5r47bgX64Vt5gRnBvqv",
+                "share": 100
+            }
+        ]
+    }
+}
