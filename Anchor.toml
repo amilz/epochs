@@ -30,7 +30,7 @@ upgradeable = false
 
 [[test.genesis]]
 address = "AssetGtQBTSgm5s91d1RAQod5JmaZiJDxqsgtqrZud73"
-program = "./tests/genesis/asset_0.2.so"
+program = "./tests/genesis/asset_0.4.so"
 
 [test.validator]
 bind_address = "0.0.0.0"
