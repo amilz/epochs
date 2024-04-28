@@ -68,9 +68,9 @@ export const TRAIT_MAP_SHIRTS = [
 ];
 
 export const TRAITS_MAP_GLASSES = [
-    "Hi Rose", "Square Black Eyes Red", "Square Black Rgb", "Square Black", "Square Blue Med Saturated",
-    "Square Blue", "Square Frog Green", "Square Full Black", "Square Green Blue Multi", "Square Grey Light",
-    "Square Guava", "Square Honey", "Square Magenta", "Square Orange", "Square Pink Purple Multi",
-    "Square Red", "Square Smoke", "Square Teal", "Square Watermelon", "Square Yellow Orange Multi",
-    "Square Yellow Saturated", "Deep Teal", "Grass"
+    "Hi Rose", "Black Eyes Red", "Black Rgb", "Black", "Blue Med Saturated",
+    "Blue", "Frog Green", "Full Black", "Green Blue Multi", "Grey Light",
+    "Guava", "Honey", "Magenta", "Orange", "Pink Purple Multi",
+    "Red", "Smoke", "Teal", "Watermelon", "Yellow Orange Multi",
+    "Yellow Saturated", "Deep Teal", "Grass", "Eclipse"
 ];
