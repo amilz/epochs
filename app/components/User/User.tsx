@@ -42,7 +42,7 @@ const AddressLabel: React.FC<{ address: string }> = ({ address }: { address: str
     const text = 'wallet address:';
     return (
         <>
-            <div className="text-4xl">{shortenHash(address)}</div>
+            <div className="text-4xl">{shortenHash(address)}'s</div>
             <div className="text-8xl sm:text-mega leading-none font-extrabold tracking-tighter">
                 {'epochs'}
             </div>

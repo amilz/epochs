@@ -1,10 +1,10 @@
-# The Epochs wip
-experimental solana on-chain nft generation
+# The Epochs Program
+experimental SVM on-chain nft generation on Eclipse
 _inspired by [Nouns](https://nouns.wtf/) and Solana's [Proof of History](https://solana.com/news/proof-of-history)_
 
 There are 2 primary groups of instructions here: 
 1. An "Epoch" Asset generated and auctioned every epoch in perpetuity. This includes asset generation, auction, and claim.
-2. A retroactive minting system called "Time Machine" that will create a "candy machine"-like mint experience for users to mint epoch's that have already passed (~600 epochs)
+2. ~~A retroactive minting system called "Time Machine" that will create a "candy machine"-like mint experience for users to mint epoch's that have already passed (~600 epochs)~~ (time machine will not be required assuming we launch on Epoch #1)
 
 ## Overview
 ### Instructions 
@@ -18,7 +18,7 @@ There are 2 primary groups of instructions here:
 
 - [`bid`](/programs/epochs/src/instructions/auction_bid.rs) creates a user bit for an active auction. It will refund the previous bid if there is one and give them Reputation points
 - [`claim`](/programs/epochs/src/instructions/auction_claim.rs) allows anybody to settle a closed auction. this will transfer the nft to the winner and give reputation points. 
-- [`time_machine`](/programs/epochs/src/instructions/time_machine/) a few instructions that govern a process for a user to mint an NFT using a time machine. This is a way to mint epoch nfts representing the Solana Epochs that have already passed.
+- ~~[`time_machine`](/programs/epochs/src/instructions/time_machine/) a few instructions that govern a process for a user to mint an NFT using a time machine. This is a way to mint epoch nfts representing the Solana Epochs that have already passed.~~
 
 
 ### State/PDAs
