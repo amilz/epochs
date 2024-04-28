@@ -1,11 +1,12 @@
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { Connection, Transaction, PublicKey, Commitment } from "@solana/web3.js";
+import { Connection, Transaction, PublicKey, Commitment, GetProgramAccountsFilter } from "@solana/web3.js";
 import { Epochs, IDL } from "./utils/idl/epochs";
-import { EPOCH_PROGRAM_ID, getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda, getTimeMachinePda } from "./utils";
+import { EPOCH_PROGRAM_ID, NIFTY_PROGRAM_ID, getAuctionEscrowPda, getAuctionPda, getAuthorityPda, getCollectionMintPda, getNftMintPda, getReputationPda, getTimeMachinePda } from "./utils";
 import { ApiError, SolanaQueryType } from "./errors";
 import { TransactionBuilder } from './transactionBuilder';
 import { Asset } from "./utils/deserialize/deserialize";
 import { Auction } from "./utils/types";
+import { COLLECTION_OFFSET, EPOCH_SIZE, OWNER_OFFSET } from "./utils/constants/deserializers";
 
 interface EpochClientArgs {
     connection: Connection;
@@ -125,7 +126,7 @@ export class EpochClient {
         }
     }
 
-    public async fetchAuction({ epoch, commitment = 'confirmed' }: { epoch: number, commitment?: Commitment}) {
+    public async fetchAuction({ epoch, commitment = 'confirmed' }: { epoch: number, commitment?: Commitment }) {
         const auction = getAuctionPda(epoch, this.program);
         const data = await this.program.account.auction.fetch(auction, commitment);
         return data;
@@ -191,6 +192,47 @@ export class EpochClient {
         const deserializedAsset = Asset.deserialize(data);
 
         return deserializedAsset;
+    }
+
+    public async fetchDeserializedAssetsByPublicKey({ assets }: { assets: PublicKey[] }) {
+        const infos = await this.connection.getMultipleAccountsInfo(assets);
+        const deserializedAssets = infos.map(({ data }) => Asset.deserialize(data));
+
+        const promises = deserializedAssets.map(async (deserializedAsset) => {
+            const { extensions, ...assetWithoutExtensions } = deserializedAsset;
+            const png = await deserializedAsset.fetchBase64Png();
+            return { assetWithoutExtensions, extensions, png };
+        });
+        const assetsAndPng = await Promise.all(promises);
+
+        return assetsAndPng;
+    }
+
+    public async fetchEpochsByOwner({ owner }: { owner: PublicKey }) {
+        const group = getCollectionMintPda(this.program);
+        let filters: GetProgramAccountsFilter[] = [
+            {
+                memcmp: {
+                    offset: OWNER_OFFSET,
+                    bytes: owner.toBase58()
+                }
+            },
+            {
+                memcmp: {
+                    offset: COLLECTION_OFFSET,
+                    bytes: group.toBase58()
+                }
+            },
+            { dataSize: EPOCH_SIZE }
+        ];
+        try {
+            const assets = await this.connection.getProgramAccounts(NIFTY_PROGRAM_ID, { filters });
+            const deserialized = await this.fetchDeserializedAssetsByPublicKey({ assets: assets.map(({ pubkey }) => pubkey) });
+            return deserialized;
+        } catch (error) {
+            console.error('Failed to fetch Nifty assets:', error);
+            throw error;
+        }
     }
 
     public isClaimed(auction: Auction): boolean {

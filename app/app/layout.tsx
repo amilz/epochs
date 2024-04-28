@@ -30,6 +30,5 @@ export default function RootLayout({
         </body>
       </html>
     </SolanaProviders>
-
   );
 }

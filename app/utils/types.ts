@@ -1,10 +1,7 @@
 import { Asset, AssetParams, ExtensionData } from "@epochs/api/utils/deserialize/deserialize";
 
-export interface DeserializedAsset {
+export interface DeserializedAsset extends DeserializedAssetNoEpoch {
     epoch: number;
-    png: string;
-    extensions: ExtensionData[];
-    assetWithoutExtensions: AssetParams
 }
 
 export enum EpochStatus {
@@ -13,4 +10,10 @@ export enum EpochStatus {
     ACTIVE = "ACTIVE",
     UNCLAIMED = "UNCLAIMED",
     COMPLETE = "COMPLETE"
+}
+
+export interface DeserializedAssetNoEpoch {
+    png: string;
+    extensions: ExtensionData[];
+    assetWithoutExtensions: AssetParams
 }

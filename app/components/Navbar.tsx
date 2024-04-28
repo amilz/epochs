@@ -2,22 +2,36 @@
 import Link from "next/link"
 import Image from "next/image";
 import dynamic from 'next/dynamic';
-import { SVGProps } from "react";
+import { SVGProps, useEffect, useState } from "react";
 import React from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const WalletMultiButtonDynamic = dynamic(
     async () => (await import('@solana/wallet-adapter-react-ui')).WalletMultiButton,
     { ssr: false }
 );
 
-const links = [
-    /* { title: 'Home', href: '/', external: false, icon: <HomeIcon className="h-6 w-6" />, mobileOnly: true },*/
+
+const baseLinks = [
     { title: 'Twitter', href: 'https://x.com/epochs_eclipse', external: true, icon: <TwitterIcon className="h-6 w-6" />, mobileOnly: false },
     { title: 'GitHub', href: 'https://github.com/amilz/epochs', external: true, icon: <GithubIcon className="h-6 w-6" />, mobileOnly: false },
     { title: 'Treasury', href: '#', external: false, icon: <PackageIcon className="h-6 w-6" />, mobileOnly: false },
 ];
 
 const Navbar: React.FC = () => {
+    const { publicKey } = useWallet();
+    const [links, setLinks] = useState(baseLinks);
+
+    useEffect(() => {
+        if (publicKey) {
+            const linkToAdd = { title: 'Profile', href: `/user/${publicKey.toBase58()}`, external: false, icon: <UserIcon className="h-6 w-6" />, mobileOnly: false };
+            const newLinks = [linkToAdd, ...baseLinks];
+            setLinks(newLinks);
+        } else {
+            setLinks(baseLinks);
+        }
+    }, [publicKey]);
+
     return (
         <>
             <header className="flex h-16 w-full items-center justify-between px-4 md:px-6">

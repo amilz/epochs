@@ -1255,10 +1255,10 @@
   resolved "https://registry.npmjs.org/@emurgo/cardano-serialization-lib-nodejs/-/cardano-serialization-lib-nodejs-11.5.0.tgz"
   integrity sha512-IlVABlRgo9XaTR1NunwZpWcxnfEv04ba2l1vkUz4S1W7Jt36F4CtffP+jPeqBZGnAe+fnUwo0XjIJC3ZTNToNQ==
 
-"@epochs/api@^1.1.3":
-  version "1.1.3"
-  resolved "https://registry.npmjs.org/@epochs/api/-/api-1.1.3.tgz"
-  integrity sha512-PY0cgtz8HK51WC27Q0ElCLGkYrwZBnY5KhsJdX63+45z2fa6pID2oEj/G+lTKzWii0SnwmKjRptwFwHHC3i11Q==
+"@epochs/api@^1.1.4":
+  version "1.1.4"
+  resolved "https://registry.npmjs.org/@epochs/api/-/api-1.1.4.tgz"
+  integrity sha512-2PRH2KiQfUQ2f+g8NFd9UIuvfs9zqjlKLJhWbj8zXvQrV1XdtsnP/g+s4z/1geuRsIeYUW4SSvHDVvldNI5sng==
   dependencies:
     "@coral-xyz/anchor" "^0.29.0"
     "@solana/spl-token" "^0.4.0"

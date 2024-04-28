@@ -1,4 +1,4 @@
-import { Cluster } from "@solana/web3.js";
+import { Cluster, PublicKey } from "@solana/web3.js";
 
 export const getExplorerUrl = (signature: string, cluster: Cluster) => {
     return `https://explorer.solana.com/tx/${signature}?cluster=${cluster}`;
@@ -17,4 +17,12 @@ export const formatNumber = (number: number, numDecimals: number = 2) => {
         minimumFractionDigits: numDecimals,
         maximumFractionDigits: numDecimals,
     });
+}
+
+export const getPubkeyIfValid = (address: string) => {
+    try {
+        return new PublicKey(address);
+    } catch (error) {
+        return null;
+    }
 }
