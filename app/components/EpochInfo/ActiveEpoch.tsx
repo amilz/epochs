@@ -11,8 +11,6 @@ import { TraitComponents } from './types';
 import { shortenHash } from "@/utils/utils";
 import EpochOverlay from "./EpochOverlay";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { LAMPORTS_PER_SOL } from "@solana/web3.js";
-
 
 export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochProps) => {
     const {
@@ -24,7 +22,6 @@ export const ActiveEpoch: React.FC<ActiveEpochProps> = ({ epoch }: ActiveEpochPr
         searchEpoch,
     } = useEpoch({ epochNumber: epoch });
     const { publicKey: pubkey } = useWallet();
-
 
     const showOwner = epochStatus === 'COMPLETE' && !!asset?.assetWithoutExtensions.holder;
     const ownerTrait = (showOwner && asset) ? { name: "Owner", value: shortenHash(asset.assetWithoutExtensions.holder.toString()) } : undefined;
