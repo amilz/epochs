@@ -51,10 +51,9 @@ fn merge_layers(top_layer: &Epoch, bottom_layer: &mut Epoch) {
 #[inline(never)]
 fn create_epoch(hat: &Epoch, clothes: &Epoch, glasses: &Epoch, body: Box<Epoch>) -> Box<Epoch> {
     let mut epoch = *body; // Dereference the box to access the Epoch instance.
-    merge_layers(hat, &mut epoch);
     merge_layers(clothes, &mut epoch);
+    merge_layers(hat, &mut epoch);
     merge_layers(glasses, &mut epoch);
-    msg!("Epoch created");
     Box::new(epoch) // Return a new Box containing the modified Epoch.
 }
 

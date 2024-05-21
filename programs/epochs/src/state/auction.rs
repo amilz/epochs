@@ -55,7 +55,7 @@ impl Auction {
 
     fn validate_bid(&self, bid_amount_lamports: u64) -> Result<()> {
         let min_bid = self.high_bid_lamports + 10_000_000;
-
+        require!(self.state == AuctionState::UnClaimed, EpochError::AuctionAlreadyClaimed);
         require!(bid_amount_lamports >= min_bid, EpochError::BidTooLow);
         Ok(())
     }

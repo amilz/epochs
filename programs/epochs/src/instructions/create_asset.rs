@@ -138,7 +138,7 @@ impl<'info> CreateAsset<'info> {
         let asset_lamports = self.asset.lamports();
         let auction_lamports = self.auction.to_account_info().lamports();
         // Use saturating add to prevent any weird scenario where somebody is sending lamports to these accounts
-        let refund_amount: u64 = asset_lamports.saturating_add(auction_lamports).min(40000000);
+        let refund_amount: u64 = asset_lamports.saturating_add(auction_lamports).min(300000);
 
         let bump = &[authority_bump];
         let seeds: &[&[u8]] = &[AUTHORITY_SEED.as_ref(), bump];

@@ -81,17 +81,6 @@ pub struct AuctionBid<'info> {
     system_program: Program<'info, System>,
 }
 
-pub fn handle_bid(ctx: Context<AuctionBid>, input_epoch: u64, bid_amount: u64) -> Result<()> {
-    get_and_validate_epoch(input_epoch)?;
-    // Must do transfers before updating auction state to avoid reentrancy attacks
-
-    ctx.accounts.transfer_funds_to_escrow(bid_amount)?;
-    ctx.accounts.transfer_funds_to_previous_high_bidder(ctx.bumps.auction_escrow)?;
-    ctx.accounts.update_auction_and_reputation(bid_amount, ctx.bumps.reputation)?;
-
-    Ok(())
-}
-
 impl AuctionBid<'_> {
     pub fn handler(&mut self, 
         input_epoch: u64, 

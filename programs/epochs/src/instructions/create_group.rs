@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use crate::{
-    EpochError, AUTHORITY, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_1_SHARE, CREATOR_2_SHARE, CREATOR_WALLET_1, CREATOR_WALLET_2, DAO_TREASURY_SHARE, DAO_TREASURY_WALLET
+    EpochError, AUTHORITY, AUTHORITY_SEED, COLLECTION_SEED, CREATOR_1_SHARE, CREATOR_WALLET_1, DAO_TREASURY_SHARE, DAO_TREASURY_WALLET
 };
 use anchor_lang::{
     prelude::*,
@@ -83,7 +83,7 @@ impl<'info> CreateGroup<'info> {
         let mut creators = CreatorsBuilder::default();
         creators.add(&Pubkey::from_str(DAO_TREASURY_WALLET).unwrap(), true, DAO_TREASURY_SHARE);
         creators.add(&Pubkey::from_str(CREATOR_WALLET_1).unwrap(), true, CREATOR_1_SHARE);
-        creators.add(&Pubkey::from_str(CREATOR_WALLET_2).unwrap(), true, CREATOR_2_SHARE);
+        
         let creators_data = creators.data();
 
         let creator_ix: Instruction = AllocateBuilder::new()
@@ -122,16 +122,15 @@ impl<'info> CreateGroup<'info> {
         Ok(())
     }
 
-    // TODO UPDATE LINKS
     fn write_links(&self, account_infos: &[AccountInfo], signer_seeds: &[&[&[u8]]; 2]) -> Result<()> {
         let mut links_builder = LinksBuilder::default();
         links_builder.add(
             "metadata",
-            "https://arweave.net/2eyYRZpFXeXrNyA17Y8QvSfQV9rNkzAqXZa7ko7MBNA",
+            "https://epochs.wtf/group/metadata.json",
         );
         links_builder.add(
             "image",
-            "https://arweave.net/aFnc6QVyRR-gVx6pKYSFu0MiwijQzFdU4fMSuApJqms",
+            "https://epochs.wtf/group/logo.png",
         );
         let links_data: Vec<u8> = links_builder.data();
 
@@ -208,7 +207,7 @@ impl<'info> CreateGroup<'info> {
             .system_program(Some(self.system_program.key()))
             .name("The Epochs Collection".to_string())
             .standard(Standard::NonFungible)
-            .mutable(false)
+            .mutable(true) // ALLOW change to royalties, metadata, etc.
             .instruction();
 
         invoke_signed(&create_ix, account_infos, signer_seeds)?;

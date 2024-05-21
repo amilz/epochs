@@ -11,8 +11,6 @@ use nifty_asset::{
 
 use crate::generate_asset;
 
-use super::log_heap_usage;
-
 type Pixel = (u8, u8, u8);
 type SelectTraitsResults = (usize, usize, usize, usize, Pixel);
 
@@ -55,7 +53,6 @@ pub fn write_rawimg_and_traits<'a>(
     signer_seeds: &[&[&[u8]]; 1],
     epoch: u64,
 ) -> Result<()> {
-    log_heap_usage(0);
     let assets = generate_asset(epoch, payer.key());
     write_attributes(
         asset.key(),

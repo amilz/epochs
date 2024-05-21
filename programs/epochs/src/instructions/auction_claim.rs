@@ -113,7 +113,7 @@ impl AuctionClaim<'_> {
         let asset_lamports = self.asset.lamports();
         let auction_lamports = self.auction.to_account_info().lamports();
         // Use saturating add to prevent any weird scenario where somebody is sending lamports to these accounts
-        let refund_amount: u64 = asset_lamports.saturating_add(auction_lamports).min(40000000);
+        let refund_amount: u64 = asset_lamports.saturating_add(auction_lamports).min(300000);
 
         transfer(
             CpiContext::new(
@@ -131,12 +131,16 @@ impl AuctionClaim<'_> {
 
     fn distribute_funds(&self, escrow_bump: u8) -> Result<()> {
         let escrow_balance: u64 = self.auction.high_bid_lamports;
-        let dao_treasury_lamports = escrow_balance.checked_mul(80).ok_or_else(|| EpochError::Overflow)? / 100;
-        let creator1_lamports = escrow_balance.checked_mul(5).ok_or_else(|| EpochError::Overflow)? / 100;
+        let dao_treasury_lamports = escrow_balance.checked_mul(DAO_TREASURY_SHARE as u64).ok_or_else(|| EpochError::Overflow)? / 100;
+        let creator_lamports = escrow_balance.checked_sub(dao_treasury_lamports).ok_or_else(|| EpochError::Underflow)?;
+
+/* Currently only using one creator
+        let creator1_lamports = escrow_balance.checked_mul(CREATOR_1_SHARE as u64).ok_or_else(|| EpochError::Overflow)? / 100;
         let creator2_lamports = escrow_balance.checked_sub(dao_treasury_lamports)
             .ok_or_else(|| EpochError::Underflow)?
             .checked_sub(creator1_lamports)
-            .ok_or_else(|| EpochError::Underflow)?;
+            .ok_or_else(|| EpochError::Underflow)?; 
+*/
 
         let bump = &[escrow_bump];
         let seeds: &[&[u8]] = &[AUCTION_ESCROW_SEED.as_ref(), bump];
@@ -161,10 +165,11 @@ impl AuctionClaim<'_> {
                     to: self.creator1_wallet.to_account_info(),
                 },
             ).with_signer(signer_seeds),
-            creator1_lamports,
+            creator_lamports,
         )?;
 
-        transfer(
+/* Currently only using one creator
+         transfer(
             CpiContext::new(
                 self.system_program.to_account_info(),
                 Transfer {
@@ -173,7 +178,8 @@ impl AuctionClaim<'_> {
                 },
             ).with_signer(signer_seeds),
             creator2_lamports,
-        )?;
+        )?; 
+*/
 
         Ok(())
     }

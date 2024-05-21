@@ -36,7 +36,7 @@ export async function bidOnAuction({
 
         const results = await Promise.allSettled([
             client.connection.getBalance(highBidder),
-            client.fetchAuction({ epoch }),
+            client.fetchAuction({ epoch, commitment: 'processed' }),
             client.connection.getBalance(auctionEscrow)
         ]);
 
@@ -51,12 +51,12 @@ export async function bidOnAuction({
         tx.lastValidBlockHeight = lastValidBlockHeight;
         tx.sign(bidder);
 
-        let sig = await sendAndConfirmTransaction(client.connection, tx, [bidder]);
+        let sig = await sendAndConfirmTransaction(client.connection, tx, [bidder], { skipPreflight: true });
 
         if (logMintInfo) console.log(`   Epoch ${epoch} - bid signature: ${sig}`);
         expectedReputation.addReputation(ReputationPoints.BID);
 
-        const finalAuctionData = await client.fetchAuction({ epoch });
+        const finalAuctionData = await client.fetchAuction({ epoch, commitment: 'processed' });
         assert.strictEqual(finalAuctionData.epoch.toNumber(), epoch, "Auction epoch should match the input epoch");
         assert.strictEqual(finalAuctionData.highBidLamports.toNumber(), bidAmount, "High bid should be user's bid");
         assert.strictEqual(finalAuctionData.highBidder.toBase58(), bidder.publicKey.toBase58(), "High bidder should be the bidder");

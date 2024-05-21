@@ -18,7 +18,6 @@
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",
         "@solana/spl-token": "^0.4.0",
-        "@solana/web3.js": "^1.91.6",
         "@types/node": "^20.11.10",
         "jimp": "^0.22.10",
         "pngjs": "^7.0.0"
