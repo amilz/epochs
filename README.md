@@ -1,4 +1,6 @@
 # The Epochs Program
+no longer being maintained. code is for reference only.
+
 experimental SVM on-chain nft generation on Eclipse
 _inspired by [Nouns](https://nouns.wtf/) and Solana's [Proof of History](https://solana.com/news/proof-of-history)_
 
